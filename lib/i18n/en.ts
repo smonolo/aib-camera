@@ -76,7 +76,7 @@ export const en: TranslationKeys = {
     altitude: 'Altitude',
     heading: 'Heading',
     customText: 'Custom text',
-    customPlaceholder: 'e.g. Fire Department Milan · Shift A',
+    customPlaceholder: 'e.g. North squad · Shift A',
     previewInfo: 'Info preview (top)',
     previewCustom: 'Custom text preview (bottom)',
     dateFormat: 'Date format',

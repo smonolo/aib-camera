@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "it.protezionecivile.aibcamera",
+      "bundleIdentifier": "dev.smnl.aibcamera",
       "infoPlist": {
         "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione per attività di antincendio boschivo.",
         "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto.",
@@ -18,7 +18,7 @@
       }
     },
     "android": {
-      "package": "it.protezionecivile.aibcamera",
+      "package": "dev.smnl.aibcamera",
       "adaptiveIcon": {
         "backgroundColor": "#F5F5F5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

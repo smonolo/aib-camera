@@ -55,7 +55,7 @@ export const DEFAULT_STAMP_SETTINGS: StampSettings = {
   showAccuracy: true,
   showAltitude: true,
   showHeading: true,
-  customLines: ['AIB — Protezione Civile'],
+  customLines: ['AIB Camera'],
   dateTimeFormat: 'it-full',
   fontSize: 'medium',
   textColor: '#FFFFFF',

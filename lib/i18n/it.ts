@@ -76,7 +76,7 @@ export const it: TranslationKeys = {
     altitude: 'Altitudine',
     heading: 'Direzione',
     customText: 'Testo personalizzato',
-    customPlaceholder: 'Es. Vigili del Fuoco Milano · Turno A',
+    customPlaceholder: 'Es. Squadra Nord · Turno A',
     previewInfo: 'Anteprima info (in alto)',
     previewCustom: 'Anteprima testo (in basso)',
     dateFormat: 'Formato data',
