@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "aib-camera",
+    "name": "AIB Camera",
     "slug": "aib-camera",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,20 +8,35 @@
     "scheme": "aibcamera",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "it.protezionecivile.aibcamera",
+      "infoPlist": {
+        "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione per attività di antincendio boschivo.",
+        "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate e indirizzo sulla foto.",
+        "NSPhotoLibraryAddUsageDescription": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
+        "NSPhotoLibraryUsageDescription": "AIB Camera può accedere alla libreria per gestire le foto salvate."
+      }
     },
     "android": {
+      "package": "it.protezionecivile.aibcamera",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F5F5F5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
-      "output": "server",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -30,10 +45,40 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#F5F5F5",
+          "dark": {
+            "backgroundColor": "#111111",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "AIB Camera usa la tua posizione GPS per stampare coordinate e indirizzo sulla foto."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
+          "savePhotosPermission": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      "expo-sharing",
+      "expo-image",
+      "expo-font",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

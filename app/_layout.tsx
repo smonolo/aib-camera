@@ -1,56 +1,141 @@
-import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import '../global.css'
 
-import { useColorScheme } from '@/components/useColorScheme';
+import {
+  Geist_400Regular,
+  Geist_500Medium,
+  Geist_600SemiBold,
+  Geist_700Bold,
+  useFonts,
+} from '@expo-google-fonts/geist'
+import { Stack } from 'expo-router'
+import { ThemeProvider } from 'expo-router/react-navigation'
+import * as SplashScreen from 'expo-splash-screen'
+import { StatusBar } from 'expo-status-bar'
+import { useEffect, useState } from 'react'
+import { Text, TextInput, useColorScheme, View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import 'react-native-reanimated'
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+import { AppMark } from '@/components/AppMark'
+import { ToastProvider } from '@/components/Toast'
+import { fonts } from '@/lib/fonts'
+import { SettingsProvider } from '@/lib/settings-context'
+import { navigationTheme } from '@/lib/theme'
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  anchor: '(tabs)',
-};
+export { ErrorBoundary } from 'expo-router'
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync()
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+const SPLASH_HOLD_MS = 700
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
+function applyDefaultFont() {
+  const textDefaults =
+    (Text as unknown as { defaultProps?: { style?: object } }).defaultProps ??
+    {}
+  ;(Text as unknown as { defaultProps: object }).defaultProps = {
+    ...textDefaults,
+    style: [{ fontFamily: fonts.regular }, textDefaults.style],
   }
 
-  return <RootLayoutNav />;
+  const inputDefaults =
+    (TextInput as unknown as { defaultProps?: { style?: object } })
+      .defaultProps ?? {}
+  ;(TextInput as unknown as { defaultProps: object }).defaultProps = {
+    ...inputDefaults,
+    style: [{ fontFamily: fonts.regular }, inputDefaults.style],
+  }
 }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+function LoadingScreen() {
+  const scheme = useColorScheme()
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: scheme === 'dark' ? '#111111' : '#F5F5F5',
+      }}
+    >
+      <AppMark size="medium" />
+    </View>
+  )
+}
+
+export default function RootLayout() {
+  const colorScheme = useColorScheme()
+  const [fontsReady, error] = useFonts({
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    Geist_700Bold,
+  })
+  const [splashDone, setSplashDone] = useState(false)
+
+  useEffect(() => {
+    if (error) throw error
+  }, [error])
+
+  useEffect(() => {
+    if (!fontsReady) return
+    applyDefaultFont()
+    void SplashScreen.hideAsync()
+    const timer = setTimeout(() => setSplashDone(true), SPLASH_HOLD_MS)
+    return () => clearTimeout(timer)
+  }, [fontsReady])
+
+  if (!fontsReady || !splashDone) {
+    return <LoadingScreen />
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
-  );
+    <GestureHandlerRootView className="flex-1 bg-canvas dark:bg-canvas-inverse">
+      <ThemeProvider value={navigationTheme(colorScheme)}>
+        <SettingsProvider>
+          <ToastProvider>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <Stack
+              screenOptions={{
+                headerShadowVisible: false,
+                contentStyle: {
+                  backgroundColor:
+                    colorScheme === 'dark' ? '#111111' : '#F5F5F5',
+                },
+                headerStyle: {
+                  backgroundColor:
+                    colorScheme === 'dark' ? '#111111' : '#F5F5F5',
+                },
+                headerTintColor: colorScheme === 'dark' ? '#FAFAFA' : '#171717',
+                headerTitleStyle: {
+                  fontFamily: fonts.semibold,
+                  fontWeight: '600',
+                },
+              }}
+            >
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="review"
+                options={{
+                  presentation: 'modal',
+                  headerShown: false,
+                  contentStyle: {
+                    backgroundColor:
+                      colorScheme === 'dark' ? '#111111' : '#F5F5F5',
+                  },
+                }}
+              />
+              <Stack.Screen
+                name="photo/[id]"
+                options={{
+                  headerShown: false,
+                  presentation: 'card',
+                  animation: 'fade',
+                }}
+              />
+            </Stack>
+          </ToastProvider>
+        </SettingsProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
+  )
 }
