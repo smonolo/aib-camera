@@ -23,6 +23,7 @@ export type TranslationKeys = {
     flashOn: string
     flashOff: string
     shutter: string
+    zoom: string
     acquiringGps: string
     captureFailed: string
     captureFailedBody: string
@@ -65,13 +66,12 @@ export type TranslationKeys = {
     address: string
     customText: string
     customPlaceholder: string
+    previewInfo: string
+    previewCustom: string
     dateFormat: string
     formatFull: string
     formatShort: string
     formatIso: string
-    position: string
-    positionTop: string
-    positionBottom: string
     fontSize: string
     sizeSmall: string
     sizeMedium: string

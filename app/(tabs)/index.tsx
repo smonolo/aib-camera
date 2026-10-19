@@ -1,10 +1,17 @@
 import { CameraView, type FlashMode } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import {
   ActivityIndicator,
-  InteractionManager,
+  Platform,
   Pressable,
   Text,
   View,
@@ -18,12 +25,19 @@ import { CameraHud } from '@/components/CameraHud'
 import { GlassSurface } from '@/components/GlassSurface'
 import { PermissionGate } from '@/components/PermissionGate'
 import { errorMessage, useToast } from '@/components/Toast'
+import { ZoomControls } from '@/components/ZoomControls'
+import {
+  buildIosZoomOptions,
+  defaultZoomOptions,
+  pickDefaultOption,
+  type ZoomOption,
+} from '@/lib/camera-zoom'
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { captureGeoSnapshot } from '@/lib/location'
 import { useStampSettings } from '@/lib/settings-context'
-import { buildStampLines } from '@/lib/stamp'
+import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
 
 export default function CameraScreen() {
   return (
@@ -42,6 +56,46 @@ function CameraExperience() {
   const [flash, setFlash] = useState<FlashMode>('off')
   const [capturing, setCapturing] = useState(false)
   const [cameraReady, setCameraReady] = useState(false)
+  const [availableLenses, setAvailableLenses] = useState<string[]>([])
+  const [selectedLens, setSelectedLens] = useState<string | undefined>()
+  const [zoom, setZoom] = useState(0)
+  const [selectedZoomKey, setSelectedZoomKey] = useState<string | null>(null)
+
+  const zoomOptions = useMemo(() => {
+    if (Platform.OS === 'ios') {
+      return buildIosZoomOptions(availableLenses)
+    }
+    return defaultZoomOptions()
+  }, [availableLenses])
+
+  const applyZoomOption = useCallback((option: ZoomOption) => {
+    setSelectedZoomKey(option.key)
+    if (option.lens) setSelectedLens(option.lens)
+    setZoom(option.zoom)
+  }, [])
+
+  useEffect(() => {
+    if (zoomOptions.length === 0) {
+      setSelectedZoomKey(null)
+      return
+    }
+
+    const stillValid = zoomOptions.some(
+      option => option.key === selectedZoomKey
+    )
+    if (stillValid) return
+
+    const fallback = pickDefaultOption(zoomOptions)
+    if (fallback) applyZoomOption(fallback)
+  }, [zoomOptions, selectedZoomKey, applyZoomOption])
+
+  const refreshLenses = useCallback(async () => {
+    if (Platform.OS !== 'ios' || !cameraRef.current) return
+    try {
+      const lenses = await cameraRef.current.getAvailableLensesAsync()
+      setAvailableLenses(lenses)
+    } catch {}
+  }, [])
 
   const openPhotos = useCallback(() => {
     void Haptics.selectionAsync()
@@ -91,15 +145,16 @@ function CameraExperience() {
         throw new Error(copy.camera.captureFailed)
       }
 
-      const lines = buildStampLines(snap, settings)
+      const infoLines = buildInfoStampLines(snap, settings)
+      const customLines = buildCustomStampLines(settings)
 
       await new Promise<void>(resolve => {
-        InteractionManager.runAfterInteractions(() => resolve())
+        requestIdleCallback(() => resolve(), { timeout: 500 })
       })
 
       const stampedUri = await compositeStampOntoPhoto(
         photo.uri,
-        lines,
+        { infoLines, customLines },
         settings
       )
 
@@ -125,7 +180,7 @@ function CameraExperience() {
     }
   }
 
-  const tabBarClearance = 44
+  const tabBarClearance = 14
   const bottomChrome = insets.bottom + tabBarClearance
   const flashOn = flash === 'on'
   const flashFg = flashOn ? '#171717' : '#FAFAFA'
@@ -138,8 +193,16 @@ function CameraExperience() {
           style={{ flex: 1 }}
           facing="back"
           flash={flash}
+          zoom={zoom}
           mode="picture"
-          onCameraReady={() => setCameraReady(true)}
+          selectedLens={Platform.OS === 'ios' ? selectedLens : undefined}
+          onCameraReady={() => {
+            setCameraReady(true)
+            void refreshLenses()
+          }}
+          onAvailableLensesChanged={({ lenses }) => {
+            setAvailableLenses(lenses)
+          }}
         />
 
         <View
@@ -185,9 +248,17 @@ function CameraExperience() {
         </View>
 
         <View
+          pointerEvents="box-none"
           className="absolute bottom-0 left-0 right-0 items-center"
           style={{ paddingBottom: bottomChrome + 4 }}
         >
+          <ZoomControls
+            options={zoomOptions}
+            selectedKey={selectedZoomKey}
+            onSelect={applyZoomOption}
+            accessibilityPrefix={copy.camera.zoom}
+          />
+
           <Pressable
             onPress={takePhoto}
             disabled={!cameraReady || capturing}

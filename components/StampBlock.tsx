@@ -1,17 +1,16 @@
 import { Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
-import { buildStampLines, stampFontPx } from '@/lib/stamp'
-import type { GeoSnapshot, StampSettings } from '@/lib/types'
+import { stampFontPx } from '@/lib/stamp'
+import type { StampSettings } from '@/lib/types'
 
 type Props = {
-  geo: GeoSnapshot
+  lines: string[]
   settings: StampSettings
   previewScale?: number
 }
 
-export function StampBlock({ geo, settings, previewScale = 1 }: Props) {
-  const lines = buildStampLines(geo, settings)
+export function StampBlock({ lines, settings, previewScale = 1 }: Props) {
   const fontSize = Math.round(stampFontPx(settings) * previewScale)
   const bgAlpha = Math.min(1, Math.max(0, settings.opacity))
 
@@ -46,6 +45,7 @@ export function StampBlock({ geo, settings, previewScale = 1 }: Props) {
               fontFamily: fonts.semibold,
               lineHeight: Math.round(fontSize * 1.25),
               marginBottom: index === lines.length - 1 ? 0 : 3,
+              flexShrink: 1,
               textShadowColor:
                 bgAlpha < 0.55 ? 'rgba(0,0,0,0.85)' : 'transparent',
               textShadowOffset: { width: 1, height: 1 },

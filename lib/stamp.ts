@@ -76,23 +76,94 @@ export function parseCustomLines(
     .slice(0, max)
 }
 
-function wrapByWords(text: string, maxChars: number): string[] {
+function breakLongToken(token: string, maxChars: number): string[] {
+  if (token.length <= maxChars) return [token]
+  const chunks: string[] = []
+  for (let i = 0; i < token.length; i += maxChars) {
+    chunks.push(token.slice(i, i + maxChars))
+  }
+  return chunks
+}
+
+export function wrapByWords(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
-  const words = text.split(/\s+/)
+  const words = text.split(/\s+/).filter(Boolean)
   const lines: string[] = []
   let current = ''
 
   for (const word of words) {
     const next = current ? `${current} ${word}` : word
-    if (next.length > maxChars && current) {
+    if (next.length <= maxChars) {
+      current = next
+      continue
+    }
+
+    if (current) {
       lines.push(current)
+      current = ''
+    }
+
+    if (word.length <= maxChars) {
+      current = word
+      continue
+    }
+
+    const chunks = breakLongToken(word, maxChars)
+    lines.push(...chunks.slice(0, -1))
+    current = chunks[chunks.length - 1] ?? ''
+  }
+
+  if (current) lines.push(current)
+  return lines.length > 0 ? lines : [text]
+}
+
+export function wrapTextToWidth(
+  text: string,
+  maxWidth: number,
+  measure: (value: string) => number
+): string[] {
+  if (maxWidth <= 0) return [text]
+  if (measure(text) <= maxWidth) return [text]
+
+  const words = text.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let current = ''
+
+  const pushOverflowWord = (word: string) => {
+    let chunk = ''
+    for (const char of word) {
+      const next = chunk + char
+      if (measure(next) <= maxWidth || chunk.length === 0) {
+        chunk = next
+      } else {
+        lines.push(chunk)
+        chunk = char
+      }
+    }
+    current = chunk
+  }
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word
+    if (measure(next) <= maxWidth) {
+      current = next
+      continue
+    }
+
+    if (current) {
+      lines.push(current)
+      current = ''
+    }
+
+    if (measure(word) <= maxWidth) {
       current = word
     } else {
-      current = next
+      pushOverflowWord(word)
     }
   }
+
   if (current) lines.push(current)
-  return lines
+  return lines.length > 0 ? lines : [text]
 }
 
 export function wrapAddress(
@@ -123,7 +194,7 @@ export function wrapAddress(
   return wrapByWords(trimmed, maxChars)
 }
 
-export function buildStampLines(
+export function buildInfoStampLines(
   geo: GeoSnapshot,
   settings: StampSettings
 ): string[] {
@@ -146,11 +217,15 @@ export function buildStampLines(
     lines.push(...wrapAddress(geo.address?.trim() || copy.stamp.noAddress))
   }
 
+  return lines
+}
+
+export function buildCustomStampLines(settings: StampSettings): string[] {
+  const lines: string[] = []
   for (const line of settings.customLines) {
     const trimmed = line.trim()
-    if (trimmed) lines.push(trimmed)
+    if (trimmed) lines.push(...wrapByWords(trimmed, ADDRESS_MAX_CHARS))
   }
-
   return lines
 }
 

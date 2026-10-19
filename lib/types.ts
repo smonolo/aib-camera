@@ -1,5 +1,3 @@
-export type StampPosition = 'top' | 'bottom'
-
 export type DateTimeFormat = 'it-full' | 'it-short' | 'iso'
 
 export type StampFontSize = 'small' | 'medium' | 'large'
@@ -15,7 +13,6 @@ export type StampSettings = {
   fontSize: StampFontSize
   textColor: string
   opacity: StampOpacityStep
-  position: StampPosition
 }
 
 export type CaptureRecord = {
@@ -39,9 +36,9 @@ export type GeoSnapshot = {
 }
 
 export const FONT_SIZE_PX: Record<StampFontSize, number> = {
-  small: 20,
-  medium: 28,
-  large: 36,
+  small: 16,
+  medium: 24,
+  large: 32,
 }
 
 export const DEFAULT_STAMP_SETTINGS: StampSettings = {
@@ -53,7 +50,6 @@ export const DEFAULT_STAMP_SETTINGS: StampSettings = {
   fontSize: 'medium',
   textColor: '#FFFFFF',
   opacity: 0.5,
-  position: 'bottom',
 }
 
 export function normalizeStampSettings(
@@ -62,13 +58,11 @@ export function normalizeStampSettings(
   const incoming = { ...(raw ?? {}) } as Partial<StampSettings> & {
     showAccuracy?: boolean
     corner?: string
+    position?: string
   }
   delete incoming.showAccuracy
-
-  if (incoming.position == null && typeof incoming.corner === 'string') {
-    incoming.position = incoming.corner.startsWith('top') ? 'top' : 'bottom'
-  }
   delete incoming.corner
+  delete incoming.position
 
   const base = { ...DEFAULT_STAMP_SETTINGS, ...incoming }
 
@@ -88,10 +82,6 @@ export function normalizeStampSettings(
           : best,
       0.75
     )
-  }
-
-  if (base.position !== 'top' && base.position !== 'bottom') {
-    base.position = 'bottom'
   }
 
   base.textColor = '#FFFFFF'

@@ -1,9 +1,21 @@
 import { Directory, File, Paths } from 'expo-file-system'
-import { FontWeight, ImageFormat, Skia } from '@shopify/react-native-skia'
+import {
+  FontWeight,
+  ImageFormat,
+  Skia,
+  type SkCanvas,
+  type SkFont,
+  type SkPaint,
+} from '@shopify/react-native-skia'
 
 import { t } from './i18n'
-import { stampFontPx } from './stamp'
-import type { StampPosition, StampSettings } from './types'
+import { stampFontPx, wrapTextToWidth } from './stamp'
+import type { StampSettings } from './types'
+
+export type StampBurnInContent = {
+  infoLines: string[]
+  customLines: string[]
+}
 
 function resolveFont(size: number) {
   const mgr = Skia.FontMgr.System()
@@ -18,19 +30,76 @@ function resolveFont(size: number) {
   return Skia.Font(typeface, size)
 }
 
-function stampOriginY(
-  position: StampPosition,
-  height: number,
-  blockHeight: number,
-  padding: number
-): number {
-  if (position === 'top') return padding
-  return height - padding - blockHeight
+function drawStampBox({
+  canvas,
+  font,
+  lines,
+  originX,
+  originY,
+  blockWidth,
+  boxPadX,
+  boxPadY,
+  fontSize,
+  lineGap,
+  scale,
+  bgAlpha,
+  textPaint,
+  shadowPaint,
+}: {
+  canvas: SkCanvas
+  font: SkFont
+  lines: string[]
+  originX: number
+  originY: number
+  blockWidth: number
+  boxPadX: number
+  boxPadY: number
+  fontSize: number
+  lineGap: number
+  scale: number
+  bgAlpha: number
+  textPaint: SkPaint
+  shadowPaint: SkPaint
+}): number {
+  if (lines.length === 0) return 0
+
+  const textMaxWidth = Math.max(1, blockWidth - boxPadX * 2)
+  const measure = (value: string) => font.measureText(value).width
+  const wrappedLines = lines.flatMap(line =>
+    wrapTextToWidth(line, textMaxWidth, measure)
+  )
+
+  const textHeight =
+    wrappedLines.length * fontSize +
+    Math.max(0, wrappedLines.length - 1) * lineGap
+  const blockHeight = textHeight + boxPadY * 2
+
+  if (bgAlpha > 0) {
+    const bgPaint = Skia.Paint()
+    bgPaint.setColor(Skia.Color(`rgba(0,0,0,${bgAlpha})`))
+    const rr = Skia.RRectXY(
+      Skia.XYWHRect(originX, originY, blockWidth, blockHeight),
+      Math.round(14 * scale),
+      Math.round(14 * scale)
+    )
+    canvas.drawRRect(rr, bgPaint)
+  }
+
+  wrappedLines.forEach((line, index) => {
+    const y = originY + boxPadY + fontSize + index * (fontSize + lineGap)
+    const x = originX + boxPadX
+    if (bgAlpha < 0.55) {
+      canvas.drawText(line, x + 1.5 * scale, y + 1.5 * scale, shadowPaint, font)
+    }
+    canvas.drawText(line, x, y, textPaint, font)
+  })
+
+  return blockHeight
 }
 
 export async function compositeStampOntoPhoto(
   photoUri: string,
-  lines: string[],
+  content: StampBurnInContent,
   settings: StampSettings
 ): Promise<string> {
   const data = await Skia.Data.fromURI(photoUri)
@@ -48,13 +117,8 @@ export async function compositeStampOntoPhoto(
   const boxPadX = Math.round(22 * scale)
   const boxPadY = Math.round(18 * scale)
   const font = resolveFont(fontSize)
-
-  const textHeight =
-    lines.length * fontSize + Math.max(0, lines.length - 1) * lineGap
   const blockWidth = width - edgePad * 2
-  const blockHeight = textHeight + boxPadY * 2
-  const originX = edgePad
-  const originY = stampOriginY(settings.position, height, blockHeight, edgePad)
+  const bgAlpha = Math.min(1, Math.max(0, settings.opacity))
 
   const surface = Skia.Surface.MakeOffscreen(width, height)
   if (!surface) {
@@ -64,32 +128,50 @@ export async function compositeStampOntoPhoto(
   const canvas = surface.getCanvas()
   canvas.drawImage(image, 0, 0)
 
-  const bgAlpha = Math.min(1, Math.max(0, settings.opacity))
-  if (bgAlpha > 0) {
-    const bgPaint = Skia.Paint()
-    bgPaint.setColor(Skia.Color(`rgba(0,0,0,${bgAlpha})`))
-    const rr = Skia.RRectXY(
-      Skia.XYWHRect(originX, originY, blockWidth, blockHeight),
-      Math.round(14 * scale),
-      Math.round(14 * scale)
-    )
-    canvas.drawRRect(rr, bgPaint)
-  }
-
   const textPaint = Skia.Paint()
   textPaint.setColor(Skia.Color('#FFFFFF'))
 
   const shadowPaint = Skia.Paint()
   shadowPaint.setColor(Skia.Color('rgba(0,0,0,0.85)'))
 
-  lines.forEach((line, index) => {
-    const y = originY + boxPadY + fontSize + index * (fontSize + lineGap)
-    const x = originX + boxPadX
-    if (bgAlpha < 0.55) {
-      canvas.drawText(line, x + 1.5 * scale, y + 1.5 * scale, shadowPaint, font)
-    }
-    canvas.drawText(line, x, y, textPaint, font)
+  const boxArgs = {
+    canvas,
+    font,
+    originX: edgePad,
+    blockWidth,
+    boxPadX,
+    boxPadY,
+    fontSize,
+    lineGap,
+    scale,
+    bgAlpha,
+    textPaint,
+    shadowPaint,
+  }
+
+  drawStampBox({
+    ...boxArgs,
+    lines: content.infoLines,
+    originY: edgePad,
   })
+
+  if (content.customLines.length > 0) {
+    const textMaxWidth = Math.max(1, blockWidth - boxPadX * 2)
+    const measure = (value: string) => font.measureText(value).width
+    const wrappedCustom = content.customLines.flatMap(line =>
+      wrapTextToWidth(line, textMaxWidth, measure)
+    )
+    const customTextHeight =
+      wrappedCustom.length * fontSize +
+      Math.max(0, wrappedCustom.length - 1) * lineGap
+    const customBlockHeight = customTextHeight + boxPadY * 2
+
+    drawStampBox({
+      ...boxArgs,
+      lines: content.customLines,
+      originY: height - edgePad - customBlockHeight,
+    })
+  }
 
   const snapshot = surface.makeImageSnapshot()
   const encoded = snapshot.encodeToBytes(ImageFormat.JPEG, 92)

@@ -14,7 +14,6 @@ import type {
   DateTimeFormat,
   StampFontSize,
   StampOpacityStep,
-  StampPosition,
 } from '@/lib/types'
 
 const SCREEN_PAD = 20
@@ -132,18 +131,6 @@ export default function SettingsScreen() {
               { value: 'it-full', label: copy.settings.formatFull },
               { value: 'it-short', label: copy.settings.formatShort },
               { value: 'iso', label: copy.settings.formatIso },
-            ]}
-          />
-        </View>
-
-        <FieldLabel color={colors.muted}>{copy.settings.position}</FieldLabel>
-        <View style={{ marginBottom: 20 }}>
-          <SegmentedControl<StampPosition>
-            value={settings.position}
-            onChange={value => bump('position', value)}
-            options={[
-              { value: 'top', label: copy.settings.positionTop },
-              { value: 'bottom', label: copy.settings.positionBottom },
             ]}
           />
         </View>
