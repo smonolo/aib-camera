@@ -94,6 +94,21 @@ export default function SettingsScreen() {
             value={settings.showAddress}
             onChange={value => bump('showAddress', value)}
           />
+          <ToggleRow
+            label={copy.settings.accuracy}
+            value={settings.showAccuracy}
+            onChange={value => bump('showAccuracy', value)}
+          />
+          <ToggleRow
+            label={copy.settings.altitude}
+            value={settings.showAltitude}
+            onChange={value => bump('showAltitude', value)}
+          />
+          <ToggleRow
+            label={copy.settings.heading}
+            value={settings.showHeading}
+            onChange={value => bump('showHeading', value)}
+          />
         </Group>
 
         <FieldLabel color={colors.muted}>{copy.settings.customText}</FieldLabel>

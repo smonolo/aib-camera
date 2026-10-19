@@ -50,6 +50,43 @@ export function formatShortCoordinates(lat: number, lon: number): string {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
 }
 
+export function formatAccuracy(meters: number): string {
+  const rounded =
+    meters < 10 ? Math.round(meters * 10) / 10 : Math.round(meters)
+  return `±${rounded} m`
+}
+
+export function formatAltitude(meters: number): string {
+  return `${Math.round(meters)} m s.l.m.`
+}
+
+const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
+
+export function formatHeading(degrees: number): string {
+  const normalized = ((degrees % 360) + 360) % 360
+  const index = Math.round(normalized / 45) % 8
+  return `${Math.round(normalized)}° ${CARDINALS[index]}`
+}
+
+export function buildMetaStampLine(
+  geo: GeoSnapshot,
+  settings: StampSettings
+): string | null {
+  const parts: string[] = []
+
+  if (settings.showAccuracy && geo.accuracy != null) {
+    parts.push(formatAccuracy(geo.accuracy))
+  }
+  if (settings.showAltitude && geo.altitude != null) {
+    parts.push(formatAltitude(geo.altitude))
+  }
+  if (settings.showHeading && geo.heading != null) {
+    parts.push(formatHeading(geo.heading))
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
 export function formatGalleryDateTime(iso: string): string {
   return new Date(iso).toLocaleString('it-IT', {
     timeZone: ROME_TZ,
@@ -213,6 +250,9 @@ export function buildInfoStampLines(
     }
   }
 
+  const meta = buildMetaStampLine(geo, settings)
+  if (meta) lines.push(meta)
+
   if (settings.showAddress) {
     lines.push(...wrapAddress(geo.address?.trim() || copy.stamp.noAddress))
   }
@@ -240,6 +280,12 @@ export function buildHudLines(geo: GeoSnapshot): string[] {
   } else {
     lines.push(copy.camera.acquiringGps)
   }
+
+  const metaParts: string[] = []
+  if (geo.accuracy != null) metaParts.push(formatAccuracy(geo.accuracy))
+  if (geo.altitude != null) metaParts.push(`${Math.round(geo.altitude)} m`)
+  if (geo.heading != null) metaParts.push(formatHeading(geo.heading))
+  if (metaParts.length > 0) lines.push(metaParts.join(' · '))
 
   if (geo.address?.trim()) {
     lines.push(...wrapAddress(geo.address, 28).slice(0, 2))

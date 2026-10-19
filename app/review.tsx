@@ -28,6 +28,8 @@ export default function ReviewScreen() {
     lat?: string
     lon?: string
     accuracy?: string
+    altitude?: string
+    heading?: string
     address?: string
   }>()
   const [busy, setBusy] = useState<'save' | 'share' | null>(null)
@@ -42,6 +44,8 @@ export default function ReviewScreen() {
       lat: params.lat ? Number(params.lat) : null,
       lon: params.lon ? Number(params.lon) : null,
       accuracy: params.accuracy ? Number(params.accuracy) : null,
+      altitude: params.altitude ? Number(params.altitude) : null,
+      heading: params.heading ? Number(params.heading) : null,
       address: params.address || null,
       customText: settings.customLines,
       stampConfigSnapshot: settings,
@@ -69,9 +73,19 @@ export default function ReviewScreen() {
     if (!uri) return
     setBusy('save')
     try {
+      // In-app gallery is the source of truth in emergencies; Photos album is best-effort.
       await persistLocal()
-      await persistPhotos()
-      showSuccess(copy.review.savedTitle, copy.review.savedBody)
+      let albumOk = true
+      try {
+        await persistPhotos()
+      } catch (photosError) {
+        albumOk = false
+        console.warn(photosError)
+      }
+      showSuccess(
+        copy.review.savedTitle,
+        albumOk ? copy.review.savedBody : copy.review.savedBodyLocalOnly
+      )
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       router.replace('/gallery')
     } catch (error) {

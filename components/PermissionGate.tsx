@@ -2,7 +2,7 @@ import { useCameraPermissions } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
 import * as Location from 'expo-location'
 import { useEffect, useState, type ReactNode } from 'react'
-import { ActivityIndicator, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
@@ -17,25 +17,39 @@ type Props = {
   children: ReactNode
 }
 
+type LocationState = 'unknown' | 'undetermined' | 'granted' | 'denied'
+
 export function PermissionGate({ children }: Props) {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
   const copy = t()
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
-  const [locationGranted, setLocationGranted] = useState<boolean | null>(null)
+  const [locationState, setLocationState] = useState<LocationState>('unknown')
   const [busy, setBusy] = useState(false)
+  const [skipLocation, setSkipLocation] = useState(false)
 
   useEffect(() => {
     void Location.getForegroundPermissionsAsync().then(result => {
-      setLocationGranted(result.granted)
+      if (result.granted) {
+        setLocationState('granted')
+        return
+      }
+      if (result.status === Location.PermissionStatus.UNDETERMINED) {
+        setLocationState('undetermined')
+        return
+      }
+      setLocationState('denied')
     })
   }, [])
 
   const cameraReady = Boolean(cameraPermission?.granted)
-  const locationReady = locationGranted === true
-  const checking = cameraPermission == null || locationGranted === null
+  const locationReady = locationState === 'granted'
+  const checking = cameraPermission == null || locationState === 'unknown'
 
-  if (cameraReady && locationReady) {
+  const canEnterCamera =
+    cameraReady && (locationReady || locationState === 'denied' || skipLocation)
+
+  if (canEnterCamera) {
     return <>{children}</>
   }
 
@@ -53,10 +67,24 @@ export function PermissionGate({ children }: Props) {
     try {
       if (!cameraReady) await requestCameraPermission()
       const loc = await ensureForegroundLocationPermission()
-      setLocationGranted(loc)
+      setLocationState(loc ? 'granted' : 'denied')
+      if (!loc) setSkipLocation(true)
     } finally {
       setBusy(false)
     }
+  }
+
+  const continueWithoutGps = async () => {
+    await Haptics.selectionAsync()
+    if (!cameraReady) {
+      setBusy(true)
+      try {
+        await requestCameraPermission()
+      } finally {
+        setBusy(false)
+      }
+    }
+    setSkipLocation(true)
   }
 
   return (
@@ -104,18 +132,55 @@ export function PermissionGate({ children }: Props) {
           iconSf="location"
           iconMaterial="my-location"
           ok={locationReady}
-          pending={locationGranted === null && !busy}
+          pending={locationState === 'undetermined'}
+          optional
         />
       </View>
 
+      <Text
+        style={{
+          fontFamily: fonts.regular,
+          fontSize: 13,
+          lineHeight: 18,
+          color: colors.muted,
+          marginTop: 14,
+        }}
+      >
+        {copy.permissions.locationOptionalHint}
+      </Text>
+
       <View style={{ flex: 1 }} />
 
-      <GlassButton
-        label={copy.permissions.continue}
-        onPress={requestAll}
-        loading={busy}
-        disabled={busy}
-      />
+      <View style={{ gap: 10 }}>
+        <GlassButton
+          label={copy.permissions.continue}
+          onPress={requestAll}
+          loading={busy}
+          disabled={busy}
+        />
+        {cameraReady ? (
+          <Pressable
+            onPress={continueWithoutGps}
+            disabled={busy}
+            accessibilityLabel={copy.permissions.continueWithoutLocation}
+            style={{
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: fonts.semibold,
+                fontSize: 15,
+                color: colors.muted,
+              }}
+            >
+              {copy.permissions.continueWithoutLocation}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -126,12 +191,14 @@ function StatusRow({
   iconMaterial,
   ok,
   pending,
+  optional,
 }: {
   label: string
   iconSf: 'camera' | 'location'
   iconMaterial: 'photo-camera' | 'my-location'
   ok: boolean
   pending?: boolean
+  optional?: boolean
 }) {
   const colors = useAppColors()
   const copy = t()
@@ -139,7 +206,9 @@ function StatusRow({
     ? copy.permissions.granted
     : pending
       ? copy.permissions.needed
-      : copy.permissions.denied
+      : optional
+        ? copy.permissions.optional
+        : copy.permissions.denied
 
   return (
     <View
@@ -153,7 +222,14 @@ function StatusRow({
         justifyContent: 'space-between',
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          flex: 1,
+        }}
+      >
         <AppIcon
           sf={iconSf === 'camera' ? 'camera' : 'location'}
           material={iconMaterial}
@@ -161,7 +237,12 @@ function StatusRow({
           color={colors.muted}
         />
         <Text
-          style={{ fontFamily: fonts.medium, fontSize: 15, color: colors.fg }}
+          style={{
+            fontFamily: fonts.medium,
+            fontSize: 15,
+            color: colors.fg,
+            flexShrink: 1,
+          }}
         >
           {label}
         </Text>
@@ -171,6 +252,7 @@ function StatusRow({
           fontFamily: fonts.semibold,
           fontSize: 13,
           color: colors.muted,
+          marginLeft: 8,
         }}
       >
         {value}

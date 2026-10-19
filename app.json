@@ -12,7 +12,7 @@
       "bundleIdentifier": "it.protezionecivile.aibcamera",
       "infoPlist": {
         "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione per attività di antincendio boschivo.",
-        "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate e indirizzo sulla foto.",
+        "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto.",
         "NSPhotoLibraryAddUsageDescription": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
         "NSPhotoLibraryUsageDescription": "AIB Camera può accedere alla libreria per gestire le foto salvate."
       }
@@ -63,7 +63,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "AIB Camera usa la tua posizione GPS per stampare coordinate e indirizzo sulla foto."
+          "locationWhenInUsePermission": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto."
         }
       ],
       [

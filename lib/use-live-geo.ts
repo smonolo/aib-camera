@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 
-import { captureGeoSnapshot, watchPosition } from './location'
+import { captureGeoSnapshot, watchHeading, watchPosition } from './location'
 import type { GeoSnapshot } from './types'
 
 const EMPTY_GEO: GeoSnapshot = {
   lat: null,
   lon: null,
   accuracy: null,
+  altitude: null,
+  heading: null,
   address: null,
   takenAt: new Date(),
 }
@@ -17,6 +19,7 @@ let sharedGeo: GeoSnapshot = EMPTY_GEO
 let listeners = new Set<Listener>()
 let refCount = 0
 let positionSub: { remove: () => void } | null = null
+let headingSub: { remove: () => void } | null = null
 let clock: ReturnType<typeof setInterval> | null = null
 let startGeneration = 0
 
@@ -32,7 +35,10 @@ function startShared() {
   let active = true
 
   void (async () => {
-    const snap = await captureGeoSnapshot()
+    const snap = await captureGeoSnapshot({
+      headingHint: sharedGeo.heading,
+      positionTimeoutMs: 5000,
+    })
     if (!active || generation !== startGeneration) return
     notify(snap)
 
@@ -42,6 +48,15 @@ function startShared() {
         ...sharedGeo,
         ...update,
         takenAt: new Date(),
+      })
+    })
+
+    headingSub = await watchHeading(heading => {
+      if (!active || generation !== startGeneration) return
+      notify({
+        ...sharedGeo,
+        heading,
+        takenAt: sharedGeo.takenAt,
       })
     })
   })()
@@ -60,10 +75,17 @@ function stopShared(cancelStart: () => void) {
   startGeneration += 1
   positionSub?.remove()
   positionSub = null
+  headingSub?.remove()
+  headingSub = null
   if (clock) {
     clearInterval(clock)
     clock = null
   }
+}
+
+/** Latest shared geo snapshot (for shutter capture without waiting on GPS). */
+export function getSharedGeoSnapshot(): GeoSnapshot {
+  return sharedGeo
 }
 
 export function useLiveGeoSnapshot(): GeoSnapshot {

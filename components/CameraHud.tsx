@@ -8,7 +8,7 @@ import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
 const HUD_WIDTH = 196
 const HUD_MIN_HEIGHT = 86
 const LINE_HEIGHT = 18
-const SLOT_COUNT = 4
+const SLOT_COUNT = 5
 
 export function CameraHud() {
   const geo = useLiveGeoSnapshot()

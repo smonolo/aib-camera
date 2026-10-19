@@ -16,6 +16,7 @@
     "expo-glass-effect": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",
+    "expo-keep-awake": "~57.0.2",
     "expo-linking": "~57.0.13",
     "expo-location": "~57.0.21",
     "expo-media-library": "~57.0.5",
@@ -52,7 +53,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "smoke-checklist": "node -e \"console.log(['Device smoke checklist — AIB Camera','1. Grant camera + location on a physical device','2. Confirm live stamp updates time/coords/address','3. Capture outdoors; verify stamp burned into JPEG','4. Confirm EXIF GPS present in Photos/Files metadata','5. Save → album AIB Camera appears','6. Share via system sheet (WhatsApp/Mail)','7. Toggle stamp settings and retake','8. Airplane mode: photo still saves; address fallback text','9. iOS 26+: Liquid Glass controls; older: blur fallback','10. Swipe left from camera opens gallery'].join('\\n'))\""
+    "smoke-checklist": "node -e \"console.log(['Device smoke checklist — AIB Camera','1. Grant camera; confirm Continue without GPS still opens camera','2. Confirm live HUD updates time/coords/accuracy/altitude/heading/place','3. Capture outdoors; verify stamp burned into JPEG (incl. meta line)','4. Confirm EXIF GPS present in Photos/Files metadata','5. Save → album AIB Camera appears','6. Share via system sheet (WhatsApp/Mail)','7. Toggle accuracy/altitude/heading/place and retake','8. Airplane mode: photo still saves; place from geocode cache if nearby cell was cached earlier','9. Rotate device: HUD heading degrees update','10. Deny Photos library: Save still keeps photo in-app gallery','11. Deny location: shutter still works; stamp shows unavailable geo lines','12. Shutter feels instant (no multi-second GPS wait)','13. iOS 26+: Liquid Glass controls; older: blur fallback','14. Swipe left from camera opens gallery'].join('\\n'))\""
   },
   "private": true,
   "allowScripts": {

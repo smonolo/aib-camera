@@ -1,5 +1,6 @@
 import { CameraView, type FlashMode } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
+import { useKeepAwake } from 'expo-keep-awake'
 import { router } from 'expo-router'
 import {
   useCallback,
@@ -38,6 +39,8 @@ import { t } from '@/lib/i18n'
 import { captureGeoSnapshot } from '@/lib/location'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
+import { getSharedGeoSnapshot } from '@/lib/use-live-geo'
+import type { GeoSnapshot } from '@/lib/types'
 
 export default function CameraScreen() {
   return (
@@ -48,6 +51,7 @@ export default function CameraScreen() {
 }
 
 function CameraExperience() {
+  useKeepAwake()
   const insets = useSafeAreaInsets()
   const cameraRef = useRef<CameraView>(null)
   const { settings } = useStampSettings()
@@ -126,7 +130,8 @@ function CameraExperience() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
     try {
-      const snap = await captureGeoSnapshot()
+      // Prefer live HUD geo so the shutter never waits on GPS/geocode.
+      const snap = await resolveCaptureGeo()
 
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
@@ -166,6 +171,8 @@ function CameraExperience() {
           lat: snap.lat != null ? String(snap.lat) : '',
           lon: snap.lon != null ? String(snap.lon) : '',
           accuracy: snap.accuracy != null ? String(snap.accuracy) : '',
+          altitude: snap.altitude != null ? String(snap.altitude) : '',
+          heading: snap.heading != null ? String(snap.heading) : '',
           address: snap.address ?? '',
         },
       })
@@ -291,6 +298,21 @@ function CameraExperience() {
       </View>
     </GestureDetector>
   )
+}
+
+/** Instant stamp geo: use live fix when available; otherwise a short GPS attempt. */
+async function resolveCaptureGeo(): Promise<GeoSnapshot> {
+  const live = getSharedGeoSnapshot()
+  const takenAt = new Date()
+
+  if (live.lat != null && live.lon != null) {
+    return { ...live, takenAt }
+  }
+
+  return captureGeoSnapshot({
+    headingHint: live.heading,
+    positionTimeoutMs: 1500,
+  })
 }
 
 function FlashChipShell({

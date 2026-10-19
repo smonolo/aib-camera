@@ -12,13 +12,17 @@ export const en: TranslationKeys = {
   },
   permissions: {
     title: 'AIB Camera',
-    body: 'Camera and GPS access are required to capture photos with date, time, coordinates, and address.',
+    body: 'Camera is required to shoot. GPS is recommended to stamp coordinates and place, but not required in an emergency.',
     camera: 'Camera',
     location: 'Location',
     granted: 'Allowed',
     needed: 'Required',
     denied: 'Denied',
+    optional: 'Optional',
+    locationOptionalHint:
+      'Without GPS you can still shoot: date/time and custom text stay on the stamp.',
     continue: 'Continue',
+    continueWithoutLocation: 'Continue without GPS',
   },
   camera: {
     flash: 'Flash',
@@ -32,7 +36,7 @@ export const en: TranslationKeys = {
   },
   stamp: {
     noCoordinates: 'Coordinates unavailable',
-    noAddress: 'Address unavailable',
+    noAddress: 'Place unavailable',
   },
   review: {
     title: 'Preview',
@@ -42,6 +46,8 @@ export const en: TranslationKeys = {
     share: 'Share',
     savedTitle: 'Photo saved',
     savedBody: 'Available in Photos and the AIB Camera album.',
+    savedBodyLocalOnly:
+      'Saved in the app. The Photos album is unavailable (check permissions).',
     saveFailed: 'Could not save',
     shareFailed: 'Could not share',
     retrySoon: 'Please try again shortly.',
@@ -65,7 +71,10 @@ export const en: TranslationKeys = {
     general: 'General',
     dateTime: 'Date and time',
     coordinates: 'Coordinates',
-    address: 'Address',
+    address: 'Place',
+    accuracy: 'GPS accuracy',
+    altitude: 'Altitude',
+    heading: 'Heading',
     customText: 'Custom text',
     customPlaceholder: 'e.g. Fire Department Milan · Shift A',
     previewInfo: 'Info preview (top)',
@@ -79,7 +88,8 @@ export const en: TranslationKeys = {
     sizeMedium: 'Medium',
     sizeLarge: 'Large',
     opacity: 'Opacity',
-    albumBody: 'Photos are saved to the “AIB Camera” album.',
+    albumBody:
+      'Photos always stay in the in-app gallery. When allowed, they are also saved to the “AIB Camera” album.',
   },
   media: {
     permissionDenied:

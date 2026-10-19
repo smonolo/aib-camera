@@ -16,7 +16,10 @@ export type TranslationKeys = {
     granted: string
     needed: string
     denied: string
+    optional: string
+    locationOptionalHint: string
     continue: string
+    continueWithoutLocation: string
   }
   camera: {
     flash: string
@@ -40,6 +43,7 @@ export type TranslationKeys = {
     share: string
     savedTitle: string
     savedBody: string
+    savedBodyLocalOnly: string
     saveFailed: string
     shareFailed: string
     retrySoon: string
@@ -64,6 +68,9 @@ export type TranslationKeys = {
     dateTime: string
     coordinates: string
     address: string
+    accuracy: string
+    altitude: string
+    heading: string
     customText: string
     customPlaceholder: string
     previewInfo: string

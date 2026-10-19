@@ -12,13 +12,17 @@ export const it: TranslationKeys = {
   },
   permissions: {
     title: 'AIB Camera',
-    body: 'Per scattare foto con data, ora, coordinate e indirizzo servono la fotocamera e la posizione GPS.',
+    body: 'Serve la fotocamera per scattare. La posizione GPS è consigliata per timbrare coordinate e luogo, ma non è obbligatoria in emergenza.',
     camera: 'Fotocamera',
     location: 'Posizione',
     granted: 'Consentito',
     needed: 'Da richiedere',
     denied: 'Negato',
+    optional: 'Opzionale',
+    locationOptionalHint:
+      'Senza GPS puoi comunque scattare: data/ora e testo personalizzato restano sul timbro.',
     continue: 'Continua',
+    continueWithoutLocation: 'Continua senza GPS',
   },
   camera: {
     flash: 'Flash',
@@ -32,7 +36,7 @@ export const it: TranslationKeys = {
   },
   stamp: {
     noCoordinates: 'Coordinate non disponibili',
-    noAddress: 'Indirizzo non disponibile',
+    noAddress: 'Luogo non disponibile',
   },
   review: {
     title: 'Anteprima',
@@ -42,6 +46,8 @@ export const it: TranslationKeys = {
     share: 'Condividi',
     savedTitle: 'Foto salvata',
     savedBody: 'Disponibile in Foto e nell’album AIB Camera.',
+    savedBodyLocalOnly:
+      'Salvata nell’app. L’album Foto non è disponibile (controlla i permessi).',
     saveFailed: 'Salvataggio non riuscito',
     shareFailed: 'Condivisione non riuscita',
     retrySoon: 'Riprova tra poco.',
@@ -65,7 +71,10 @@ export const it: TranslationKeys = {
     general: 'Generale',
     dateTime: 'Data e ora',
     coordinates: 'Coordinate',
-    address: 'Indirizzo',
+    address: 'Luogo',
+    accuracy: 'Precisione GPS',
+    altitude: 'Altitudine',
+    heading: 'Direzione',
     customText: 'Testo personalizzato',
     customPlaceholder: 'Es. Vigili del Fuoco Milano · Turno A',
     previewInfo: 'Anteprima info (in alto)',
@@ -79,7 +88,8 @@ export const it: TranslationKeys = {
     sizeMedium: 'Medio',
     sizeLarge: 'Grande',
     opacity: 'Opacità',
-    albumBody: 'Le foto vengono salvate nell’album «AIB Camera».',
+    albumBody:
+      'Le foto restano sempre nella galleria dell’app. Se consentito, vengono anche salvate nell’album «AIB Camera».',
   },
   media: {
     permissionDenied:

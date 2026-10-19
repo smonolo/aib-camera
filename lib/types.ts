@@ -8,6 +8,9 @@ export type StampSettings = {
   showDateTime: boolean
   showCoordinates: boolean
   showAddress: boolean
+  showAccuracy: boolean
+  showAltitude: boolean
+  showHeading: boolean
   customLines: string[]
   dateTimeFormat: DateTimeFormat
   fontSize: StampFontSize
@@ -22,6 +25,8 @@ export type CaptureRecord = {
   lat: number | null
   lon: number | null
   accuracy: number | null
+  altitude: number | null
+  heading: number | null
   address: string | null
   customText: string[]
   stampConfigSnapshot: StampSettings
@@ -31,6 +36,8 @@ export type GeoSnapshot = {
   lat: number | null
   lon: number | null
   accuracy: number | null
+  altitude: number | null
+  heading: number | null
   address: string | null
   takenAt: Date
 }
@@ -45,6 +52,9 @@ export const DEFAULT_STAMP_SETTINGS: StampSettings = {
   showDateTime: true,
   showCoordinates: true,
   showAddress: true,
+  showAccuracy: true,
+  showAltitude: true,
+  showHeading: true,
   customLines: ['AIB — Protezione Civile'],
   dateTimeFormat: 'it-full',
   fontSize: 'medium',
@@ -56,11 +66,9 @@ export function normalizeStampSettings(
   raw: Partial<StampSettings> | null | undefined
 ): StampSettings {
   const incoming = { ...(raw ?? {}) } as Partial<StampSettings> & {
-    showAccuracy?: boolean
     corner?: string
     position?: string
   }
-  delete incoming.showAccuracy
   delete incoming.corner
   delete incoming.position
 
