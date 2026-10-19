@@ -50,6 +50,32 @@ export function formatShortCoordinates(lat: number, lon: number): string {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
 }
 
+export function formatGalleryDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('it-IT', {
+    timeZone: ROME_TZ,
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function parseCustomLines(
+  text: string,
+  options?: { max?: number; dropEmpty?: boolean }
+): string[] {
+  const max = options?.max ?? 4
+  const lines = text.split('\n').map(line => line.trimEnd())
+
+  if (options?.dropEmpty) {
+    return lines.filter(Boolean).slice(0, max)
+  }
+
+  return lines
+    .filter((line, index, arr) => !(line === '' && index === arr.length - 1))
+    .slice(0, max)
+}
+
 function wrapByWords(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
   const words = text.split(/\s+/)
@@ -128,7 +154,6 @@ export function buildStampLines(
   return lines
 }
 
-/** Compact confirmation lines for the live camera HUD (not the burn-in layout). */
 export function buildHudLines(geo: GeoSnapshot): string[] {
   const copy = t()
   const lines: string[] = []
@@ -146,16 +171,6 @@ export function buildHudLines(geo: GeoSnapshot): string[] {
   }
 
   return lines
-}
-
-/** Full-width banner; only vertical edge varies. */
-export function stampPlacement(position: StampSettings['position']): {
-  top?: number
-  bottom?: number
-} {
-  const pad = 16
-  if (position === 'top') return { top: pad }
-  return { bottom: pad }
 }
 
 export function stampFontPx(settings: StampSettings): number {

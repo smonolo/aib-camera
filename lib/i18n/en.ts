@@ -84,6 +84,8 @@ export const en: TranslationKeys = {
   media: {
     permissionDenied:
       'Photo library permission denied. Enable it in device Settings.',
+    shareDialogTitle: 'Share AIB photo',
+    shareTitle: 'AIB Camera',
   },
   notFound: {
     title: 'Screen not found',

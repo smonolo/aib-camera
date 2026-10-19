@@ -1,4 +1,3 @@
-/** Vertical placement only — stamp is always left-aligned to content width. */
 export type StampPosition = 'top' | 'bottom'
 
 export type DateTimeFormat = 'it-full' | 'it-short' | 'iso'
@@ -66,7 +65,6 @@ export function normalizeStampSettings(
   }
   delete incoming.showAccuracy
 
-  // Migrate legacy 4-corner values → top | bottom
   if (incoming.position == null && typeof incoming.corner === 'string') {
     incoming.position = incoming.corner.startsWith('top') ? 'top' : 'bottom'
   }
@@ -74,7 +72,6 @@ export function normalizeStampSettings(
 
   const base = { ...DEFAULT_STAMP_SETTINGS, ...incoming }
 
-  // Migrate legacy numeric fontSize / opacity if present in storage
   const legacy = raw as
     { fontSize?: number | StampFontSize; opacity?: number } | undefined
   if (typeof legacy?.fontSize === 'number') {

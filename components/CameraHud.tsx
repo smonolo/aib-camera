@@ -3,19 +3,15 @@ import { Text, View } from 'react-native'
 import { GlassSurface } from '@/components/GlassSurface'
 import { fonts } from '@/lib/fonts'
 import { buildHudLines } from '@/lib/stamp'
-import type { GeoSnapshot } from '@/lib/types'
+import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
 
-type Props = {
-  geo: GeoSnapshot
-}
-
-/** Fixed-size confirmation panel — avoids layout jumps as the clock ticks. */
 const HUD_WIDTH = 196
 const HUD_MIN_HEIGHT = 86
 const LINE_HEIGHT = 18
 const SLOT_COUNT = 4
 
-export function CameraHud({ geo }: Props) {
+export function CameraHud() {
+  const geo = useLiveGeoSnapshot()
   const lines = buildHudLines(geo)
   const slots = Array.from(
     { length: SLOT_COUNT },

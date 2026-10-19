@@ -1,13 +1,6 @@
 import * as Haptics from 'expo-haptics'
 import { useEffect, useState, type ReactNode } from 'react'
-import {
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  useColorScheme,
-  View,
-} from 'react-native'
+import { ScrollView, Switch, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -15,6 +8,8 @@ import { StampPreview } from '@/components/StampPreview'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { useStampSettings } from '@/lib/settings-context'
+import { parseCustomLines } from '@/lib/stamp'
+import { useAppColors } from '@/lib/theme'
 import type {
   DateTimeFormat,
   StampFontSize,
@@ -26,11 +21,7 @@ const SCREEN_PAD = 20
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
-  const scheme = useColorScheme()
-  const fg = scheme === 'dark' ? '#FAFAFA' : '#171717'
-  const muted = scheme === 'dark' ? '#A3A3A3' : '#525252'
-  const surface = scheme === 'dark' ? '#1A1A1A' : '#FFFFFF'
-  const border = scheme === 'dark' ? '#2A2A2A' : '#E5E5E5'
+  const colors = useAppColors()
   const copy = t()
   const { settings, updateSettings, ready } = useStampSettings()
   const [customDraft, setCustomDraft] = useState(
@@ -51,11 +42,7 @@ export default function SettingsScreen() {
 
   const syncCustom = async (value: string) => {
     setCustomDraft(value)
-    const lines = value
-      .split('\n')
-      .map(line => line.trimEnd())
-      .filter((line, index, arr) => !(line === '' && index === arr.length - 1))
-    await updateSettings({ customLines: lines.slice(0, 4) })
+    await updateSettings({ customLines: parseCustomLines(value) })
   }
 
   return (
@@ -68,7 +55,7 @@ export default function SettingsScreen() {
           style={{
             fontFamily: fonts.bold,
             fontSize: 28,
-            color: fg,
+            color: colors.fg,
             letterSpacing: -0.4,
           }}
         >
@@ -87,66 +74,56 @@ export default function SettingsScreen() {
         <StampPreview
           settings={{
             ...settings,
-            customLines: customDraft
-              .split('\n')
-              .map(line => line.trimEnd())
-              .filter(Boolean)
-              .slice(0, 4),
+            customLines: parseCustomLines(customDraft, { dropEmpty: true }),
           }}
         />
 
-        <FieldLabel color={muted}>{copy.settings.general}</FieldLabel>
+        <FieldLabel color={colors.muted}>{copy.settings.general}</FieldLabel>
         <Group>
           <ToggleRow
             label={copy.settings.dateTime}
             value={settings.showDateTime}
             onChange={value => bump('showDateTime', value)}
-            fg={fg}
-            surface={surface}
           />
           <ToggleRow
             label={copy.settings.coordinates}
             value={settings.showCoordinates}
             onChange={value => bump('showCoordinates', value)}
-            fg={fg}
-            surface={surface}
           />
           <ToggleRow
             label={copy.settings.address}
             value={settings.showAddress}
             onChange={value => bump('showAddress', value)}
-            fg={fg}
-            surface={surface}
           />
         </Group>
 
-        <FieldLabel color={muted}>{copy.settings.customText}</FieldLabel>
+        <FieldLabel color={colors.muted}>{copy.settings.customText}</FieldLabel>
         <TextInput
           value={customDraft}
           onChangeText={value => void syncCustom(value)}
           multiline
           placeholder={copy.settings.customPlaceholder}
-          placeholderTextColor={scheme === 'dark' ? '#737373' : '#A3A3A3'}
+          placeholderTextColor={colors.placeholder}
           textAlignVertical="top"
-          selectionColor={scheme === 'dark' ? '#A3A3A3' : '#525252'}
-          cursorColor={fg}
+          selectionColor={colors.selection}
+          cursorColor={colors.fg}
           underlineColorAndroid="transparent"
           style={{
             minHeight: 100,
             borderRadius: 14,
             borderWidth: 1,
-            borderColor: border,
-            backgroundColor: surface,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
             paddingHorizontal: 14,
             paddingVertical: 12,
             fontFamily: fonts.regular,
             fontSize: 15,
-            color: fg,
+            color: colors.fg,
             marginBottom: 20,
           }}
         />
 
-        <FieldLabel color={muted}>{copy.settings.dateFormat}</FieldLabel>
+        <FieldLabel color={colors.muted}>{copy.settings.dateFormat}</FieldLabel>
         <View style={{ marginBottom: 20 }}>
           <SegmentedControl<DateTimeFormat>
             value={settings.dateTimeFormat}
@@ -159,7 +136,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <FieldLabel color={muted}>{copy.settings.position}</FieldLabel>
+        <FieldLabel color={colors.muted}>{copy.settings.position}</FieldLabel>
         <View style={{ marginBottom: 20 }}>
           <SegmentedControl<StampPosition>
             value={settings.position}
@@ -171,7 +148,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <FieldLabel color={muted}>{copy.settings.fontSize}</FieldLabel>
+        <FieldLabel color={colors.muted}>{copy.settings.fontSize}</FieldLabel>
         <View style={{ marginBottom: 20 }}>
           <SegmentedControl<StampFontSize>
             value={settings.fontSize}
@@ -184,7 +161,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <FieldLabel color={muted}>{copy.settings.opacity}</FieldLabel>
+        <FieldLabel color={colors.muted}>{copy.settings.opacity}</FieldLabel>
         <View style={{ marginBottom: 28 }}>
           <SegmentedControl<StampOpacityStep>
             value={settings.opacity}
@@ -204,7 +181,7 @@ export default function SettingsScreen() {
             fontFamily: fonts.regular,
             fontSize: 14,
             lineHeight: 20,
-            color: muted,
+            color: colors.muted,
           }}
         >
           {copy.settings.albumBody}
@@ -232,21 +209,19 @@ function ToggleRow({
   label,
   value,
   onChange,
-  fg,
-  surface,
 }: {
   label: string
   value: boolean
   onChange: (value: boolean) => void
-  fg: string
-  surface: string
 }) {
+  const colors = useAppColors()
+
   return (
     <View
       style={{
         height: 52,
         borderRadius: 14,
-        backgroundColor: surface,
+        backgroundColor: colors.surface,
         paddingHorizontal: 14,
         flexDirection: 'row',
         alignItems: 'center',
@@ -258,7 +233,7 @@ function ToggleRow({
           flex: 1,
           fontFamily: fonts.regular,
           fontSize: 15,
-          color: fg,
+          color: colors.fg,
           marginRight: 12,
         }}
         numberOfLines={1}
@@ -269,9 +244,12 @@ function ToggleRow({
         <Switch
           value={value}
           onValueChange={onChange}
-          trackColor={{ false: '#D4D4D4', true: '#404040' }}
+          trackColor={{
+            false: colors.borderStrong,
+            true: colors.trackActive,
+          }}
           thumbColor="#FFFFFF"
-          ios_backgroundColor="#D4D4D4"
+          ios_backgroundColor={colors.borderStrong}
           style={{ transform: [{ scaleX: 0.92 }, { scaleY: 0.92 }] }}
         />
       </View>

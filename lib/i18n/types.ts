@@ -81,6 +81,8 @@ export type TranslationKeys = {
   }
   media: {
     permissionDenied: string
+    shareDialogTitle: string
+    shareTitle: string
   }
   notFound: {
     title: string

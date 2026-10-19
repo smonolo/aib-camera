@@ -2,24 +2,17 @@ import * as Haptics from 'expo-haptics'
 import { Image } from 'expo-image'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useCallback, useState } from 'react'
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native'
+import { ActivityIndicator, Alert, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AppIcon } from '@/components/AppIcon'
-import { GlassSurface } from '@/components/GlassSurface'
+import { GlassButton } from '@/components/GlassButton'
 import { IconButton } from '@/components/IconButton'
 import { errorMessage, useToast } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { sharePhoto } from '@/lib/media'
 import { getCapture, removeCapture } from '@/lib/storage'
+import { useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
 const SCREEN_PAD = 16
@@ -27,10 +20,7 @@ const SCREEN_PAD = 16
 export default function PhotoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
-  const scheme = useColorScheme()
-  const fg = scheme === 'dark' ? '#FAFAFA' : '#171717'
-  const muted = scheme === 'dark' ? '#A3A3A3' : '#525252'
-  const canvas = scheme === 'dark' ? '#111111' : '#F5F5F5'
+  const colors = useAppColors()
   const copy = t()
   const { showError, showSuccess } = useToast()
   const [photo, setPhoto] = useState<CaptureRecord | null | undefined>(
@@ -94,9 +84,9 @@ export default function PhotoDetailScreen() {
     return (
       <View
         className="flex-1 items-center justify-center"
-        style={{ backgroundColor: canvas }}
+        style={{ backgroundColor: colors.canvas }}
       >
-        <ActivityIndicator color={fg} />
+        <ActivityIndicator color={colors.fg} />
       </View>
     )
   }
@@ -104,7 +94,7 @@ export default function PhotoDetailScreen() {
   if (!photo) {
     return (
       <View className="flex-1 items-center justify-center bg-canvas dark:bg-canvas-inverse">
-        <Text style={{ fontFamily: fonts.regular, color: muted }}>
+        <Text style={{ fontFamily: fonts.regular, color: colors.muted }}>
           {copy.review.empty}
         </Text>
       </View>
@@ -150,7 +140,7 @@ export default function PhotoDetailScreen() {
             flex: 1,
             borderRadius: 16,
             overflow: 'hidden',
-            backgroundColor: scheme === 'dark' ? '#1A1A1A' : '#FFFFFF',
+            backgroundColor: colors.surface,
           }}
         >
           <Image
@@ -167,33 +157,12 @@ export default function PhotoDetailScreen() {
           paddingBottom: insets.bottom + 16,
         }}
       >
-        <View style={{ borderRadius: 16, overflow: 'hidden' }}>
-          <GlassSurface interactive style={{ borderRadius: 16 }}>
-            <Pressable
-              onPress={() => void onShare()}
-              accessibilityLabel={copy.photos.share}
-              style={{
-                minHeight: 52,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
-            >
-              <AppIcon
-                sf="square.and.arrow.up"
-                material="ios-share"
-                size={18}
-                color={fg}
-              />
-              <Text
-                style={{ fontFamily: fonts.semibold, fontSize: 16, color: fg }}
-              >
-                {copy.photos.share}
-              </Text>
-            </Pressable>
-          </GlassSurface>
-        </View>
+        <GlassButton
+          label={copy.photos.share}
+          sf="square.and.arrow.up"
+          material="ios-share"
+          onPress={() => void onShare()}
+        />
       </View>
     </View>
   )

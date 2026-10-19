@@ -85,7 +85,6 @@ export async function compositeStampOntoPhoto(
   lines.forEach((line, index) => {
     const y = originY + boxPadY + fontSize + index * (fontSize + lineGap)
     const x = originX + boxPadX
-    // Shadow helps readability when the background is light/transparent
     if (bgAlpha < 0.55) {
       canvas.drawText(line, x + 1.5 * scale, y + 1.5 * scale, shadowPaint, font)
     }

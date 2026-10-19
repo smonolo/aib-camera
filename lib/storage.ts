@@ -10,6 +10,14 @@ import {
 const SETTINGS_KEY = 'aib-camera.settings.v1'
 const CAPTURES_KEY = 'aib-camera.captures.v1'
 
+let capturesCache: CaptureRecord[] | null = null
+
+function sortByTakenAtDesc(captures: CaptureRecord[]): CaptureRecord[] {
+  return [...captures].sort(
+    (a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
+  )
+}
+
 export async function loadStampSettings(): Promise<StampSettings> {
   try {
     const raw = await AsyncStorage.getItem(SETTINGS_KEY)
@@ -30,21 +38,26 @@ export async function saveStampSettings(
 }
 
 export async function loadCaptures(): Promise<CaptureRecord[]> {
+  if (capturesCache) return capturesCache
+
   try {
     const raw = await AsyncStorage.getItem(CAPTURES_KEY)
-    if (!raw) return []
+    if (!raw) {
+      capturesCache = []
+      return capturesCache
+    }
     const parsed = JSON.parse(raw) as CaptureRecord[]
-    if (!Array.isArray(parsed)) return []
-    return [...parsed].sort(
-      (a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
-    )
+    capturesCache = Array.isArray(parsed) ? sortByTakenAtDesc(parsed) : []
+    return capturesCache
   } catch {
-    return []
+    capturesCache = []
+    return capturesCache
   }
 }
 
 export async function saveCaptures(captures: CaptureRecord[]): Promise<void> {
-  await AsyncStorage.setItem(CAPTURES_KEY, JSON.stringify(captures))
+  capturesCache = sortByTakenAtDesc(captures)
+  await AsyncStorage.setItem(CAPTURES_KEY, JSON.stringify(capturesCache))
 }
 
 export async function addCapture(

@@ -20,7 +20,7 @@ import { AppMark } from '@/components/AppMark'
 import { ToastProvider } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { SettingsProvider } from '@/lib/settings-context'
-import { navigationTheme } from '@/lib/theme'
+import { navigationTheme, useAppColors } from '@/lib/theme'
 
 export { ErrorBoundary } from 'expo-router'
 
@@ -47,14 +47,14 @@ function applyDefaultFont() {
 }
 
 function LoadingScreen() {
-  const scheme = useColorScheme()
+  const colors = useAppColors()
   return (
     <View
       style={{
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: scheme === 'dark' ? '#111111' : '#F5F5F5',
+        backgroundColor: colors.canvas,
       }}
     >
       <AppMark size="medium" />
@@ -64,6 +64,7 @@ function LoadingScreen() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
+  const colors = useAppColors()
   const [fontsReady, error] = useFonts({
     Geist_400Regular,
     Geist_500Medium,
@@ -97,15 +98,9 @@ export default function RootLayout() {
             <Stack
               screenOptions={{
                 headerShadowVisible: false,
-                contentStyle: {
-                  backgroundColor:
-                    colorScheme === 'dark' ? '#111111' : '#F5F5F5',
-                },
-                headerStyle: {
-                  backgroundColor:
-                    colorScheme === 'dark' ? '#111111' : '#F5F5F5',
-                },
-                headerTintColor: colorScheme === 'dark' ? '#FAFAFA' : '#171717',
+                contentStyle: { backgroundColor: colors.canvas },
+                headerStyle: { backgroundColor: colors.canvas },
+                headerTintColor: colors.fg,
                 headerTitleStyle: {
                   fontFamily: fonts.semibold,
                   fontWeight: '600',
@@ -118,10 +113,7 @@ export default function RootLayout() {
                 options={{
                   presentation: 'modal',
                   headerShown: false,
-                  contentStyle: {
-                    backgroundColor:
-                      colorScheme === 'dark' ? '#111111' : '#F5F5F5',
-                  },
+                  contentStyle: { backgroundColor: colors.canvas },
                 }}
               />
               <Stack.Screen

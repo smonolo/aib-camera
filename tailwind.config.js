@@ -10,7 +10,6 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Gray-only palette (black / white / gray)
         canvas: {
           DEFAULT: '#F5F5F5',
           elevated: '#FFFFFF',

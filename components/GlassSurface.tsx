@@ -20,7 +20,6 @@ type Props = {
   interactive?: boolean
   className?: string
   forceDark?: boolean
-  /** Clip children to border radius (use for buttons; avoid on large glass panels). */
   clipped?: boolean
 }
 
@@ -78,8 +77,6 @@ export function GlassSurface({
     isGlassEffectAPIAvailable()
 
   if (canUseGlass) {
-    // Never put overflow:hidden on GlassView — it cuts the liquid glass rim.
-    // For buttons, wrap content in an inner rounded view instead.
     return (
       <GlassView
         className={className}
@@ -93,7 +90,6 @@ export function GlassSurface({
     )
   }
 
-  // Android (and older iOS): solid gray surfaces — cleaner than blur mush.
   if (Platform.OS === 'android' || Platform.OS === 'web') {
     return (
       <View

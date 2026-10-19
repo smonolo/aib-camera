@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { Pressable, Text, useColorScheme, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   FadeInUp,
@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
 import { fonts } from '@/lib/fonts'
+import { useAppColors, useIsDark } from '@/lib/theme'
 
 type ToastTone = 'error' | 'success' | 'info'
 
@@ -50,8 +51,8 @@ const SWIPE_THRESHOLD = -36
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets()
-  const scheme = useColorScheme()
-  const isDark = scheme === 'dark'
+  const colors = useAppColors()
+  const isDark = useIsDark()
   const [toast, setToast] = useState<ToastPayload | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const seq = useRef(0)
@@ -150,10 +151,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     opacity: opacity.value,
   }))
 
-  const surface = isDark ? '#1A1A1A' : '#FFFFFF'
-  const border = isDark ? '#2A2A2A' : '#E5E5E5'
-  const titleColor = isDark ? '#FAFAFA' : '#171717'
-  const bodyColor = isDark ? '#A3A3A3' : '#525252'
   const iconColor =
     toast?.tone === 'error'
       ? isDark
@@ -165,7 +162,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           : '#15803D'
         : isDark
           ? '#D4D4D4'
-          : '#404040'
+          : colors.trackActive
 
   return (
     <ToastContext.Provider value={value}>
@@ -190,9 +187,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   <View
                     style={{
                       borderRadius: 16,
-                      backgroundColor: surface,
+                      backgroundColor: colors.surface,
                       borderWidth: 1,
-                      borderColor: border,
+                      borderColor: colors.border,
                       shadowColor: '#000',
                       shadowOpacity: isDark ? 0.45 : 0.12,
                       shadowRadius: 16,
@@ -232,7 +229,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                           style={{
                             fontFamily: fonts.semibold,
                             fontSize: 15,
-                            color: titleColor,
+                            color: colors.fg,
                           }}
                         >
                           {toast.title}
@@ -243,7 +240,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                               fontFamily: fonts.regular,
                               fontSize: 13,
                               lineHeight: 20,
-                              color: bodyColor,
+                              color: colors.muted,
                               marginTop: 2,
                             }}
                           >

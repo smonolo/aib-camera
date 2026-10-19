@@ -1,7 +1,8 @@
 import * as Haptics from 'expo-haptics'
-import { Pressable, Text, useColorScheme, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
+import { useAppColors } from '@/lib/theme'
 
 type Option<T extends string | number> = {
   value: T
@@ -19,17 +20,13 @@ export function SegmentedControl<T extends string | number>({
   value,
   onChange,
 }: Props<T>) {
-  const scheme = useColorScheme()
-  const track = scheme === 'dark' ? '#262626' : '#E5E5E5'
-  const activeBg = scheme === 'dark' ? '#FAFAFA' : '#171717'
-  const activeFg = scheme === 'dark' ? '#171717' : '#FAFAFA'
-  const idleFg = scheme === 'dark' ? '#D4D4D4' : '#525252'
+  const colors = useAppColors()
 
   return (
     <View
       style={{
         flexDirection: 'row',
-        backgroundColor: track,
+        backgroundColor: colors.track,
         borderRadius: 12,
         padding: 3,
         gap: 2,
@@ -50,7 +47,7 @@ export function SegmentedControl<T extends string | number>({
               borderRadius: 10,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: active ? activeBg : 'transparent',
+              backgroundColor: active ? colors.fg : 'transparent',
               paddingHorizontal: 6,
             }}
           >
@@ -58,7 +55,7 @@ export function SegmentedControl<T extends string | number>({
               style={{
                 fontFamily: fonts.medium,
                 fontSize: 13,
-                color: active ? activeFg : idleFg,
+                color: active ? colors.fgInverse : colors.trackIdle,
               }}
               numberOfLines={1}
             >

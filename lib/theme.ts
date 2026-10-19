@@ -3,19 +3,70 @@ import {
   DefaultTheme,
   type Theme,
 } from 'expo-router/react-navigation'
+import { useColorScheme } from 'react-native'
 
 import { fonts } from './fonts'
+
+export const palette = {
+  light: {
+    canvas: '#F5F5F5',
+    surface: '#FFFFFF',
+    surfaceMuted: '#E5E5E5',
+    fg: '#171717',
+    fgInverse: '#FAFAFA',
+    muted: '#525252',
+    mutedSoft: '#A3A3A3',
+    border: '#E5E5E5',
+    borderStrong: '#D4D4D4',
+    track: '#E5E5E5',
+    trackActive: '#404040',
+    trackIdle: '#525252',
+    placeholder: '#A3A3A3',
+    selection: '#525252',
+    grabber: '#D4D4D4',
+  },
+  dark: {
+    canvas: '#111111',
+    surface: '#1A1A1A',
+    surfaceMuted: '#262626',
+    fg: '#FAFAFA',
+    fgInverse: '#171717',
+    muted: '#A3A3A3',
+    mutedSoft: '#737373',
+    border: '#2A2A2A',
+    borderStrong: '#525252',
+    track: '#262626',
+    trackActive: '#404040',
+    trackIdle: '#D4D4D4',
+    placeholder: '#737373',
+    selection: '#A3A3A3',
+    grabber: '#525252',
+  },
+} as const
+
+export type AppColors = {
+  [K in keyof (typeof palette)['light']]: string
+}
+
+export function useAppColors(): AppColors {
+  const scheme = useColorScheme()
+  return scheme === 'dark' ? palette.dark : palette.light
+}
+
+export function useIsDark(): boolean {
+  return useColorScheme() === 'dark'
+}
 
 export const lightTheme: Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#404040',
-    background: '#F5F5F5',
-    card: '#FFFFFF',
-    text: '#171717',
-    border: '#E5E5E5',
-    notification: '#525252',
+    primary: palette.light.trackActive,
+    background: palette.light.canvas,
+    card: palette.light.surface,
+    text: palette.light.fg,
+    border: palette.light.border,
+    notification: palette.light.muted,
   },
   fonts: {
     ...DefaultTheme.fonts,
@@ -31,11 +82,11 @@ export const darkTheme: Theme = {
   colors: {
     ...DarkTheme.colors,
     primary: '#D4D4D4',
-    background: '#111111',
-    card: '#1A1A1A',
-    text: '#FAFAFA',
-    border: '#2A2A2A',
-    notification: '#A3A3A3',
+    background: palette.dark.canvas,
+    card: palette.dark.surface,
+    text: palette.dark.fg,
+    border: palette.dark.border,
+    notification: palette.dark.muted,
   },
   fonts: {
     ...DarkTheme.fonts,

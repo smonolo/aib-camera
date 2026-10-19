@@ -36,16 +36,20 @@ export async function saveToAibAlbum(uri: string): Promise<void> {
 }
 
 export async function sharePhoto(uri: string): Promise<void> {
+  const copy = t()
+
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, {
       mimeType: 'image/jpeg',
-      dialogTitle: 'Condividi foto AIB',
+      dialogTitle: copy.media.shareDialogTitle,
       UTI: 'public.jpeg',
     })
     return
   }
 
   await Share.share(
-    Platform.OS === 'ios' ? { url: uri } : { message: uri, title: 'AIB Camera' }
+    Platform.OS === 'ios'
+      ? { url: uri }
+      : { message: uri, title: copy.media.shareTitle }
   )
 }

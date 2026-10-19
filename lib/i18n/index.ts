@@ -5,7 +5,6 @@ import type { TranslationKeys } from './types'
 export type AppLocale = 'it' | 'en'
 export type { TranslationKeys }
 
-/** Italian is the only active language for now. */
 export const DEFAULT_LOCALE: AppLocale = 'it'
 
 const catalogs: Record<AppLocale, TranslationKeys> = {

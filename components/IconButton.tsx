@@ -1,8 +1,9 @@
 import type { ComponentProps } from 'react'
-import { Pressable, useColorScheme, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { AppIcon } from '@/components/AppIcon'
 import { GlassSurface } from '@/components/GlassSurface'
+import { useAppColors } from '@/lib/theme'
 
 type Props = {
   sf: ComponentProps<typeof AppIcon>['sf']
@@ -21,8 +22,8 @@ export function IconButton({
   forceDark = false,
   size = 20,
 }: Props) {
-  const scheme = useColorScheme()
-  const color = forceDark || scheme === 'dark' ? '#FAFAFA' : '#171717'
+  const colors = useAppColors()
+  const color = forceDark ? '#FAFAFA' : colors.fg
 
   return (
     <View style={{ borderRadius: 999, overflow: 'hidden' }}>

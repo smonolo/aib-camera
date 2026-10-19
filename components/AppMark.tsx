@@ -1,8 +1,9 @@
 import { Image } from 'expo-image'
-import { Text, useColorScheme, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
+import { useAppColors } from '@/lib/theme'
 
 type Props = {
   size?: 'medium' | 'large'
@@ -10,8 +11,7 @@ type Props = {
 }
 
 export function AppMark({ size = 'medium', showTitle = true }: Props) {
-  const scheme = useColorScheme()
-  const fg = scheme === 'dark' ? '#FAFAFA' : '#171717'
+  const colors = useAppColors()
   const icon = size === 'large' ? 88 : 72
 
   return (
@@ -28,7 +28,7 @@ export function AppMark({ size = 'medium', showTitle = true }: Props) {
             fontFamily: fonts.semibold,
             fontSize: size === 'large' ? 28 : 22,
             letterSpacing: -0.4,
-            color: fg,
+            color: colors.fg,
           }}
         >
           {t().splash.title}

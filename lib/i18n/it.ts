@@ -84,6 +84,8 @@ export const it: TranslationKeys = {
   media: {
     permissionDenied:
       'Permesso alla libreria foto negato. Abilitalo nelle Impostazioni del dispositivo.',
+    shareDialogTitle: 'Condividi foto AIB',
+    shareTitle: 'AIB Camera',
   },
   notFound: {
     title: 'Schermata non trovata',

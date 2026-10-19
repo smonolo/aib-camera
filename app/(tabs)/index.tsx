@@ -1,8 +1,14 @@
 import { CameraView, type FlashMode } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
-import { router, useFocusEffect } from 'expo-router'
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { router } from 'expo-router'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  ActivityIndicator,
+  InteractionManager,
+  Pressable,
+  Text,
+  View,
+} from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { runOnJS } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,10 +21,9 @@ import { errorMessage, useToast } from '@/components/Toast'
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
-import { captureGeoSnapshot, watchPosition } from '@/lib/location'
+import { captureGeoSnapshot } from '@/lib/location'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildStampLines } from '@/lib/stamp'
-import type { GeoSnapshot } from '@/lib/types'
 
 export default function CameraScreen() {
   return (
@@ -37,44 +42,6 @@ function CameraExperience() {
   const [flash, setFlash] = useState<FlashMode>('off')
   const [capturing, setCapturing] = useState(false)
   const [cameraReady, setCameraReady] = useState(false)
-  const [geo, setGeo] = useState<GeoSnapshot>({
-    lat: null,
-    lon: null,
-    accuracy: null,
-    address: null,
-    takenAt: new Date(),
-  })
-
-  useFocusEffect(
-    useCallback(() => {
-      let sub: { remove: () => void } | null = null
-      let active = true
-
-      void (async () => {
-        const snap = await captureGeoSnapshot()
-        if (active) setGeo(snap)
-
-        sub = await watchPosition(update => {
-          if (!active) return
-          setGeo(prev => ({
-            ...prev,
-            ...update,
-            takenAt: new Date(),
-          }))
-        })
-      })()
-
-      const clock = setInterval(() => {
-        setGeo(prev => ({ ...prev, takenAt: new Date() }))
-      }, 1000)
-
-      return () => {
-        active = false
-        sub?.remove()
-        clearInterval(clock)
-      }
-    }, [])
-  )
 
   const openPhotos = useCallback(() => {
     void Haptics.selectionAsync()
@@ -106,7 +73,6 @@ function CameraExperience() {
 
     try {
       const snap = await captureGeoSnapshot()
-      setGeo(snap)
 
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
@@ -126,6 +92,11 @@ function CameraExperience() {
       }
 
       const lines = buildStampLines(snap, settings)
+
+      await new Promise<void>(resolve => {
+        InteractionManager.runAfterInteractions(() => resolve())
+      })
+
       const stampedUri = await compositeStampOntoPhoto(
         photo.uri,
         lines,
@@ -157,6 +128,7 @@ function CameraExperience() {
   const tabBarClearance = 44
   const bottomChrome = insets.bottom + tabBarClearance
   const flashOn = flash === 'on'
+  const flashFg = flashOn ? '#171717' : '#FAFAFA'
 
   return (
     <GestureDetector gesture={swipeToPhotos}>
@@ -182,56 +154,34 @@ function CameraExperience() {
               backgroundColor: flashOn ? '#FACC15' : 'transparent',
             }}
           >
-            {flashOn ? (
+            <FlashChipShell flashOn={flashOn}>
               <Pressable
                 onPress={toggleFlash}
                 className="h-11 flex-row items-center gap-2 px-3.5"
-                accessibilityLabel={copy.camera.flashOn}
+                accessibilityLabel={
+                  flashOn ? copy.camera.flashOn : copy.camera.flashOff
+                }
               >
                 <AppIcon
-                  sf="bolt.fill"
-                  material="flash-on"
+                  sf={flashOn ? 'bolt.fill' : 'bolt.slash.fill'}
+                  material={flashOn ? 'flash-on' : 'flash-off'}
                   size={18}
-                  color="#171717"
+                  color={flashFg}
                 />
                 <Text
                   style={{
                     fontFamily: fonts.semibold,
-                    color: '#171717',
+                    color: flashFg,
                     fontSize: 13,
                   }}
                 >
                   {copy.camera.flash}
                 </Text>
               </Pressable>
-            ) : (
-              <GlassSurface interactive forceDark style={{ borderRadius: 999 }}>
-                <Pressable
-                  onPress={toggleFlash}
-                  className="h-11 flex-row items-center gap-2 px-3.5"
-                  accessibilityLabel={copy.camera.flashOff}
-                >
-                  <AppIcon
-                    sf="bolt.slash.fill"
-                    material="flash-off"
-                    size={18}
-                    color="#FAFAFA"
-                  />
-                  <Text
-                    style={{
-                      fontFamily: fonts.semibold,
-                      color: '#FAFAFA',
-                      fontSize: 13,
-                    }}
-                  >
-                    {copy.camera.flash}
-                  </Text>
-                </Pressable>
-              </GlassSurface>
-            )}
+            </FlashChipShell>
           </View>
 
-          <CameraHud geo={geo} />
+          <CameraHud />
         </View>
 
         <View
@@ -269,5 +219,20 @@ function CameraExperience() {
         </View>
       </View>
     </GestureDetector>
+  )
+}
+
+function FlashChipShell({
+  flashOn,
+  children,
+}: {
+  flashOn: boolean
+  children: ReactNode
+}) {
+  if (flashOn) return <>{children}</>
+  return (
+    <GlassSurface interactive forceDark style={{ borderRadius: 999 }}>
+      {children}
+    </GlassSurface>
   )
 }

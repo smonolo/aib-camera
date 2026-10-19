@@ -7,7 +7,6 @@ import type { GeoSnapshot, StampSettings } from '@/lib/types'
 type Props = {
   geo: GeoSnapshot
   settings: StampSettings
-  /** Scale preview relative to burn-in sizes (settings screen). */
   previewScale?: number
 }
 
