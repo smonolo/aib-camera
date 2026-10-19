@@ -46,7 +46,7 @@ function applyDefaultFont() {
   }
 }
 
-function LoadingScreen() {
+function LoadingScreen({ fontsReady }: { fontsReady: boolean }) {
   const colors = useAppColors()
   return (
     <View
@@ -57,7 +57,7 @@ function LoadingScreen() {
         backgroundColor: colors.canvas,
       }}
     >
-      <AppMark size="medium" />
+      <AppMark size="medium" showTitle={fontsReady} />
     </View>
   )
 }
@@ -86,7 +86,7 @@ export default function RootLayout() {
   }, [fontsReady])
 
   if (!fontsReady || !splashDone) {
-    return <LoadingScreen />
+    return <LoadingScreen fontsReady={fontsReady} />
   }
 
   return (

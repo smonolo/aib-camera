@@ -25,7 +25,7 @@ export function AppMark({ size = 'medium', showTitle = true }: Props) {
         <Text
           style={{
             marginTop: 16,
-            fontFamily: fonts.semibold,
+            fontFamily: fonts.bold,
             fontSize: size === 'large' ? 28 : 22,
             letterSpacing: -0.4,
             color: colors.fg,
