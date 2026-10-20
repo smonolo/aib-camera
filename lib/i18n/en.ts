@@ -90,6 +90,16 @@ export const en: TranslationKeys = {
     opacity: 'Opacity',
     albumBody:
       'Photos always stay in the in-app gallery. When allowed, they are also saved to the “AIB Camera” album.',
+    about: 'About',
+    versionLabel: 'Version',
+    disclaimerTitle: 'Independent app',
+    disclaimerBody:
+      'AIB Camera is an unofficial volunteer project. It is not built, endorsed, or affiliated with Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution.',
+    privacyTitle: 'Privacy',
+    privacyBody:
+      'Photos, settings, and the gallery stay on this device. No accounts, analytics, or cloud sync. Location and network are used only for the stamp (optional geocoding).',
+    privacyLink: 'Open privacy policy',
+    privacyOpenFailed: 'Could not open the link. Check your connection.',
   },
   media: {
     permissionDenied:

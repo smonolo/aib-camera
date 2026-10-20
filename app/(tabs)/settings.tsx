@@ -1,10 +1,20 @@
 import * as Haptics from 'expo-haptics'
+import * as WebBrowser from 'expo-web-browser'
 import { useEffect, useState, type ReactNode } from 'react'
-import { ScrollView, Switch, Text, TextInput, View } from 'react-native'
+import {
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { StampPreview } from '@/components/StampPreview'
+import { useToast } from '@/components/Toast'
+import { appVersionLabel, privacyPolicyUrl } from '@/lib/config'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { useStampSettings } from '@/lib/settings-context'
@@ -22,10 +32,12 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
   const copy = t()
+  const { showError } = useToast()
   const { settings, updateSettings, ready } = useStampSettings()
   const [customDraft, setCustomDraft] = useState(
     settings.customLines.join('\n')
   )
+  const versionLabel = appVersionLabel()
 
   useEffect(() => {
     if (ready) setCustomDraft(settings.customLines.join('\n'))
@@ -184,11 +196,107 @@ export default function SettingsScreen() {
             fontSize: 14,
             lineHeight: 20,
             color: colors.muted,
+            marginBottom: 28,
           }}
         >
           {copy.settings.albumBody}
         </Text>
+
+        <FieldLabel color={colors.muted}>{copy.settings.about}</FieldLabel>
+        <Group>
+          <InfoCard
+            title={copy.settings.versionLabel}
+            body={versionLabel}
+            colors={colors}
+          />
+          <InfoCard
+            title={copy.settings.disclaimerTitle}
+            body={copy.settings.disclaimerBody}
+            colors={colors}
+          />
+          <InfoCard
+            title={copy.settings.privacyTitle}
+            body={copy.settings.privacyBody}
+            colors={colors}
+          />
+          <Pressable
+            onPress={() => {
+              void (async () => {
+                await Haptics.selectionAsync()
+                try {
+                  await WebBrowser.openBrowserAsync(privacyPolicyUrl())
+                } catch {
+                  showError(
+                    copy.settings.privacyTitle,
+                    copy.settings.privacyOpenFailed
+                  )
+                }
+              })()
+            }}
+            accessibilityRole="link"
+            accessibilityLabel={copy.settings.privacyLink}
+            style={{
+              minHeight: 52,
+              borderRadius: 14,
+              backgroundColor: colors.surface,
+              paddingHorizontal: 14,
+              justifyContent: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: fonts.semibold,
+                fontSize: 15,
+                color: colors.fg,
+              }}
+            >
+              {copy.settings.privacyLink}
+            </Text>
+          </Pressable>
+        </Group>
       </ScrollView>
+    </View>
+  )
+}
+
+function InfoCard({
+  title,
+  body,
+  colors,
+}: {
+  title: string
+  body: string
+  colors: ReturnType<typeof useAppColors>
+}) {
+  return (
+    <View
+      style={{
+        borderRadius: 14,
+        backgroundColor: colors.surface,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        gap: 4,
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: fonts.semibold,
+          fontSize: 14,
+          color: colors.fg,
+        }}
+      >
+        {title}
+      </Text>
+      <Text
+        style={{
+          fontFamily: fonts.regular,
+          fontSize: 13,
+          lineHeight: 18,
+          color: colors.muted,
+        }}
+      >
+        {body}
+      </Text>
     </View>
   )
 }

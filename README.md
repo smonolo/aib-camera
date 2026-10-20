@@ -6,6 +6,10 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** voluntee
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · Default UI language: Italian · Timezone on stamps: `Europe/Rome`
 
+User-facing version: `1.0.0` · iOS `buildNumber` / Android `versionCode`: `1` (bump both before each store upload)
+
+Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
+
 ## Features
 
 - Live camera HUD (time, coords, accuracy, altitude, compass heading, place)
@@ -51,6 +55,16 @@ npm run smoke-checklist   # prints the device QA checklist
 - Reverse geocode is time-bounded; on failure the app uses the nearest cached place (~2.5 km).
 - Save always persists to the in-app gallery; the system Photos album is best-effort.
 - Screen stays awake on the camera tab.
+
+## Store release notes
+
+Before uploading binaries (local or EAS):
+
+1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and paste that URL into App Store Connect / Play Console.
+2. Prepare store screenshots (iPhone 6.9″ required; iPad not required — `supportsTablet: false`). Play also needs a 512×512 icon and 1024×500 feature graphic.
+3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking.
+4. Increment `version` for user-visible releases; always increment `ios.buildNumber` and `android.versionCode` for every new binary.
+5. Run `npm run typecheck`, `npx expo-doctor`, and `npm run smoke-checklist` on a physical device.
 
 ## Agent guidance
 

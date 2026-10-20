@@ -85,6 +85,14 @@ export type TranslationKeys = {
     sizeLarge: string
     opacity: string
     albumBody: string
+    about: string
+    versionLabel: string
+    disclaimerTitle: string
+    disclaimerBody: string
+    privacyTitle: string
+    privacyBody: string
+    privacyLink: string
+    privacyOpenFailed: string
   }
   media: {
     permissionDenied: string

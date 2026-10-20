@@ -90,6 +90,16 @@ export const it: TranslationKeys = {
     opacity: 'Opacità',
     albumBody:
       'Le foto restano sempre nella galleria dell’app. Se consentito, vengono anche salvate nell’album «AIB Camera».',
+    about: 'Informazioni',
+    versionLabel: 'Versione',
+    disclaimerTitle: 'App indipendente',
+    disclaimerBody:
+      'AIB Camera è un progetto volontario non ufficiale. Non è realizzata, patrocinata né affiliata a Protezione Civile, Vigili del Fuoco, Regione Lombardia o altre istituzioni pubbliche.',
+    privacyTitle: 'Privacy',
+    privacyBody:
+      'Foto, impostazioni e galleria restano sul dispositivo. Nessun account, nessun analytics e nessun sync cloud. La posizione e la rete servono solo al timbro (geocoding opzionale).',
+    privacyLink: 'Apri informativa privacy',
+    privacyOpenFailed: 'Impossibile aprire il link. Controlla la connessione.',
   },
   media: {
     permissionDenied:

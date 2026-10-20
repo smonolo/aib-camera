@@ -10,12 +10,14 @@ import { Platform, Share } from 'react-native'
 import { t } from './i18n'
 
 const ALBUM_NAME = 'AIB Camera'
+/** Save-only: no full library browse. Keep plugin `granularPermissions` in sync. */
+const PHOTO_GRANULAR = ['photo'] as const
 
 export async function ensureMediaLibraryPermission(): Promise<boolean> {
-  const current = await getPermissionsAsync()
+  const current = await getPermissionsAsync(true, [...PHOTO_GRANULAR])
   if (current.granted) return true
 
-  const requested = await requestPermissionsAsync()
+  const requested = await requestPermissionsAsync(true, [...PHOTO_GRANULAR])
   return requested.granted
 }
 
@@ -25,10 +27,14 @@ export async function saveToAibAlbum(uri: string): Promise<void> {
     throw new Error(t().media.permissionDenied)
   }
 
-  const existing = await Album.get(ALBUM_NAME)
-  if (existing) {
-    await Asset.create(uri, existing)
-    return
+  try {
+    const existing = await Album.get(ALBUM_NAME)
+    if (existing) {
+      await Asset.create(uri, existing)
+      return
+    }
+  } catch {
+    // Write-only grants may not allow album lookup; fall through to create.
   }
 
   const asset = await Asset.create(uri)
