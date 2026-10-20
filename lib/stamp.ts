@@ -97,6 +97,39 @@ export function formatGalleryDateTime(iso: string): string {
   })
 }
 
+/** Calendar day key in Europe/Rome (`YYYY-MM-DD`) for grouping gallery sections. */
+export function galleryDayKey(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: ROME_TZ })
+}
+
+export function formatGalleryDayLabel(
+  dayKey: string,
+  labels: { today: string; yesterday: string },
+  locale: 'it' | 'en'
+): string {
+  const todayKey = galleryDayKey(new Date().toISOString())
+  if (dayKey === todayKey) return labels.today
+
+  const yesterdayKey = shiftDayKey(todayKey, -1)
+  if (dayKey === yesterdayKey) return labels.yesterday
+
+  // Noon UTC avoids DST edge cases when formatting a calendar day key.
+  const date = new Date(`${dayKey}T12:00:00.000Z`)
+  return date.toLocaleDateString(locale === 'it' ? 'it-IT' : 'en-GB', {
+    timeZone: 'UTC',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function shiftDayKey(dayKey: string, deltaDays: number): string {
+  const date = new Date(`${dayKey}T12:00:00.000Z`)
+  date.setUTCDate(date.getUTCDate() + deltaDays)
+  return date.toISOString().slice(0, 10)
+}
+
 export function parseCustomLines(
   text: string,
   options?: { max?: number; dropEmpty?: boolean }
@@ -269,9 +302,13 @@ export function buildCustomStampLines(settings: StampSettings): string[] {
   return lines
 }
 
-export function buildHudLines(geo: GeoSnapshot): string[] {
+export function buildHudLines(
+  geo: GeoSnapshot,
+  options?: { addressMaxChars?: number }
+): string[] {
   const copy = t()
   const lines: string[] = []
+  const addressMaxChars = options?.addressMaxChars ?? 36
 
   lines.push(formatDateTime(geo.takenAt, 'it-short'))
 
@@ -288,7 +325,7 @@ export function buildHudLines(geo: GeoSnapshot): string[] {
   if (metaParts.length > 0) lines.push(metaParts.join(' · '))
 
   if (geo.address?.trim()) {
-    lines.push(...wrapAddress(geo.address, 28).slice(0, 2))
+    lines.push(...wrapAddress(geo.address, addressMaxChars).slice(0, 3))
   }
 
   return lines

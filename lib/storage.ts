@@ -94,8 +94,14 @@ export async function addCapture(
 }
 
 export async function removeCapture(id: string): Promise<CaptureRecord[]> {
+  return removeCaptures([id])
+}
+
+export async function removeCaptures(ids: string[]): Promise<CaptureRecord[]> {
+  if (ids.length === 0) return loadCaptures()
+  const remove = new Set(ids)
   const existing = await loadCaptures()
-  const next = existing.filter(item => item.id !== id)
+  const next = existing.filter(item => !remove.has(item.id))
   await saveCaptures(next)
   return next
 }

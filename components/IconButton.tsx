@@ -12,6 +12,7 @@ type Props = {
   accessibilityLabel: string
   forceDark?: boolean
   size?: number
+  disabled?: boolean
 }
 
 export function IconButton({
@@ -21,12 +22,19 @@ export function IconButton({
   accessibilityLabel,
   forceDark = false,
   size = 20,
+  disabled = false,
 }: Props) {
   const colors = useAppColors()
   const color = forceDark ? '#FAFAFA' : colors.fg
 
   return (
-    <View style={{ borderRadius: 999, overflow: 'hidden' }}>
+    <View
+      style={{
+        borderRadius: 999,
+        overflow: 'hidden',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
       <GlassSurface
         interactive
         forceDark={forceDark}
@@ -34,7 +42,9 @@ export function IconButton({
       >
         <Pressable
           onPress={onPress}
+          disabled={disabled}
           accessibilityLabel={accessibilityLabel}
+          accessibilityState={{ disabled }}
           hitSlop={8}
           style={{
             width: 40,

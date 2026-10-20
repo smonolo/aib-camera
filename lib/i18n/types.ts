@@ -35,32 +35,28 @@ export type TranslationKeys = {
     noCoordinates: string
     noAddress: string
   }
-  review: {
-    title: string
-    empty: string
-    retake: string
-    save: string
-    share: string
-    savedTitle: string
-    savedBody: string
-    savedBodyLocalOnly: string
-    saveFailed: string
-    shareFailed: string
-    retrySoon: string
-  }
   photos: {
     title: string
     emptyHint: string
+    empty: string
     share: string
     delete: string
     deleteTitle: string
     deleteBody: string
+    deleteManyTitle: string
+    deleteManyBody: string
     cancel: string
-    done: string
+    select: string
+    selectedCount: string
+    actions: string
     deleted: string
+    deletedMany: string
     deleteFailed: string
     shareFailed: string
+    retrySoon: string
     back: string
+    today: string
+    yesterday: string
   }
   settings: {
     title: string

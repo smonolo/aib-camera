@@ -109,14 +109,6 @@ export default function RootLayout() {
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
-                name="review"
-                options={{
-                  presentation: 'modal',
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.canvas },
-                }}
-              />
-              <Stack.Screen
                 name="photo/[id]"
                 options={{
                   headerShown: false,

@@ -47,7 +47,7 @@ export default function PhotoDetailScreen() {
     } catch (error) {
       showError(
         copy.photos.shareFailed,
-        errorMessage(error, copy.review.retrySoon)
+        errorMessage(error, copy.photos.retrySoon)
       )
     }
   }
@@ -71,7 +71,7 @@ export default function PhotoDetailScreen() {
             } catch (error) {
               showError(
                 copy.photos.deleteFailed,
-                errorMessage(error, copy.review.retrySoon)
+                errorMessage(error, copy.photos.retrySoon)
               )
             }
           })()
@@ -95,7 +95,7 @@ export default function PhotoDetailScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-canvas dark:bg-canvas-inverse">
         <Text style={{ fontFamily: fonts.regular, color: colors.muted }}>
-          {copy.review.empty}
+          {copy.photos.empty}
         </Text>
       </View>
     )

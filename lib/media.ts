@@ -42,20 +42,49 @@ export async function saveToAibAlbum(uri: string): Promise<void> {
 }
 
 export async function sharePhoto(uri: string): Promise<void> {
-  const copy = t()
+  await sharePhotos([uri])
+}
 
-  if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, {
-      mimeType: 'image/jpeg',
-      dialogTitle: copy.media.shareDialogTitle,
-      UTI: 'public.jpeg',
-    })
+export async function sharePhotos(uris: string[]): Promise<void> {
+  const copy = t()
+  const unique = [...new Set(uris.filter(Boolean))]
+  if (unique.length === 0) return
+
+  if (unique.length === 1) {
+    const uri = unique[0]!
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/jpeg',
+        dialogTitle: copy.media.shareDialogTitle,
+        UTI: 'public.jpeg',
+      })
+      return
+    }
+
+    await Share.share(
+      Platform.OS === 'ios'
+        ? { url: uri }
+        : { message: uri, title: copy.media.shareTitle }
+    )
     return
   }
 
-  await Share.share(
-    Platform.OS === 'ios'
-      ? { url: uri }
-      : { message: uri, title: copy.media.shareTitle }
-  )
+  // iOS Share supports multiple file URLs in one sheet (not in RN typings).
+  if (Platform.OS === 'ios') {
+    await Share.share({ urls: unique } as never)
+    return
+  }
+
+  // Android RN Share has no multi-file API; open one sheet per photo.
+  for (const uri of unique) {
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/jpeg',
+        dialogTitle: copy.media.shareDialogTitle,
+        UTI: 'public.jpeg',
+      })
+    } else {
+      await Share.share({ message: uri, title: copy.media.shareTitle })
+    }
+  }
 }

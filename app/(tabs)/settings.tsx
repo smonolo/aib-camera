@@ -17,6 +17,7 @@ import { useToast } from '@/components/Toast'
 import { appVersionLabel, privacyPolicyUrl } from '@/lib/config'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
+import { TAB_BAR_CLEARANCE } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
 import { parseCustomLines } from '@/lib/stamp'
 import { useAppColors } from '@/lib/theme'
@@ -77,7 +78,7 @@ export default function SettingsScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 28,
+          paddingBottom: insets.bottom + TAB_BAR_CLEARANCE + 28,
           paddingHorizontal: SCREEN_PAD,
         }}
         keyboardShouldPersistTaps="handled"
@@ -90,7 +91,7 @@ export default function SettingsScreen() {
         />
 
         <FieldLabel color={colors.muted}>{copy.settings.general}</FieldLabel>
-        <Group>
+        <ToggleGroup>
           <ToggleRow
             label={copy.settings.dateTime}
             value={settings.showDateTime}
@@ -120,8 +121,9 @@ export default function SettingsScreen() {
             label={copy.settings.heading}
             value={settings.showHeading}
             onChange={value => bump('showHeading', value)}
+            isLast
           />
-        </Group>
+        </ToggleGroup>
 
         <FieldLabel color={colors.muted}>{copy.settings.customText}</FieldLabel>
         <TextInput
@@ -305,6 +307,23 @@ function Group({ children }: { children: ReactNode }) {
   return <View style={{ marginBottom: 20, gap: 8 }}>{children}</View>
 }
 
+function ToggleGroup({ children }: { children: ReactNode }) {
+  const colors = useAppColors()
+
+  return (
+    <View
+      style={{
+        marginBottom: 20,
+        borderRadius: 14,
+        backgroundColor: colors.surface,
+        overflow: 'hidden',
+      }}
+    >
+      {children}
+    </View>
+  )
+}
+
 function FieldLabel({ children, color }: { children: string; color: string }) {
   return (
     <Text
@@ -319,10 +338,12 @@ function ToggleRow({
   label,
   value,
   onChange,
+  isLast = false,
 }: {
   label: string
   value: boolean
   onChange: (value: boolean) => void
+  isLast?: boolean
 }) {
   const colors = useAppColors()
 
@@ -330,12 +351,12 @@ function ToggleRow({
     <View
       style={{
         height: 52,
-        borderRadius: 14,
-        backgroundColor: colors.surface,
         paddingHorizontal: 14,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        borderBottomWidth: isLast ? 0 : 1,
+        borderBottomColor: colors.border,
       }}
     >
       <Text

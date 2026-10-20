@@ -18,7 +18,13 @@ import {
   View,
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { runOnJS } from 'react-native-reanimated'
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
@@ -36,9 +42,12 @@ import {
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
+import { TAB_BAR_CLEARANCE } from '@/lib/layout'
 import { captureGeoSnapshot } from '@/lib/location'
+import { saveToAibAlbum } from '@/lib/media'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
+import { addCapture } from '@/lib/storage'
 import { getSharedGeoSnapshot } from '@/lib/use-live-geo'
 import type { GeoSnapshot } from '@/lib/types'
 
@@ -64,6 +73,18 @@ function CameraExperience() {
   const [selectedLens, setSelectedLens] = useState<string | undefined>()
   const [zoom, setZoom] = useState(0)
   const [selectedZoomKey, setSelectedZoomKey] = useState<string | null>(null)
+  const shutterFlash = useSharedValue(0)
+  const shutterFlashStyle = useAnimatedStyle(() => ({
+    opacity: shutterFlash.value,
+  }))
+
+  const playShutterFlash = useCallback(() => {
+    shutterFlash.value = 0
+    shutterFlash.value = withSequence(
+      withTiming(1, { duration: 35 }),
+      withTiming(0, { duration: 220 })
+    )
+  }, [shutterFlash])
 
   const zoomOptions = useMemo(() => {
     if (Platform.OS === 'ios') {
@@ -127,6 +148,7 @@ function CameraExperience() {
     if (!cameraRef.current || !cameraReady || capturing) return
 
     setCapturing(true)
+    playShutterFlash()
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
     try {
@@ -163,19 +185,26 @@ function CameraExperience() {
         settings
       )
 
-      router.push({
-        pathname: '/review',
-        params: {
-          uri: stampedUri,
-          takenAt: snap.takenAt.toISOString(),
-          lat: snap.lat != null ? String(snap.lat) : '',
-          lon: snap.lon != null ? String(snap.lon) : '',
-          accuracy: snap.accuracy != null ? String(snap.accuracy) : '',
-          altitude: snap.altitude != null ? String(snap.altitude) : '',
-          heading: snap.heading != null ? String(snap.heading) : '',
-          address: snap.address ?? '',
-        },
+      await addCapture({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        uri: stampedUri,
+        takenAt: snap.takenAt.toISOString(),
+        lat: snap.lat,
+        lon: snap.lon,
+        accuracy: snap.accuracy,
+        altitude: snap.altitude,
+        heading: snap.heading,
+        address: snap.address,
+        customText: settings.customLines,
+        stampConfigSnapshot: settings,
       })
+
+      // System album is best-effort; never block the next shutter on it.
+      void saveToAibAlbum(stampedUri).catch(error => {
+        console.warn(error)
+      })
+
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } catch (error) {
       console.error(error)
       showError(
@@ -187,8 +216,7 @@ function CameraExperience() {
     }
   }
 
-  const tabBarClearance = 14
-  const bottomChrome = insets.bottom + tabBarClearance
+  const bottomChrome = insets.bottom + TAB_BAR_CLEARANCE
   const flashOn = flash === 'on'
   const flashFg = flashOn ? '#171717' : '#FAFAFA'
 
@@ -210,6 +238,21 @@ function CameraExperience() {
           onAvailableLensesChanged={({ lenses }) => {
             setAvailableLenses(lenses)
           }}
+        />
+
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: '#FFFFFF',
+            },
+            shutterFlashStyle,
+          ]}
         />
 
         <View

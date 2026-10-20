@@ -21,12 +21,12 @@ export default function TabLayout() {
     <NativeTabs disableTransparentOnScrollEdge tintColor={tint}>
       <NativeTabs.Trigger name="index" accessibilityLabel={copy.tabs.camera}>
         <NativeTabs.Trigger.Icon sf="camera.fill" md="photo_camera" />
-        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Label>{copy.tabs.camera}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="gallery" accessibilityLabel={copy.tabs.photos}>
         <NativeTabs.Trigger.Icon sf="photo.on.rectangle" md="photo_library" />
-        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Label>{copy.tabs.photos}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger
@@ -34,7 +34,9 @@ export default function TabLayout() {
         accessibilityLabel={copy.tabs.settings}
       >
         <NativeTabs.Trigger.Icon sf="gearshape.fill" md="settings" />
-        <NativeTabs.Trigger.Label hidden />
+        <NativeTabs.Trigger.Label>
+          {copy.tabs.settings}
+        </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   )
