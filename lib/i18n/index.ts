@@ -5,7 +5,7 @@ import type { TranslationKeys } from './types'
 export type AppLocale = 'it' | 'en'
 export type { TranslationKeys }
 
-export const DEFAULT_LOCALE: AppLocale = 'it'
+const DEFAULT_LOCALE: AppLocale = 'it'
 
 const catalogs: Record<AppLocale, TranslationKeys> = {
   it,
@@ -13,10 +13,6 @@ const catalogs: Record<AppLocale, TranslationKeys> = {
 }
 
 let activeLocale: AppLocale = DEFAULT_LOCALE
-
-export function setLocale(locale: AppLocale) {
-  activeLocale = locale
-}
 
 export function getLocale(): AppLocale {
   return activeLocale

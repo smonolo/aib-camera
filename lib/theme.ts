@@ -57,7 +57,7 @@ export function useIsDark(): boolean {
   return useColorScheme() === 'dark'
 }
 
-export const lightTheme: Theme = {
+const lightTheme: Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
@@ -77,7 +77,7 @@ export const lightTheme: Theme = {
   },
 }
 
-export const darkTheme: Theme = {
+const darkTheme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,

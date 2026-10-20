@@ -11,12 +11,11 @@ import { Stack } from 'expo-router'
 import { ThemeProvider } from 'expo-router/react-navigation'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Text, TextInput, useColorScheme, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
 
-import { AppMark } from '@/components/AppMark'
 import { ToastProvider } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { SettingsProvider } from '@/lib/settings-context'
@@ -25,8 +24,6 @@ import { navigationTheme, useAppColors } from '@/lib/theme'
 export { ErrorBoundary } from 'expo-router'
 
 SplashScreen.preventAutoHideAsync()
-
-const SPLASH_HOLD_MS = 700
 
 function applyDefaultFont() {
   const textDefaults =
@@ -46,22 +43,6 @@ function applyDefaultFont() {
   }
 }
 
-function LoadingScreen({ fontsReady }: { fontsReady: boolean }) {
-  const colors = useAppColors()
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.canvas,
-      }}
-    >
-      <AppMark size="medium" showTitle={fontsReady} />
-    </View>
-  )
-}
-
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const colors = useAppColors()
@@ -71,7 +52,6 @@ export default function RootLayout() {
     Geist_600SemiBold,
     Geist_700Bold,
   })
-  const [splashDone, setSplashDone] = useState(false)
 
   useEffect(() => {
     if (error) throw error
@@ -81,12 +61,10 @@ export default function RootLayout() {
     if (!fontsReady) return
     applyDefaultFont()
     void SplashScreen.hideAsync()
-    const timer = setTimeout(() => setSplashDone(true), SPLASH_HOLD_MS)
-    return () => clearTimeout(timer)
   }, [fontsReady])
 
-  if (!fontsReady || !splashDone) {
-    return <LoadingScreen fontsReady={fontsReady} />
+  if (!fontsReady) {
+    return <View style={{ flex: 1, backgroundColor: colors.canvas }} />
   }
 
   return (

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native'
 
-export type ZoomKind = 'ultraWide' | 'wide' | 'tele'
+type ZoomKind = 'ultraWide' | 'wide' | 'tele'
 
 export type ZoomOption = {
   key: string
@@ -12,7 +12,7 @@ export type ZoomOption = {
 
 const ASSUMED_DEVICE_MAX_ZOOM = 125
 
-export function formatZoomFactor(factor: number, useComma: boolean): string {
+function formatZoomFactor(factor: number, useComma: boolean): string {
   if (factor === 0.5) return useComma ? '0,5' : '0.5'
   if (Number.isInteger(factor)) return String(factor)
   return useComma ? String(factor).replace('.', ',') : String(factor)
@@ -27,7 +27,7 @@ export function formatZoomLabel(
   return active ? `${base}×` : base
 }
 
-export function normalizedZoomForFactor(
+function normalizedZoomForFactor(
   factor: number,
   assumedMax = ASSUMED_DEVICE_MAX_ZOOM
 ): number {
@@ -35,7 +35,7 @@ export function normalizedZoomForFactor(
   return Math.min(1, Math.log(factor) / Math.log(assumedMax))
 }
 
-export function classifyLensName(name: string): ZoomKind | null {
+function classifyLensName(name: string): ZoomKind | null {
   const n = name.toLowerCase()
 
   if (

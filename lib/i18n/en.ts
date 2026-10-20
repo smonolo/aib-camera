@@ -1,14 +1,10 @@
 import type { TranslationKeys } from './types'
 
 export const en: TranslationKeys = {
-  appName: 'AIB Camera',
   tabs: {
     camera: 'Camera',
     photos: 'Photos',
     settings: 'Settings',
-  },
-  splash: {
-    title: 'AIB Camera',
   },
   permissions: {
     title: 'AIB Camera',

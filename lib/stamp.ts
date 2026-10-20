@@ -9,7 +9,7 @@ import {
 const ROME_TZ = 'Europe/Rome'
 const ADDRESS_MAX_CHARS = 38
 
-export function formatDateTime(date: Date, format: DateTimeFormat): string {
+function formatDateTime(date: Date, format: DateTimeFormat): string {
   if (format === 'iso') {
     return date.toLocaleString('sv-SE', { timeZone: ROME_TZ }).replace(' ', 'T')
   }
@@ -40,35 +40,35 @@ export function formatDateTime(date: Date, format: DateTimeFormat): string {
   })
 }
 
-export function formatCoordinates(lat: number, lon: number): string {
+function formatCoordinates(lat: number, lon: number): string {
   const latHem = lat >= 0 ? 'N' : 'S'
   const lonHem = lon >= 0 ? 'E' : 'W'
   return `${Math.abs(lat).toFixed(6)}° ${latHem}, ${Math.abs(lon).toFixed(6)}° ${lonHem}`
 }
 
-export function formatShortCoordinates(lat: number, lon: number): string {
+function formatShortCoordinates(lat: number, lon: number): string {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
 }
 
-export function formatAccuracy(meters: number): string {
+function formatAccuracy(meters: number): string {
   const rounded =
     meters < 10 ? Math.round(meters * 10) / 10 : Math.round(meters)
   return `±${rounded} m`
 }
 
-export function formatAltitude(meters: number): string {
+function formatAltitude(meters: number): string {
   return `${Math.round(meters)} m s.l.m.`
 }
 
 const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
 
-export function formatHeading(degrees: number): string {
+function formatHeading(degrees: number): string {
   const normalized = ((degrees % 360) + 360) % 360
   const index = Math.round(normalized / 45) % 8
   return `${Math.round(normalized)}° ${CARDINALS[index]}`
 }
 
-export function buildMetaStampLine(
+function buildMetaStampLine(
   geo: GeoSnapshot,
   settings: StampSettings
 ): string | null {
@@ -85,16 +85,6 @@ export function buildMetaStampLine(
   }
 
   return parts.length > 0 ? parts.join(' · ') : null
-}
-
-export function formatGalleryDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('it-IT', {
-    timeZone: ROME_TZ,
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 /** Calendar day key in Europe/Rome (`YYYY-MM-DD`) for grouping gallery sections. */
@@ -155,7 +145,7 @@ function breakLongToken(token: string, maxChars: number): string[] {
   return chunks
 }
 
-export function wrapByWords(text: string, maxChars: number): string[] {
+function wrapByWords(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
   const words = text.split(/\s+/).filter(Boolean)
   const lines: string[] = []
@@ -236,10 +226,7 @@ export function wrapTextToWidth(
   return lines.length > 0 ? lines : [text]
 }
 
-export function wrapAddress(
-  address: string,
-  maxChars = ADDRESS_MAX_CHARS
-): string[] {
+function wrapAddress(address: string, maxChars = ADDRESS_MAX_CHARS): string[] {
   const trimmed = address.trim()
   if (!trimmed) return [t().stamp.noAddress]
   if (trimmed.length <= maxChars) return [trimmed]

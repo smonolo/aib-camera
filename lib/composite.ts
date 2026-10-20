@@ -12,7 +12,7 @@ import { t } from './i18n'
 import { stampFontPx, wrapTextToWidth } from './stamp'
 import type { StampSettings } from './types'
 
-export type StampBurnInContent = {
+type StampBurnInContent = {
   infoLines: string[]
   customLines: string[]
 }

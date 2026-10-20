@@ -13,7 +13,7 @@ const ALBUM_NAME = 'AIB Camera'
 /** Save-only: no full library browse. Keep plugin `granularPermissions` in sync. */
 const PHOTO_GRANULAR = ['photo'] as const
 
-export async function ensureMediaLibraryPermission(): Promise<boolean> {
+async function ensureMediaLibraryPermission(): Promise<boolean> {
   const current = await getPermissionsAsync(true, [...PHOTO_GRANULAR])
   if (current.granted) return true
 

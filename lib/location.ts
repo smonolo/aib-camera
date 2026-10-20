@@ -40,7 +40,7 @@ async function withTimeout<T>(
   ])
 }
 
-export async function hasForegroundLocationPermission(): Promise<boolean> {
+async function hasForegroundLocationPermission(): Promise<boolean> {
   const current = await Location.getForegroundPermissionsAsync()
   return current.granted
 }
@@ -58,7 +58,7 @@ function geocodeCellKey(latitude: number, longitude: number): string {
 }
 
 /** Locality-first place label for forest / AIB ops (no country). */
-export function formatAddress(parts: Location.LocationGeocodedAddress): string {
+function formatAddress(parts: Location.LocationGeocodedAddress): string {
   const streetBits = [parts.street, parts.streetNumber]
     .filter(Boolean)
     .join(' ')
@@ -85,7 +85,7 @@ export function formatAddress(parts: Location.LocationGeocodedAddress): string {
   return bits.filter(bit => bit && String(bit).trim().length > 0).join(' · ')
 }
 
-export function headingFromLocationHeading(
+function headingFromLocationHeading(
   heading: Location.LocationHeadingObject
 ): number | null {
   if (heading.trueHeading >= 0) {
@@ -102,7 +102,7 @@ function normalizeHeadingDegrees(value: number): number {
   return Math.round(wrapped)
 }
 
-export async function reverseGeocodeSafe(
+async function reverseGeocodeSafe(
   latitude: number,
   longitude: number
 ): Promise<string | null> {
@@ -154,7 +154,7 @@ export async function reverseGeocodeSafe(
   return null
 }
 
-export type CaptureGeoOptions = {
+type CaptureGeoOptions = {
   headingHint?: number | null
   /** Max wait for a fresh GPS fix. Keep short on the shutter path. */
   positionTimeoutMs?: number

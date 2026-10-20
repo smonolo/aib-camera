@@ -1,12 +1,8 @@
 export type TranslationKeys = {
-  appName: string
   tabs: {
     camera: string
     photos: string
     settings: string
-  }
-  splash: {
-    title: string
   }
   permissions: {
     title: string

@@ -6,7 +6,6 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
-import { AppMark } from '@/components/AppMark'
 import { GlassButton } from '@/components/GlassButton'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
@@ -96,14 +95,12 @@ export function PermissionGate({ children }: Props) {
         paddingHorizontal: 20,
       }}
     >
-      <AppMark size="medium" showTitle={false} />
       <Text
         style={{
           fontFamily: fonts.bold,
           fontSize: 28,
           color: colors.fg,
           letterSpacing: -0.4,
-          marginTop: 20,
         }}
       >
         {copy.permissions.title}

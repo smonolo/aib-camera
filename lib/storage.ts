@@ -13,7 +13,7 @@ const GEOCODE_CACHE_KEY = 'aib-camera.geocode-cache.v1'
 
 const GEOCODE_CACHE_MAX = 80
 
-export type GeocodeCacheEntry = {
+type GeocodeCacheEntry = {
   key: string
   address: string
   lat: number
@@ -79,7 +79,7 @@ export async function loadCaptures(): Promise<CaptureRecord[]> {
   }
 }
 
-export async function saveCaptures(captures: CaptureRecord[]): Promise<void> {
+async function saveCaptures(captures: CaptureRecord[]): Promise<void> {
   capturesCache = sortByTakenAtDesc(captures)
   await AsyncStorage.setItem(CAPTURES_KEY, JSON.stringify(capturesCache))
 }
