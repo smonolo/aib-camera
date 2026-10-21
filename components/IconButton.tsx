@@ -2,15 +2,14 @@ import type { ComponentProps } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { AppIcon } from '@/components/AppIcon'
-import { GlassSurface } from '@/components/GlassSurface'
-import { useAppColors } from '@/lib/theme'
+import { Surface } from '@/components/Surface'
+import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
   sf: ComponentProps<typeof AppIcon>['sf']
   material: ComponentProps<typeof AppIcon>['material']
   onPress: () => void
   accessibilityLabel: string
-  forceDark?: boolean
   size?: number
   disabled?: boolean
 }
@@ -20,26 +19,20 @@ export function IconButton({
   material,
   onPress,
   accessibilityLabel,
-  forceDark = false,
   size = 20,
   disabled = false,
 }: Props) {
   const colors = useAppColors()
-  const color = forceDark ? '#FAFAFA' : colors.fg
 
   return (
     <View
       style={{
-        borderRadius: 999,
+        borderRadius: radii.full,
         overflow: 'hidden',
         opacity: disabled ? 0.4 : 1,
       }}
     >
-      <GlassSurface
-        interactive
-        forceDark={forceDark}
-        style={{ borderRadius: 999 }}
-      >
+      <Surface style={{ borderRadius: radii.full }}>
         <Pressable
           onPress={onPress}
           disabled={disabled}
@@ -53,9 +46,9 @@ export function IconButton({
             justifyContent: 'center',
           }}
         >
-          <AppIcon sf={sf} material={material} size={size} color={color} />
+          <AppIcon sf={sf} material={material} size={size} color={colors.fg} />
         </Pressable>
-      </GlassSurface>
+      </Surface>
     </View>
   )
 }

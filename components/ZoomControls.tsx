@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native'
 import { formatZoomLabel, type ZoomOption } from '@/lib/camera-zoom'
 import { fonts } from '@/lib/fonts'
 import { getLocale } from '@/lib/i18n'
+import { cameraOverlay, radii } from '@/lib/theme'
 
 type Props = {
   options: ZoomOption[]
@@ -33,8 +34,8 @@ export function ZoomControls({
         gap: 2,
         marginBottom: 14,
         padding: 3,
-        borderRadius: 999,
-        backgroundColor: 'rgba(0,0,0,0.42)',
+        borderRadius: radii.full,
+        backgroundColor: cameraOverlay.fill,
       }}
     >
       {options.map(option => {
@@ -54,7 +55,7 @@ export function ZoomControls({
             style={{
               width: CHIP,
               height: CHIP,
-              borderRadius: CHIP / 2,
+              borderRadius: radii.full,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: active ? '#F5D74E' : 'transparent',
@@ -65,7 +66,7 @@ export function ZoomControls({
                 fontFamily: fonts.semibold,
                 fontSize: active ? 13 : 12,
                 letterSpacing: -0.2,
-                color: active ? '#171717' : 'rgba(255,255,255,0.92)',
+                color: active ? '#171717' : cameraOverlay.text,
               }}
             >
               {label}

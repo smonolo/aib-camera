@@ -57,7 +57,6 @@ function geocodeCellKey(latitude: number, longitude: number): string {
   return `${latitude.toFixed(GEOCODE_CELL_DECIMALS)},${longitude.toFixed(GEOCODE_CELL_DECIMALS)}`
 }
 
-/** Locality-first place label for forest / AIB ops (no country). */
 function formatAddress(parts: Location.LocationGeocodedAddress): string {
   const streetBits = [parts.street, parts.streetNumber]
     .filter(Boolean)
@@ -130,9 +129,7 @@ async function reverseGeocodeSafe(
       })
       return formatted
     }
-  } catch {
-    // Fall through to persistent cache below.
-  }
+  } catch {}
 
   try {
     const cached = await findNearestGeocodeCache(
@@ -145,9 +142,7 @@ async function reverseGeocodeSafe(
       lastGeocodeAddress = cached.address
       return cached.address
     }
-  } catch {
-    // Ignore cache read failures.
-  }
+  } catch {}
 
   lastGeocodeKey = key
   lastGeocodeAddress = null
@@ -156,7 +151,6 @@ async function reverseGeocodeSafe(
 
 type CaptureGeoOptions = {
   headingHint?: number | null
-  /** Max wait for a fresh GPS fix. Keep short on the shutter path. */
   positionTimeoutMs?: number
 }
 

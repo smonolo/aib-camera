@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 
-import { captureGeoSnapshot, watchHeading, watchPosition } from './location'
+import {
+  captureGeoSnapshot,
+  ensureForegroundLocationPermission,
+  watchHeading,
+  watchPosition,
+} from './location'
 import type { GeoSnapshot } from './types'
 
 const EMPTY_GEO: GeoSnapshot = {
@@ -35,6 +40,9 @@ function startShared() {
   let active = true
 
   void (async () => {
+    await ensureForegroundLocationPermission()
+    if (!active || generation !== startGeneration) return
+
     const snap = await captureGeoSnapshot({
       headingHint: sharedGeo.heading,
       positionTimeoutMs: 5000,
@@ -83,7 +91,6 @@ function stopShared(cancelStart: () => void) {
   }
 }
 
-/** Latest shared geo snapshot (for shutter capture without waiting on GPS). */
 export function getSharedGeoSnapshot(): GeoSnapshot {
   return sharedGeo
 }

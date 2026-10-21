@@ -8,13 +8,11 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@shopify/react-native-skia": "2.6.2",
     "expo": "~57.0.0",
-    "expo-blur": "~57.0.3",
     "expo-build-properties": "~57.0.22",
     "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.22",
     "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
-    "expo-glass-effect": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",
     "expo-keep-awake": "~57.0.2",
@@ -26,6 +24,7 @@
     "expo-splash-screen": "~57.0.10",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
+    "expo-system-ui": "~57.0.4",
     "expo-web-browser": "~57.0.3",
     "nativewind": "^4.2.7",
     "react": "19.2.3",
@@ -54,7 +53,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "smoke-checklist": "node -e \"console.log(['Device smoke checklist — AIB Camera','1. Grant camera; confirm Continue without GPS still opens camera','2. Confirm live HUD updates time/coords/accuracy/altitude/heading/place','3. Capture outdoors; verify stamp burned into JPEG (incl. meta line) and no confirm modal','4. Burst: take several shots without leaving camera; all appear in Photos','5. Confirm EXIF GPS present in Photos/Files metadata','6. Album AIB Camera appears when library permission granted','7. Gallery: date-grouped 3-column squares; tap opens detail','8. Select multiple → share / delete from gallery toolbar','9. Share via system sheet (WhatsApp/Mail)','10. Toggle accuracy/altitude/heading/place and retake','11. Airplane mode: photo still saves; place from geocode cache if nearby cell was cached earlier','12. Rotate device: HUD heading degrees update','13. Deny Photos library: capture still keeps photo in-app gallery','14. Deny location: shutter still works; stamp shows unavailable geo lines','15. Shutter feels instant (no multi-second GPS wait)','16. iOS 26+: Liquid Glass controls; older: blur fallback','17. Swipe left from camera opens gallery'].join('\\n'))\""
+    "smoke-checklist": "node -e \"console.log(['Device smoke checklist — AIB Camera','1. Grant camera; confirm Continue without GPS still opens camera','2. Confirm live HUD updates time/coords/accuracy/altitude/heading/place','3. Capture outdoors; verify stamp burned into JPEG (incl. meta line) and no confirm modal','4. Burst: take several shots without leaving camera; all appear in Photos','5. Confirm EXIF GPS present in Photos/Files metadata','6. Album AIB Camera appears when library permission granted','7. Gallery: date-grouped 3-column squares; tap opens detail','8. Select multiple → share / delete from gallery toolbar','9. Share via system sheet (WhatsApp/Mail)','10. Toggle accuracy/altitude/heading/place and retake','11. Airplane mode: photo still saves; place from geocode cache if nearby cell was cached earlier','12. Rotate device: HUD heading degrees update','13. Deny Photos library: capture still keeps photo in-app gallery','14. Deny location: shutter still works; stamp shows unavailable geo lines','15. Shutter feels instant (no multi-second GPS wait)','16. iOS: Liquid Glass only on system tab bar; HUD/buttons match Android solids','17. Swipe left from camera opens gallery'].join('\\n'))\""
   },
   "private": true,
   "allowScripts": {

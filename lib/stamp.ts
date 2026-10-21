@@ -9,7 +9,10 @@ import {
 const ROME_TZ = 'Europe/Rome'
 const ADDRESS_MAX_CHARS = 38
 
-function formatDateTime(date: Date, format: DateTimeFormat): string {
+export function formatStampDateTime(
+  date: Date,
+  format: DateTimeFormat
+): string {
   if (format === 'iso') {
     return date.toLocaleString('sv-SE', { timeZone: ROME_TZ }).replace(' ', 'T')
   }
@@ -87,7 +90,6 @@ function buildMetaStampLine(
   return parts.length > 0 ? parts.join(' · ') : null
 }
 
-/** Calendar day key in Europe/Rome (`YYYY-MM-DD`) for grouping gallery sections. */
 export function galleryDayKey(iso: string): string {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone: ROME_TZ })
 }
@@ -103,7 +105,6 @@ export function formatGalleryDayLabel(
   const yesterdayKey = shiftDayKey(todayKey, -1)
   if (dayKey === yesterdayKey) return labels.yesterday
 
-  // Noon UTC avoids DST edge cases when formatting a calendar day key.
   const date = new Date(`${dayKey}T12:00:00.000Z`)
   return date.toLocaleDateString(locale === 'it' ? 'it-IT' : 'en-GB', {
     timeZone: 'UTC',
@@ -259,7 +260,7 @@ export function buildInfoStampLines(
   const copy = t()
 
   if (settings.showDateTime) {
-    lines.push(formatDateTime(geo.takenAt, settings.dateTimeFormat))
+    lines.push(formatStampDateTime(geo.takenAt, settings.dateTimeFormat))
   }
 
   if (settings.showCoordinates) {
@@ -291,13 +292,41 @@ export function buildCustomStampLines(settings: StampSettings): string[] {
 
 export function buildHudLines(
   geo: GeoSnapshot,
-  options?: { addressMaxChars?: number }
+  options?: {
+    addressMaxChars?: number
+    expanded?: boolean
+  }
 ): string[] {
   const copy = t()
   const lines: string[] = []
-  const addressMaxChars = options?.addressMaxChars ?? 36
+  const expanded = options?.expanded ?? false
+  const addressMaxChars = options?.addressMaxChars ?? (expanded ? 42 : 28)
 
-  lines.push(formatDateTime(geo.takenAt, 'it-short'))
+  if (expanded) {
+    lines.push(formatStampDateTime(geo.takenAt, 'it-full'))
+
+    if (geo.lat != null && geo.lon != null) {
+      lines.push(formatCoordinates(geo.lat, geo.lon))
+    } else {
+      lines.push(copy.stamp.noCoordinates)
+    }
+
+    const metaParts: string[] = []
+    if (geo.accuracy != null) metaParts.push(formatAccuracy(geo.accuracy))
+    if (geo.altitude != null) metaParts.push(formatAltitude(geo.altitude))
+    if (geo.heading != null) metaParts.push(formatHeading(geo.heading))
+    if (metaParts.length > 0) lines.push(metaParts.join(' · '))
+
+    lines.push(
+      ...wrapAddress(
+        geo.address?.trim() || copy.stamp.noAddress,
+        addressMaxChars
+      )
+    )
+    return lines
+  }
+
+  lines.push(formatStampDateTime(geo.takenAt, 'it-short'))
 
   if (geo.lat != null && geo.lon != null) {
     lines.push(formatShortCoordinates(geo.lat, geo.lon))
@@ -305,14 +334,8 @@ export function buildHudLines(
     lines.push(copy.camera.acquiringGps)
   }
 
-  const metaParts: string[] = []
-  if (geo.accuracy != null) metaParts.push(formatAccuracy(geo.accuracy))
-  if (geo.altitude != null) metaParts.push(`${Math.round(geo.altitude)} m`)
-  if (geo.heading != null) metaParts.push(formatHeading(geo.heading))
-  if (metaParts.length > 0) lines.push(metaParts.join(' · '))
-
   if (geo.address?.trim()) {
-    lines.push(...wrapAddress(geo.address, addressMaxChars).slice(0, 3))
+    lines.push(...wrapAddress(geo.address, addressMaxChars).slice(0, 1))
   }
 
   return lines

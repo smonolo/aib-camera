@@ -9,13 +9,15 @@ export type TranslationKeys = {
     body: string
     camera: string
     location: string
-    granted: string
     needed: string
     denied: string
-    optional: string
+    blocked: string
+    optionalLater: string
     locationOptionalHint: string
+    cameraDeniedHint: string
+    cameraBlockedHint: string
     continue: string
-    continueWithoutLocation: string
+    openSettings: string
   }
   camera: {
     flash: string
@@ -26,6 +28,8 @@ export type TranslationKeys = {
     acquiringGps: string
     captureFailed: string
     captureFailedBody: string
+    hudExpand: string
+    hudCollapse: string
   }
   stamp: {
     noCoordinates: string
@@ -65,8 +69,6 @@ export type TranslationKeys = {
     heading: string
     customText: string
     customPlaceholder: string
-    previewInfo: string
-    previewCustom: string
     dateFormat: string
     formatFull: string
     formatShort: string
@@ -76,7 +78,11 @@ export type TranslationKeys = {
     sizeMedium: string
     sizeLarge: string
     opacity: string
-    albumBody: string
+    permissions: string
+    locationPermission: string
+    locationAllowed: string
+    locationAsk: string
+    locationOpenSettings: string
     about: string
     versionLabel: string
     disclaimerTitle: string

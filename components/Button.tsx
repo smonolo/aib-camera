@@ -9,9 +9,9 @@ import {
 } from 'react-native'
 
 import { AppIcon } from '@/components/AppIcon'
-import { GlassSurface } from '@/components/GlassSurface'
+import { Surface } from '@/components/Surface'
 import { fonts } from '@/lib/fonts'
-import { useAppColors } from '@/lib/theme'
+import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
   label: string
@@ -21,12 +21,11 @@ type Props = {
   material?: ComponentProps<typeof AppIcon>['material']
   loading?: boolean
   disabled?: boolean
-  forceDark?: boolean
   flex?: boolean
   style?: StyleProp<ViewStyle>
 }
 
-export function GlassButton({
+export function Button({
   label,
   onPress,
   accessibilityLabel,
@@ -34,26 +33,20 @@ export function GlassButton({
   material,
   loading = false,
   disabled = false,
-  forceDark = false,
   flex = false,
   style,
 }: Props) {
   const colors = useAppColors()
-  const color = forceDark ? '#FAFAFA' : colors.fg
 
   return (
     <View
       style={[
-        { borderRadius: 16, overflow: 'hidden' },
+        { borderRadius: radii.md, overflow: 'hidden' },
         flex && { flex: 1 },
         style,
       ]}
     >
-      <GlassSurface
-        interactive
-        forceDark={forceDark}
-        style={{ borderRadius: 16 }}
-      >
+      <Surface style={{ borderRadius: radii.md }}>
         <Pressable
           onPress={onPress}
           disabled={disabled || loading}
@@ -68,17 +61,22 @@ export function GlassButton({
           }}
         >
           {loading ? (
-            <ActivityIndicator color={color} />
+            <ActivityIndicator color={colors.fg} />
           ) : (
             <>
               {sf && material ? (
-                <AppIcon sf={sf} material={material} size={18} color={color} />
+                <AppIcon
+                  sf={sf}
+                  material={material}
+                  size={18}
+                  color={colors.fg}
+                />
               ) : null}
               <Text
                 style={{
                   fontFamily: fonts.semibold,
                   fontSize: 14,
-                  color,
+                  color: colors.fg,
                 }}
               >
                 {label}
@@ -86,7 +84,7 @@ export function GlassButton({
             </>
           )}
         </Pressable>
-      </GlassSurface>
+      </Surface>
     </View>
   )
 }

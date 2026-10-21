@@ -1,33 +1,29 @@
 import * as Haptics from 'expo-haptics'
+import * as Linking from 'expo-linking'
+import * as Location from 'expo-location'
 import * as WebBrowser from 'expo-web-browser'
-import { useEffect, useState, type ReactNode } from 'react'
-import {
-  Pressable,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { AppIcon } from '@/components/AppIcon'
 import { SegmentedControl } from '@/components/SegmentedControl'
-import { StampPreview } from '@/components/StampPreview'
+import { Toggle } from '@/components/Toggle'
 import { useToast } from '@/components/Toast'
 import { appVersionLabel, privacyPolicyUrl } from '@/lib/config'
 import { fonts } from '@/lib/fonts'
+import { useOnAppActive } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
-import { TAB_BAR_CLEARANCE } from '@/lib/layout'
+import { SCREEN_PAD, tabScrollBottomPad } from '@/lib/layout'
+import { ensureForegroundLocationPermission } from '@/lib/location'
 import { useStampSettings } from '@/lib/settings-context'
-import { parseCustomLines } from '@/lib/stamp'
-import { useAppColors } from '@/lib/theme'
+import { formatStampDateTime, parseCustomLines } from '@/lib/stamp'
+import { radii, useAppColors } from '@/lib/theme'
 import type {
   DateTimeFormat,
   StampFontSize,
   StampOpacityStep,
 } from '@/lib/types'
-
-const SCREEN_PAD = 20
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
@@ -38,17 +34,33 @@ export default function SettingsScreen() {
   const [customDraft, setCustomDraft] = useState(
     settings.customLines.join('\n')
   )
+  const [locationGranted, setLocationGranted] = useState(false)
+  const [locationCanAsk, setLocationCanAsk] = useState(true)
   const versionLabel = appVersionLabel()
+
+  const refreshLocationPermission = useCallback(async () => {
+    const result = await Location.getForegroundPermissionsAsync()
+    setLocationGranted(result.granted)
+    setLocationCanAsk(result.granted || result.canAskAgain)
+  }, [])
 
   useEffect(() => {
     if (ready) setCustomDraft(settings.customLines.join('\n'))
   }, [ready])
 
+  useEffect(() => {
+    void refreshLocationPermission()
+  }, [refreshLocationPermission])
+
+  useOnAppActive(() => {
+    void refreshLocationPermission()
+  })
+
   const bump = async <K extends keyof typeof settings>(
     key: K,
     value: (typeof settings)[K]
   ) => {
-    await Haptics.selectionAsync()
+    if (typeof value !== 'boolean') await Haptics.selectionAsync()
     await updateSettings({ [key]: value } as Partial<typeof settings>)
   }
 
@@ -56,6 +68,11 @@ export default function SettingsScreen() {
     setCustomDraft(value)
     await updateSettings({ customLines: parseCustomLines(value) })
   }
+
+  const dateFormatExample = formatStampDateTime(
+    new Date(),
+    settings.dateTimeFormat
+  )
 
   return (
     <View
@@ -78,20 +95,67 @@ export default function SettingsScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + TAB_BAR_CLEARANCE + 28,
+          paddingBottom: tabScrollBottomPad(insets.bottom),
           paddingHorizontal: SCREEN_PAD,
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <StampPreview
-          settings={{
-            ...settings,
-            customLines: parseCustomLines(customDraft, { dropEmpty: true }),
-          }}
-        />
+        <FieldLabel color={colors.muted}>
+          {copy.settings.permissions}
+        </FieldLabel>
+        <CardGroup>
+          <Pressable
+            onPress={() => {
+              void (async () => {
+                await Haptics.selectionAsync()
+                if (locationGranted) return
+                if (locationCanAsk) {
+                  await ensureForegroundLocationPermission()
+                  await refreshLocationPermission()
+                  return
+                }
+                await Linking.openSettings()
+              })()
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={copy.settings.locationPermission}
+            style={{
+              minHeight: 52,
+              paddingHorizontal: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontFamily: fonts.regular,
+                fontSize: 15,
+                color: colors.fg,
+              }}
+            >
+              {copy.settings.locationPermission}
+            </Text>
+            <Text
+              style={{
+                fontFamily: fonts.semibold,
+                fontSize: 13,
+                color: colors.muted,
+              }}
+            >
+              {locationGranted
+                ? copy.settings.locationAllowed
+                : locationCanAsk
+                  ? copy.settings.locationAsk
+                  : copy.settings.locationOpenSettings}
+            </Text>
+          </Pressable>
+        </CardGroup>
 
         <FieldLabel color={colors.muted}>{copy.settings.general}</FieldLabel>
-        <ToggleGroup>
+        <CardGroup>
           <ToggleRow
             label={copy.settings.dateTime}
             value={settings.showDateTime}
@@ -123,7 +187,7 @@ export default function SettingsScreen() {
             onChange={value => bump('showHeading', value)}
             isLast
           />
-        </ToggleGroup>
+        </CardGroup>
 
         <FieldLabel color={colors.muted}>{copy.settings.customText}</FieldLabel>
         <TextInput
@@ -138,7 +202,7 @@ export default function SettingsScreen() {
           underlineColorAndroid="transparent"
           style={{
             minHeight: 100,
-            borderRadius: 14,
+            borderRadius: radii.md,
             borderWidth: 1,
             borderColor: colors.border,
             backgroundColor: colors.surface,
@@ -162,6 +226,17 @@ export default function SettingsScreen() {
               { value: 'iso', label: copy.settings.formatIso },
             ]}
           />
+          <Text
+            style={{
+              fontFamily: fonts.regular,
+              fontSize: 13,
+              lineHeight: 18,
+              color: colors.muted,
+              marginTop: 8,
+            }}
+          >
+            {dateFormatExample}
+          </Text>
         </View>
 
         <FieldLabel color={colors.muted}>{copy.settings.fontSize}</FieldLabel>
@@ -192,31 +267,19 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <Text
-          style={{
-            fontFamily: fonts.regular,
-            fontSize: 14,
-            lineHeight: 20,
-            color: colors.muted,
-            marginBottom: 28,
-          }}
-        >
-          {copy.settings.albumBody}
-        </Text>
-
         <FieldLabel color={colors.muted}>{copy.settings.about}</FieldLabel>
-        <Group>
-          <InfoCard
+        <CardGroup>
+          <InfoRow
             title={copy.settings.versionLabel}
             body={versionLabel}
             colors={colors}
           />
-          <InfoCard
+          <InfoRow
             title={copy.settings.disclaimerTitle}
             body={copy.settings.disclaimerBody}
             colors={colors}
           />
-          <InfoCard
+          <InfoRow
             title={copy.settings.privacyTitle}
             body={copy.settings.privacyBody}
             colors={colors}
@@ -239,14 +302,16 @@ export default function SettingsScreen() {
             accessibilityLabel={copy.settings.privacyLink}
             style={{
               minHeight: 52,
-              borderRadius: 14,
-              backgroundColor: colors.surface,
               paddingHorizontal: 14,
-              justifyContent: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
             }}
           >
             <Text
               style={{
+                flex: 1,
                 fontFamily: fonts.semibold,
                 fontSize: 15,
                 color: colors.fg,
@@ -254,14 +319,20 @@ export default function SettingsScreen() {
             >
               {copy.settings.privacyLink}
             </Text>
+            <AppIcon
+              sf="arrow.up.right"
+              material="open-in-new"
+              size={18}
+              color={colors.muted}
+            />
           </Pressable>
-        </Group>
+        </CardGroup>
       </ScrollView>
     </View>
   )
 }
 
-function InfoCard({
+function InfoRow({
   title,
   body,
   colors,
@@ -273,11 +344,11 @@ function InfoCard({
   return (
     <View
       style={{
-        borderRadius: 14,
-        backgroundColor: colors.surface,
         paddingHorizontal: 14,
         paddingVertical: 12,
         gap: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
       }}
     >
       <Text
@@ -303,18 +374,14 @@ function InfoCard({
   )
 }
 
-function Group({ children }: { children: ReactNode }) {
-  return <View style={{ marginBottom: 20, gap: 8 }}>{children}</View>
-}
-
-function ToggleGroup({ children }: { children: ReactNode }) {
+function CardGroup({ children }: { children: ReactNode }) {
   const colors = useAppColors()
 
   return (
     <View
       style={{
         marginBottom: 20,
-        borderRadius: 14,
+        borderRadius: radii.md,
         backgroundColor: colors.surface,
         overflow: 'hidden',
       }}
@@ -371,19 +438,7 @@ function ToggleRow({
       >
         {label}
       </Text>
-      <View style={{ justifyContent: 'center', height: 52 }}>
-        <Switch
-          value={value}
-          onValueChange={onChange}
-          trackColor={{
-            false: colors.borderStrong,
-            true: colors.trackActive,
-          }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor={colors.borderStrong}
-          style={{ transform: [{ scaleX: 0.92 }, { scaleY: 0.92 }] }}
-        />
-      </View>
+      <Toggle value={value} onValueChange={onChange} />
     </View>
   )
 }

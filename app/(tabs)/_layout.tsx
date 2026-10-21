@@ -1,12 +1,12 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
-import { DynamicColorIOS, Platform, useColorScheme } from 'react-native'
+import { DynamicColorIOS, Platform } from 'react-native'
 
 import { t } from '@/lib/i18n'
-import { palette } from '@/lib/theme'
+import { palette, useAppColorScheme } from '@/lib/theme'
 
 export default function TabLayout() {
   const copy = t()
-  const scheme = useColorScheme()
+  const scheme = useAppColorScheme()
   const tint =
     Platform.OS === 'ios'
       ? DynamicColorIOS({

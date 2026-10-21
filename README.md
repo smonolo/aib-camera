@@ -44,7 +44,7 @@ npm run smoke-checklist   # prints the device QA checklist
 | Path          | Role                                                                |
 | ------------- | ------------------------------------------------------------------- |
 | `app/`        | Expo Router screens (tabs: camera, gallery, settings; review modal) |
-| `components/` | UI (HUD, stamp preview, permissions, glass controls)                |
+| `components/` | UI (HUD, permissions, buttons, surfaces)                            |
 | `lib/`        | Geo, stamp, composite, storage, i18n, settings, media               |
 | `assets/`     | Icons and splash                                                    |
 

@@ -5,17 +5,16 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Alert, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { GlassButton } from '@/components/GlassButton'
+import { Button } from '@/components/Button'
 import { IconButton } from '@/components/IconButton'
 import { errorMessage, useToast } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
+import { SCREEN_PAD_NARROW } from '@/lib/layout'
 import { sharePhoto } from '@/lib/media'
 import { getCapture, removeCapture } from '@/lib/storage'
-import { useAppColors } from '@/lib/theme'
+import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
-
-const SCREEN_PAD = 16
 
 export default function PhotoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -108,7 +107,7 @@ export default function PhotoDetailScreen() {
     >
       <View
         style={{
-          paddingHorizontal: SCREEN_PAD,
+          paddingHorizontal: SCREEN_PAD_NARROW,
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -133,12 +132,16 @@ export default function PhotoDetailScreen() {
       </View>
 
       <View
-        style={{ flex: 1, paddingHorizontal: SCREEN_PAD, marginBottom: 12 }}
+        style={{
+          flex: 1,
+          paddingHorizontal: SCREEN_PAD_NARROW,
+          marginBottom: 12,
+        }}
       >
         <View
           style={{
             flex: 1,
-            borderRadius: 16,
+            borderRadius: radii.md,
             overflow: 'hidden',
             backgroundColor: colors.surface,
           }}
@@ -153,11 +156,11 @@ export default function PhotoDetailScreen() {
 
       <View
         style={{
-          paddingHorizontal: SCREEN_PAD,
+          paddingHorizontal: SCREEN_PAD_NARROW,
           paddingBottom: insets.bottom + 16,
         }}
       >
-        <GlassButton
+        <Button
           label={copy.photos.share}
           sf="square.and.arrow.up"
           material="ios-share"

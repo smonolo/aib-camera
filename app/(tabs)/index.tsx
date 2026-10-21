@@ -2,14 +2,7 @@ import { CameraView, type FlashMode } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
 import { useKeepAwake } from 'expo-keep-awake'
 import { router } from 'expo-router'
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Platform,
@@ -29,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
 import { CameraHud } from '@/components/CameraHud'
-import { GlassSurface } from '@/components/GlassSurface'
+
 import { PermissionGate } from '@/components/PermissionGate'
 import { errorMessage, useToast } from '@/components/Toast'
 import { ZoomControls } from '@/components/ZoomControls'
@@ -42,12 +35,13 @@ import {
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
-import { TAB_BAR_CLEARANCE } from '@/lib/layout'
+import { cameraBottomChrome } from '@/lib/layout'
 import { captureGeoSnapshot } from '@/lib/location'
 import { saveToAibAlbum } from '@/lib/media'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
 import { addCapture } from '@/lib/storage'
+import { cameraOverlay, radii } from '@/lib/theme'
 import { getSharedGeoSnapshot } from '@/lib/use-live-geo'
 import type { GeoSnapshot } from '@/lib/types'
 
@@ -152,7 +146,6 @@ function CameraExperience() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
 
     try {
-      // Prefer live HUD geo so the shutter never waits on GPS/geocode.
       const snap = await resolveCaptureGeo()
 
       const photo = await cameraRef.current.takePictureAsync({
@@ -199,7 +192,6 @@ function CameraExperience() {
         stampConfigSnapshot: settings,
       })
 
-      // System album is best-effort; never block the next shutter on it.
       void saveToAibAlbum(stampedUri).catch(error => {
         console.warn(error)
       })
@@ -216,7 +208,7 @@ function CameraExperience() {
     }
   }
 
-  const bottomChrome = insets.bottom + TAB_BAR_CLEARANCE
+  const bottomChrome = cameraBottomChrome(insets.bottom)
   const flashOn = flash === 'on'
   const flashFg = flashOn ? '#171717' : '#FAFAFA'
 
@@ -260,39 +252,37 @@ function CameraExperience() {
           className="absolute left-0 right-0 top-0 flex-row items-start justify-between px-4"
           style={{ paddingTop: insets.top + 10 }}
         >
-          <View
+          <Pressable
+            onPress={toggleFlash}
+            accessibilityLabel={
+              flashOn ? copy.camera.flashOn : copy.camera.flashOff
+            }
             style={{
-              borderRadius: 999,
-              overflow: 'hidden',
-              backgroundColor: flashOn ? '#FACC15' : 'transparent',
+              height: 40,
+              borderRadius: radii.full,
+              paddingHorizontal: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: flashOn ? '#FACC15' : cameraOverlay.fill,
             }}
           >
-            <FlashChipShell flashOn={flashOn}>
-              <Pressable
-                onPress={toggleFlash}
-                className="h-11 flex-row items-center gap-2 px-3.5"
-                accessibilityLabel={
-                  flashOn ? copy.camera.flashOn : copy.camera.flashOff
-                }
-              >
-                <AppIcon
-                  sf={flashOn ? 'bolt.fill' : 'bolt.slash.fill'}
-                  material={flashOn ? 'flash-on' : 'flash-off'}
-                  size={18}
-                  color={flashFg}
-                />
-                <Text
-                  style={{
-                    fontFamily: fonts.semibold,
-                    color: flashFg,
-                    fontSize: 13,
-                  }}
-                >
-                  {copy.camera.flash}
-                </Text>
-              </Pressable>
-            </FlashChipShell>
-          </View>
+            <AppIcon
+              sf={flashOn ? 'bolt.fill' : 'bolt.slash.fill'}
+              material={flashOn ? 'flash-on' : 'flash-off'}
+              size={18}
+              color={flashFg}
+            />
+            <Text
+              style={{
+                fontFamily: fonts.semibold,
+                color: flashFg,
+                fontSize: 13,
+              }}
+            >
+              {copy.camera.flash}
+            </Text>
+          </Pressable>
 
           <CameraHud />
         </View>
@@ -316,7 +306,7 @@ function CameraExperience() {
             style={{
               width: 74,
               height: 74,
-              borderRadius: 37,
+              borderRadius: radii.full,
               borderWidth: 4,
               borderColor: 'rgba(255,255,255,0.85)',
               alignItems: 'center',
@@ -328,7 +318,7 @@ function CameraExperience() {
               style={{
                 width: 60,
                 height: 60,
-                borderRadius: 30,
+                borderRadius: radii.full,
                 backgroundColor: '#FFFFFF',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -343,7 +333,6 @@ function CameraExperience() {
   )
 }
 
-/** Instant stamp geo: use live fix when available; otherwise a short GPS attempt. */
 async function resolveCaptureGeo(): Promise<GeoSnapshot> {
   const live = getSharedGeoSnapshot()
   const takenAt = new Date()
@@ -356,19 +345,4 @@ async function resolveCaptureGeo(): Promise<GeoSnapshot> {
     headingHint: live.heading,
     positionTimeoutMs: 1500,
   })
-}
-
-function FlashChipShell({
-  flashOn,
-  children,
-}: {
-  flashOn: boolean
-  children: ReactNode
-}) {
-  if (flashOn) return <>{children}</>
-  return (
-    <GlassSurface interactive forceDark style={{ borderRadius: 999 }}>
-      {children}
-    </GlassSurface>
-  )
 }

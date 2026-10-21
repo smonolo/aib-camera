@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics'
 import { Pressable, Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
-import { useAppColors } from '@/lib/theme'
+import { radii, useAppColors } from '@/lib/theme'
 
 type Option<T extends string | number> = {
   value: T
@@ -27,7 +27,7 @@ export function SegmentedControl<T extends string | number>({
       style={{
         flexDirection: 'row',
         backgroundColor: colors.track,
-        borderRadius: 12,
+        borderRadius: radii.sm,
         padding: 3,
         gap: 2,
       }}
@@ -44,7 +44,7 @@ export function SegmentedControl<T extends string | number>({
             style={{
               flex: 1,
               minHeight: 36,
-              borderRadius: 10,
+              borderRadius: radii.sm,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: active ? colors.fg : 'transparent',

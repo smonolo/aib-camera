@@ -3,9 +3,36 @@ import {
   DefaultTheme,
   type Theme,
 } from 'expo-router/react-navigation'
-import { useColorScheme } from 'react-native'
+import { useEffect, useState } from 'react'
+import {
+  Appearance,
+  useColorScheme as useSystemColorScheme,
+} from 'react-native'
 
 import { fonts } from './fonts'
+
+export type AppColorScheme = 'light' | 'dark'
+
+export function useAppColorScheme(): AppColorScheme {
+  const system = useSystemColorScheme()
+  const [scheme, setScheme] = useState<AppColorScheme>(() =>
+    resolveScheme(Appearance.getColorScheme() ?? system)
+  )
+
+  useEffect(() => {
+    setScheme(resolveScheme(Appearance.getColorScheme() ?? system))
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      setScheme(resolveScheme(colorScheme))
+    })
+    return () => sub.remove()
+  }, [system])
+
+  return scheme
+}
+
+function resolveScheme(value: string | null | undefined): AppColorScheme {
+  return value === 'dark' ? 'dark' : 'light'
+}
 
 export const palette = {
   light: {
@@ -15,7 +42,6 @@ export const palette = {
     fg: '#171717',
     fgInverse: '#FAFAFA',
     muted: '#525252',
-    mutedSoft: '#A3A3A3',
     border: '#E5E5E5',
     borderStrong: '#D4D4D4',
     track: '#E5E5E5',
@@ -23,7 +49,6 @@ export const palette = {
     trackIdle: '#525252',
     placeholder: '#A3A3A3',
     selection: '#525252',
-    grabber: '#D4D4D4',
   },
   dark: {
     canvas: '#111111',
@@ -32,7 +57,6 @@ export const palette = {
     fg: '#FAFAFA',
     fgInverse: '#171717',
     muted: '#A3A3A3',
-    mutedSoft: '#737373',
     border: '#2A2A2A',
     borderStrong: '#525252',
     track: '#262626',
@@ -40,8 +64,18 @@ export const palette = {
     trackIdle: '#D4D4D4',
     placeholder: '#737373',
     selection: '#A3A3A3',
-    grabber: '#525252',
   },
+} as const
+
+export const radii = {
+  sm: 12,
+  md: 16,
+  full: 999,
+} as const
+
+export const cameraOverlay = {
+  fill: 'rgba(0,0,0,0.42)',
+  text: 'rgba(255,255,255,0.92)',
 } as const
 
 export type AppColors = {
@@ -49,12 +83,12 @@ export type AppColors = {
 }
 
 export function useAppColors(): AppColors {
-  const scheme = useColorScheme()
+  const scheme = useAppColorScheme()
   return scheme === 'dark' ? palette.dark : palette.light
 }
 
 export function useIsDark(): boolean {
-  return useColorScheme() === 'dark'
+  return useAppColorScheme() === 'dark'
 }
 
 const lightTheme: Theme = {

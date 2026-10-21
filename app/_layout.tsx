@@ -11,15 +11,21 @@ import { Stack } from 'expo-router'
 import { ThemeProvider } from 'expo-router/react-navigation'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
+import * as SystemUI from 'expo-system-ui'
 import { useEffect } from 'react'
-import { Text, TextInput, useColorScheme, View } from 'react-native'
+import { Text, TextInput, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
 
 import { ToastProvider } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { SettingsProvider } from '@/lib/settings-context'
-import { navigationTheme, useAppColors } from '@/lib/theme'
+import {
+  navigationTheme,
+  palette,
+  useAppColorScheme,
+  useAppColors,
+} from '@/lib/theme'
 
 export { ErrorBoundary } from 'expo-router'
 
@@ -44,7 +50,7 @@ function applyDefaultFont() {
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
+  const colorScheme = useAppColorScheme()
   const colors = useAppColors()
   const [fontsReady, error] = useFonts({
     Geist_400Regular,
@@ -62,6 +68,12 @@ export default function RootLayout() {
     applyDefaultFont()
     void SplashScreen.hideAsync()
   }, [fontsReady])
+
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(
+      colorScheme === 'dark' ? palette.dark.canvas : palette.light.canvas
+    )
+  }, [colorScheme])
 
   if (!fontsReady) {
     return <View style={{ flex: 1, backgroundColor: colors.canvas }} />

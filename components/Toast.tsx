@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
 import { fonts } from '@/lib/fonts'
-import { useAppColors, useIsDark } from '@/lib/theme'
+import { radii, useAppColors, useIsDark } from '@/lib/theme'
 
 type ToastTone = 'error' | 'success' | 'info'
 
@@ -186,7 +186,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <Pressable onPress={dismiss}>
                   <View
                     style={{
-                      borderRadius: 16,
+                      borderRadius: radii.md,
                       backgroundColor: colors.surface,
                       borderWidth: 1,
                       borderColor: colors.border,

@@ -19,14 +19,13 @@ import { IconButton } from '@/components/IconButton'
 import { errorMessage, useToast } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { getLocale, t } from '@/lib/i18n'
-import { TAB_BAR_CLEARANCE } from '@/lib/layout'
+import { SCREEN_PAD_NARROW, tabScrollBottomPad } from '@/lib/layout'
 import { sharePhotos } from '@/lib/media'
 import { formatGalleryDayLabel, galleryDayKey } from '@/lib/stamp'
 import { loadCaptures, removeCaptures } from '@/lib/storage'
-import { useAppColors } from '@/lib/theme'
+import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
-const SCREEN_PAD = 2
 const GAP = 2
 const COLUMNS = 3
 
@@ -53,7 +52,7 @@ export default function PhotosScreen() {
   const [busy, setBusy] = useState<'share' | 'delete' | null>(null)
 
   const tileSize =
-    (windowWidth - SCREEN_PAD * 2 - GAP * (COLUMNS - 1)) / COLUMNS
+    (windowWidth - SCREEN_PAD_NARROW * 2 - GAP * (COLUMNS - 1)) / COLUMNS
 
   const refresh = useCallback(async () => {
     setCaptures(await loadCaptures())
@@ -62,6 +61,10 @@ export default function PhotosScreen() {
   useFocusEffect(
     useCallback(() => {
       void refresh()
+      return () => {
+        setSelecting(false)
+        setSelectedIds(new Set())
+      }
     }, [refresh])
   )
 
@@ -197,7 +200,7 @@ export default function PhotosScreen() {
         style={{
           flexDirection: 'row',
           gap: GAP,
-          paddingHorizontal: SCREEN_PAD,
+          paddingHorizontal: SCREEN_PAD_NARROW,
           marginBottom: GAP,
         }}
       >
@@ -243,7 +246,7 @@ export default function PhotosScreen() {
           fontFamily: fonts.semibold,
           fontSize: 15,
           color: colors.fg,
-          paddingHorizontal: 16,
+          paddingHorizontal: SCREEN_PAD_NARROW,
           paddingTop: 14,
           paddingBottom: 8,
         }}
@@ -354,7 +357,7 @@ export default function PhotosScreen() {
         windowSize={9}
         removeClippedSubviews
         contentContainerStyle={{
-          paddingBottom: insets.bottom + TAB_BAR_CLEARANCE + 16,
+          paddingBottom: tabScrollBottomPad(insets.bottom),
           flexGrow: 1,
         }}
         ListEmptyComponent={<GalleryEmpty />}
@@ -411,7 +414,7 @@ const GalleryTile = memo(function GalleryTile({
             right: 6,
             width: 22,
             height: 22,
-            borderRadius: 11,
+            borderRadius: radii.full,
             borderWidth: 2,
             borderColor: '#FFFFFF',
             backgroundColor: selected ? '#007AFF' : 'rgba(0,0,0,0.25)',
@@ -449,7 +452,7 @@ function GalleryEmpty() {
         style={{
           width: 56,
           height: 56,
-          borderRadius: 16,
+          borderRadius: radii.md,
           marginBottom: 16,
           alignItems: 'center',
           justifyContent: 'center',

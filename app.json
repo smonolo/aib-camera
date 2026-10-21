@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "dev.smnl.aibcamera",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "infoPlist": {
         "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione per attività di antincendio boschivo.",
         "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto.",
@@ -45,6 +45,7 @@
     "android": {
       "package": "dev.smnl.aibcamera",
       "versionCode": 1,
+      "userInterfaceStyle": "automatic",
       "adaptiveIcon": {
         "backgroundColor": "#F5F5F5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -114,6 +115,7 @@
       "expo-image",
       "expo-font",
       "expo-status-bar",
+      "expo-system-ui",
       "expo-web-browser"
     ],
     "experiments": {

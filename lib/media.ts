@@ -10,7 +10,6 @@ import { Platform, Share } from 'react-native'
 import { t } from './i18n'
 
 const ALBUM_NAME = 'AIB Camera'
-/** Save-only: no full library browse. Keep plugin `granularPermissions` in sync. */
 const PHOTO_GRANULAR = ['photo'] as const
 
 async function ensureMediaLibraryPermission(): Promise<boolean> {
@@ -33,9 +32,7 @@ export async function saveToAibAlbum(uri: string): Promise<void> {
       await Asset.create(uri, existing)
       return
     }
-  } catch {
-    // Write-only grants may not allow album lookup; fall through to create.
-  }
+  } catch {}
 
   const asset = await Asset.create(uri)
   await Album.create(ALBUM_NAME, [asset], false)
@@ -69,13 +66,11 @@ export async function sharePhotos(uris: string[]): Promise<void> {
     return
   }
 
-  // iOS Share supports multiple file URLs in one sheet (not in RN typings).
   if (Platform.OS === 'ios') {
     await Share.share({ urls: unique } as never)
     return
   }
 
-  // Android RN Share has no multi-file API; open one sheet per photo.
   for (const uri of unique) {
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(uri, {

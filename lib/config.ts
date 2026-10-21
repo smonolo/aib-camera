@@ -9,7 +9,6 @@ function extra(): Extra {
   return (Constants.expoConfig?.extra ?? {}) as Extra
 }
 
-/** Hosted privacy policy for store listings. Keep in sync with PRIVACY.md. */
 export function privacyPolicyUrl(): string {
   return extra().privacyPolicyUrl ?? 'https://smnl.dev/aib-camera/privacy'
 }
