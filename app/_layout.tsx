@@ -19,7 +19,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
 
 import { ToastProvider } from '@/components/Toast'
-import { fonts } from '@/lib/fonts'
+import { fonts, setCustomFontsReady } from '@/lib/fonts'
+import { warn } from '@/lib/soft'
 import { SettingsProvider } from '@/lib/settings-context'
 import {
   navigationTheme,
@@ -30,7 +31,7 @@ import {
 
 export { ErrorBoundary } from 'expo-router'
 
-SplashScreen.preventAutoHideAsync()
+void SplashScreen.preventAutoHideAsync().catch(() => {})
 
 function applyDefaultFont() {
   const textDefaults =
@@ -53,35 +54,46 @@ function applyDefaultFont() {
 export default function RootLayout() {
   const colorScheme = useAppColorScheme()
   const colors = useAppColors()
-  const [fontsReady, error] = useFonts({
+  const [fontsReady, fontError] = useFonts({
     Geist_400Regular,
     Geist_500Medium,
     Geist_600SemiBold,
     Geist_700Bold,
   })
 
-  useEffect(() => {
-    if (error) throw error
-  }, [error])
+  const uiReady = fontsReady || fontError != null
 
   useEffect(() => {
-    if (!fontsReady) return
-    applyDefaultFont()
-    void SplashScreen.hideAsync()
-  }, [fontsReady])
+    if (fontsReady) {
+      setCustomFontsReady(true)
+      return
+    }
+    if (fontError) {
+      setCustomFontsReady(false)
+      warn('Custom fonts unavailable; using system fonts', fontError)
+    }
+  }, [fontsReady, fontError])
+
+  useEffect(() => {
+    if (!uiReady) return
+    if (fontsReady) applyDefaultFont()
+    void SplashScreen.hideAsync().catch(() => {})
+  }, [uiReady, fontsReady])
 
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(
       colorScheme === 'dark' ? palette.dark.canvas : palette.light.canvas
-    )
+    ).catch(() => {})
   }, [colorScheme])
 
   useEffect(() => {
     if (Platform.OS !== 'android') return
-    NavigationBar.setStyle(colorScheme === 'dark' ? 'light' : 'dark')
+    try {
+      NavigationBar.setStyle(colorScheme === 'dark' ? 'light' : 'dark')
+    } catch {}
   }, [colorScheme])
 
-  if (!fontsReady) {
+  if (!uiReady) {
     return <View style={{ flex: 1, backgroundColor: colors.canvas }} />
   }
 
@@ -122,6 +134,13 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="audit-log"
+                options={{
+                  headerShown: false,
+                  presentation: 'card',
+                }}
+              />
+              <Stack.Screen
+                name="configuration"
                 options={{
                   headerShown: false,
                   presentation: 'card',

@@ -12,10 +12,10 @@ Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.js
 
 ## Features
 
-- Live stamp overlay on the camera (same fields, font size, and opacity as the burned-in stamp)
-- Burn-in stamp via Skia (info block top, custom text bottom)
+- Letterboxed camera preview with black chrome; flash top-left, stamp configuration top-right, zoom bottom-right, shutter center; live stamp overlay (same fields, font size, and opacity as the burned-in stamp)
+- Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
-- Per-capture UUID plus an on-device **capture log** (Settings) that keeps ID, date, and coords even after gallery deletes
+- Per-install UUID plus an on-device **capture log** (capture ID, date, coords) that survives gallery deletes; Settings → About shows version and install ID (tap either to copy); export the full log as CSV (includes `install_id`) via the share sheet
 - Settings toggles for datetime, coordinates, place, accuracy, altitude, heading
 - Locality-first place labels + persistent geocode cache for offline reuse
 - In-app gallery (source of truth) + optional Photos album «AIB Camera»
@@ -46,13 +46,13 @@ npm run smoke-checklist   # prints the device QA checklist
 
 ## Project layout
 
-| Path          | Role                                                                                      |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| `app/`        | Expo Router screens (tabs: camera, gallery, settings/*; `photo/[id]`; `audit-log`)        |
-| `components/` | UI (stamp overlay, permissions, buttons, surfaces)                                        |
-| `lib/`        | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config |
-| `tests/`      | jest-expo unit tests                                                                      |
-| `assets/`     | Icons and splash                                                                          |
+| Path             | Role                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `app/`           | Expo Router screens (tabs: camera, gallery, settings; root: `configuration`, `photo/[id]`, `audit-log`) |
+| `components/`    | UI (stamp overlay, permissions, buttons, surfaces)                                                      |
+| `lib/`           | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config               |
+| `tests/`         | jest-expo unit tests                                                                                    |
+| `assets/images/` | App icon, adaptive icon layers, splash, favicon                                                         |
 
 ## Emergency design notes
 
@@ -62,8 +62,25 @@ npm run smoke-checklist   # prints the device QA checklist
 - Save always persists to the in-app gallery; the system Photos album is best-effort.
 - Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.
 - EXIF write is best-effort (skipped if the native module is missing); stamp, gallery, and capture log still succeed.
-- The capture log is append-only locally and is not cleared when photos are deleted from the gallery.
+- The capture log is append-only locally and is not cleared when photos are deleted from the gallery; CSV export is offline via the system share sheet and includes the install ID.
+- Settings: tap **Version** or **Install ID** to copy the value; stamp configuration is only from the camera tune control.
 - Screen stays awake on the camera tab.
+- Camera preview sits in black chrome between top chrome and shutter (grows to fill leftover height); zoom chips show live magnification above 2× like the system Camera.
+
+## Device compatibility & fallbacks
+
+Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 57). Non-critical native features must never block capture:
+
+| Area                                | Fallback when unavailable                                 |
+| ----------------------------------- | --------------------------------------------------------- |
+| GPS / compass / geocode             | Stamp shows clear “unavailable” copy; shutter still fires |
+| Stamp compositing (Skia)            | Unstamped JPEG is kept in the in-app gallery              |
+| EXIF native module                  | Skipped; photo + gallery + capture log still succeed      |
+| Photos library                      | In-app gallery only                                       |
+| Custom Geist fonts                  | System typefaces                                          |
+| Haptics / clipboard / share helpers | Silent no-op or RN `Share` fallback                       |
+| Capture at full JPEG quality        | Retry at lower quality without shutter sound              |
+| AsyncStorage writes                 | In-memory state kept for the session; warn and continue   |
 
 ## Store release notes
 

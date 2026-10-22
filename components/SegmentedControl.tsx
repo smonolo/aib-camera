@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics'
+import * as Haptics from '@/lib/haptics'
 import { Pressable, Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'

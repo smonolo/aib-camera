@@ -13,11 +13,13 @@ export function SettingsSubscreenShell({
   title,
   backLabel,
   onBack,
+  headerRight,
   children,
 }: {
   title: string
   backLabel: string
   onBack: () => void
+  headerRight?: ReactNode
   children: ReactNode
 }) {
   const insets = useSafeAreaInsets()
@@ -68,7 +70,9 @@ export function SettingsSubscreenShell({
             {title}
           </Text>
         </View>
-        <View style={{ width: 40, height: 40 }} />
+        <View style={{ zIndex: 1, minWidth: 40, alignItems: 'flex-end' }}>
+          {headerRight ?? <View style={{ width: 40, height: 40 }} />}
+        </View>
       </View>
       {children}
     </View>
@@ -255,19 +259,20 @@ export function ToggleRow({
   )
 }
 
-export function InfoRow({ title, body }: { title: string; body: string }) {
+export function InfoRow({
+  title,
+  body,
+  onPress,
+  accessibilityLabel,
+}: {
+  title: string
+  body: string
+  onPress?: () => void
+  accessibilityLabel?: string
+}) {
   const colors = useAppColors()
-
-  return (
-    <View
-      style={{
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        gap: 4,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-      }}
-    >
+  const content = (
+    <>
       <Text
         style={{
           fontFamily: fonts.semibold,
@@ -284,9 +289,33 @@ export function InfoRow({ title, body }: { title: string; body: string }) {
           lineHeight: 18,
           color: colors.muted,
         }}
+        selectable={!onPress}
       >
         {body}
       </Text>
-    </View>
+    </>
   )
+
+  const style = {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  } as const
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? title}
+        style={style}
+      >
+        {content}
+      </Pressable>
+    )
+  }
+
+  return <View style={style}>{content}</View>
 }

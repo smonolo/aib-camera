@@ -5,6 +5,7 @@ import {
   appVersionLabel,
   newCaptureId,
   privacyPolicyUrl,
+  userGuideUrl,
 } from '@/lib/config'
 
 jest.mock('expo-constants', () => ({
@@ -12,7 +13,10 @@ jest.mock('expo-constants', () => ({
     version: '2.0.0',
     ios: { buildNumber: '12' },
     android: { versionCode: 7 },
-    extra: { privacyPolicyUrl: 'https://example.test/privacy' },
+    extra: {
+      privacyPolicyUrl: 'https://example.test/privacy',
+      userGuideUrl: 'https://example.test/guida',
+    },
   },
   nativeAppVersion: '2.0.0',
   nativeBuildVersion: '12',
@@ -38,6 +42,10 @@ describe('config', () => {
 
   it('reads the privacy policy URL from expo config', () => {
     expect(privacyPolicyUrl()).toBe('https://example.test/privacy')
+  })
+
+  it('reads the user guide URL from expo config', () => {
+    expect(userGuideUrl()).toBe('https://example.test/guida')
   })
 
   it('formats the iOS version label with build number', () => {

@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics'
+import * as Haptics from '@/lib/haptics'
 import { useEffect } from 'react'
 import { Pressable } from 'react-native'
 import Animated, {

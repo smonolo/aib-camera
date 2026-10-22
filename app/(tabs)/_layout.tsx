@@ -1,6 +1,7 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
 import { DynamicColorIOS, Platform } from 'react-native'
 
+import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { palette, useAppColorScheme } from '@/lib/theme'
 
@@ -34,6 +35,7 @@ export default function TabLayout() {
     <NativeTabs
       disableTransparentOnScrollEdge
       tintColor={tint}
+      labelStyle={{ fontFamily: fonts.medium }}
       {...(androidBar ?? {})}
     >
       <NativeTabs.Trigger name="index" accessibilityLabel={copy.tabs.camera}>

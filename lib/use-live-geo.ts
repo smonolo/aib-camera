@@ -2,25 +2,17 @@ import { useEffect, useState } from 'react'
 
 import {
   captureGeoSnapshot,
+  emptyGeoSnapshot,
   ensureForegroundLocationPermission,
   watchHeading,
   watchPosition,
 } from './location'
+import { warn } from './soft'
 import type { GeoSnapshot } from './types'
-
-const EMPTY_GEO: GeoSnapshot = {
-  lat: null,
-  lon: null,
-  accuracy: null,
-  altitude: null,
-  heading: null,
-  address: null,
-  takenAt: new Date(),
-}
 
 type Listener = (geo: GeoSnapshot) => void
 
-let sharedGeo: GeoSnapshot = EMPTY_GEO
+let sharedGeo: GeoSnapshot = emptyGeoSnapshot()
 let listeners = new Set<Listener>()
 let refCount = 0
 let positionSub: { remove: () => void } | null = null
@@ -40,33 +32,40 @@ function startShared() {
   let active = true
 
   void (async () => {
-    await ensureForegroundLocationPermission()
-    if (!active || generation !== startGeneration) return
-
-    const snap = await captureGeoSnapshot({
-      headingHint: sharedGeo.heading,
-      positionTimeoutMs: 5000,
-    })
-    if (!active || generation !== startGeneration) return
-    notify(snap)
-
-    positionSub = await watchPosition(update => {
+    try {
+      await ensureForegroundLocationPermission()
       if (!active || generation !== startGeneration) return
-      notify({
-        ...sharedGeo,
-        ...update,
-        takenAt: new Date(),
-      })
-    })
 
-    headingSub = await watchHeading(heading => {
-      if (!active || generation !== startGeneration) return
-      notify({
-        ...sharedGeo,
-        heading,
-        takenAt: sharedGeo.takenAt,
+      const snap = await captureGeoSnapshot({
+        headingHint: sharedGeo.heading,
+        positionTimeoutMs: 5000,
       })
-    })
+      if (!active || generation !== startGeneration) return
+      notify(snap)
+
+      positionSub = await watchPosition(update => {
+        if (!active || generation !== startGeneration) return
+        notify({
+          ...sharedGeo,
+          ...update,
+          takenAt: new Date(),
+        })
+      })
+
+      headingSub = await watchHeading(heading => {
+        if (!active || generation !== startGeneration) return
+        notify({
+          ...sharedGeo,
+          heading,
+          takenAt: sharedGeo.takenAt,
+        })
+      })
+    } catch (error) {
+      warn('Live geo start failed; continuing without GPS', error)
+      if (active && generation === startGeneration) {
+        notify(emptyGeoSnapshot())
+      }
+    }
   })()
 
   clock = setInterval(() => {

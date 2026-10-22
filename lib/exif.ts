@@ -2,6 +2,7 @@ import type { ExifTags } from '@lodev09/react-native-exify'
 import { TurboModuleRegistry } from 'react-native'
 
 import { APP_NAME, appVersionLabel } from './config'
+import { warn } from './soft'
 import { formatExifDateTime, ROME_TZ } from './time'
 import type { GeoSnapshot } from './types'
 
@@ -18,13 +19,13 @@ function loadExify(): ExifyModule | null {
   try {
     exifyCache = require('@lodev09/react-native-exify') as ExifyModule
   } catch (error) {
-    console.warn('EXIF native module unavailable', error)
+    warn('EXIF native module unavailable', error)
     exifyCache = null
   }
   return exifyCache
 }
 
-export type CaptureExifOptions = {
+type CaptureExifOptions = {
   captureId: string
   customLines?: string[]
 }
@@ -113,7 +114,7 @@ export async function writeCaptureExif(
     await Exify.write(uri, buildCaptureExifTags(geo, options))
     return true
   } catch (error) {
-    console.warn('EXIF write failed', error)
+    warn('EXIF write failed', error)
     return false
   }
 }

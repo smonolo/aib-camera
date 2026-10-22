@@ -6,6 +6,7 @@ export const APP_NAME = 'AIB Camera'
 
 type Extra = {
   privacyPolicyUrl?: string
+  userGuideUrl?: string
 }
 
 function extra(): Extra {
@@ -14,6 +15,10 @@ function extra(): Extra {
 
 export function privacyPolicyUrl(): string {
   return extra().privacyPolicyUrl ?? 'https://smnl.dev/aib-camera/privacy'
+}
+
+export function userGuideUrl(): string {
+  return extra().userGuideUrl ?? 'https://smnl.dev/aib-camera/guida'
 }
 
 export function appVersionLabel(): string {

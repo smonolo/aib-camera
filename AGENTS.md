@@ -10,8 +10,9 @@ This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** field
 - **Shutter must stay fast.** Prefer live HUD geo (`getSharedGeoSnapshot`) over waiting on a high-accuracy fix. Bound GPS/geocode/heading with short timeouts.
 - **In-app gallery is the source of truth for photos.** System album «AIB Camera» is best-effort; save must succeed even if media-library permission is denied.
 - **Gallery deletes also remove the system Photos copy** when an album asset id was stored; local JPEG cleanup is best-effort. Capture log entries always remain.
-- **Capture log is append-only.** Each shot gets a UUID written to EXIF when possible and stored in the local audit log; gallery deletes must not remove audit entries.
+- **Capture log is append-only.** Each shot gets a UUID written to EXIF when possible and stored in the local audit log; gallery deletes must not remove audit entries. CSV export (`lib/audit-csv.ts`) shares a local file via the system sheet — no upload. Each app install has a stable local UUID (`lib/install-id.ts`), shown in Settings (tap version or install ID to copy) and included as `install_id` on every CSV row.
 - **EXIF write is best-effort.** Missing native Exify (Expo Go / stale binary) must not fail capture; stamp + gallery + audit log still succeed.
+- **Graceful degradation on older / constrained devices.** Never crash the UI or block the shutter for fonts, haptics, clipboard, share helpers, Photos album, or storage write failures. Stamp composite failure keeps the unstamped JPEG (`lib/persist-photo.ts`). Soft-fail helpers: `lib/soft.ts`, `lib/haptics.ts`, `lib/share.ts`, `lib/clipboard.ts`, gated Exify. Android `minSdkVersion` 24 via `expo-build-properties`.
 - **Stamp timezone** is always `Europe/Rome`. Default locale copy is Italian (`lib/i18n`); keep IT and EN catalogs in sync.
 - **Do not** add cloud sync, auth, or regional dispatch integrations unless explicitly requested.
 
@@ -52,17 +53,19 @@ Run typecheck and unit tests (and lint when configured) before declaring any tas
 
 ## Key modules
 
-| Area                                      | Where                                                                                 |
-| ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| Geo snapshot, geocode cache, heading      | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                            |
-| Stamp lines / formatters                  | `lib/stamp.ts`                                                                        |
-| JPEG burn-in                              | `lib/composite.ts`                                                                    |
-| Capture finalize (stamp → EXIF → gallery) | `lib/capture.ts`                                                                      |
-| EXIF (post-stamp)                         | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                |
-| Capture UUID + gallery + audit log        | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`)                  |
-| System Photos save/delete + cleanup       | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                   |
-| Settings + persistence                    | `app/(tabs)/settings/` hub + permissions/appearance/about; `lib/settings-context.tsx` |
-| Permissions gate                          | `components/PermissionGate.tsx` (camera hard; location soft)                          |
+| Area                                      | Where                                                                                                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geo snapshot, geocode cache, heading      | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                                                                                                |
+| Stamp lines / formatters                  | `lib/stamp.ts`                                                                                                                                            |
+| JPEG burn-in                              | `lib/composite.ts` (Geist SemiBold via `STAMP_FONT_ASSET` in `lib/fonts.ts`)                                                                              |
+| Capture finalize (stamp → EXIF → gallery) | `lib/capture.ts`                                                                                                                                          |
+| EXIF (post-stamp)                         | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                                                                                    |
+| Capture UUID + gallery + audit log        | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`), `lib/install-id.ts`, `lib/audit-csv.ts` (CSV export)                                |
+| System Photos save/delete + cleanup       | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                                                                                       |
+| Settings + persistence                    | `app/(tabs)/settings/` (permissions + about on one screen); stamp configuration is root `app/configuration.tsx` (camera only); `lib/settings-context.tsx` |
+| Camera letterbox (preview + chrome bands) | `lib/layout.ts` (`cameraLetterboxLayout`); preview + stamp in `app/(tabs)/index.tsx` / `components/StampOverlay.tsx`                                      |
+| Permissions gate                          | `components/PermissionGate.tsx` (camera hard; location soft)                                                                                              |
+| App icon / splash                         | `assets/images/` (`icon.png`, adaptive layers, `splash-icon-light.png` / `splash-icon-dark.png`); brand red `#AF2525`, splash bg `#111111`                |
 
 ## Building with EAS
 
@@ -70,10 +73,18 @@ Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submi
 
 Docs: https://docs.expo.dev/eas/index.md
 
+## Docs & site sync (required on every product change)
+
+Whenever you change app behavior, UX, permissions, privacy, capture/stamp/gallery/settings, or release/build notes — **before declaring the task done** — update all user- and agent-facing docs that the change affects:
+
+1. **In-repo markdown** (this repo): `README.md`, `PRIVACY.md`, `AGENTS.md`, and any other `*.md` that describes the changed behavior.
+2. **Marketing / public site** (sibling monorepo, if present locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guida.vue`, `privacy.vue`), `content/aib-camera/` (e.g. `guida-operativa.md`), `layouts/aib-camera.vue`, and related CSS/assets under that app. Skip the site only if that path is missing; say so briefly when skipping.
+
+Keep copy consistent across IT/EN where both exist, and preserve the **unofficial volunteer** framing (no institutional affiliation). Do not leave docs or the site describing old behavior.
+
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code (including Exify), the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
-- Keep markdown docs (`README.md`, `PRIVACY.md`, `AGENTS.md`) aligned when product behavior changes.
 - Do not commit secrets. Do not create git commits unless the user asks.

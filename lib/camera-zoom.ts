@@ -10,7 +10,7 @@ export type ZoomOption = {
   zoom: number
 }
 
-export type ResolvedZoom = {
+type ResolvedZoom = {
   option: ZoomOption
   zoom: number
   factor: number
@@ -36,26 +36,28 @@ export function formatZoomLabel(
   return active ? `${base}×` : base
 }
 
-export function formatLiveZoomFactor(
-  factor: number,
+export function snapMajorZoomFactor(factor: number): number {
+  if (!Number.isFinite(factor) || factor <= 0) return 1
+  if (factor < 0.75) return 0.5
+  return Math.max(1, Math.round(factor))
+}
+
+export function formatZoomChipLabel(
+  option: ZoomOption,
+  selectedKey: string | null,
+  liveFactor: number,
   useComma: boolean
 ): string {
-  if (!Number.isFinite(factor) || factor <= 0) {
-    return formatZoomLabel(1, useComma, true)
+  const active = option.key === selectedKey
+  if (
+    active &&
+    option.kind === 'tele' &&
+    Number.isFinite(liveFactor) &&
+    liveFactor > option.factor + 1e-9
+  ) {
+    return formatZoomLabel(snapMajorZoomFactor(liveFactor), useComma, true)
   }
-
-  const rounded = Math.round(factor * 10) / 10
-  if (Math.abs(rounded - 0.5) < 0.05) {
-    return formatZoomLabel(0.5, useComma, true)
-  }
-  if (Number.isInteger(rounded)) {
-    return formatZoomLabel(rounded, useComma, true)
-  }
-
-  const text = useComma
-    ? rounded.toFixed(1).replace('.', ',')
-    : rounded.toFixed(1)
-  return `${text}×`
+  return formatZoomLabel(option.factor, useComma, active)
 }
 
 function normalizedZoomForFactor(
@@ -250,57 +252,11 @@ export function resolveAbsoluteFactor(
   return { option, zoom, factor }
 }
 
-export const PINCH_FACTOR_EXPO = 1
-
 export function factorFromPinchScale(
   startFactor: number,
-  scale: number,
-  expo = PINCH_FACTOR_EXPO
+  scale: number
 ): number {
   if (!Number.isFinite(startFactor) || startFactor <= 0) return 1
   if (!Number.isFinite(scale) || scale <= 0) return startFactor
-  return startFactor * scale ** expo
-}
-
-export function pinchProgress(
-  options: ZoomOption[],
-  absoluteFactor: number
-): number {
-  const { min, max } = pinchFactorRange(options)
-  if (max <= min) return 0
-  return Math.min(1, Math.max(0, (absoluteFactor - min) / (max - min)))
-}
-
-export function pinchStepMarks(
-  options: ZoomOption[]
-): { key: string; factor: number; progress: number }[] {
-  const { min, max } = pinchFactorRange(options)
-  if (max <= min) {
-    return options.map(option => ({
-      key: option.key,
-      factor: option.factor,
-      progress: 0,
-    }))
-  }
-
-  return [...options]
-    .sort((a, b) => a.factor - b.factor)
-    .map(option => ({
-      key: option.key,
-      factor: option.factor,
-      progress: Math.min(1, Math.max(0, (option.factor - min) / (max - min))),
-    }))
-}
-
-export function nearestZoomOption(
-  options: ZoomOption[],
-  absoluteFactor: number
-): ZoomOption | null {
-  if (options.length === 0) return null
-  return options.reduce((best, option) =>
-    Math.abs(option.factor - absoluteFactor) <
-    Math.abs(best.factor - absoluteFactor)
-      ? option
-      : best
-  )
+  return startFactor * scale
 }

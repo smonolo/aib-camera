@@ -79,7 +79,7 @@ export type TranslationKeys = {
     sizeLarge: string
     opacity: string
     permissions: string
-    appearance: string
+    configuration: string
     cameraPermission: string
     locationPermission: string
     photosPermission: string
@@ -88,9 +88,19 @@ export type TranslationKeys = {
     permissionOpenSettings: string
     about: string
     versionLabel: string
+    versionCopy: string
+    versionCopied: string
+    installIdLabel: string
+    installIdCopy: string
+    installIdCopied: string
+    copyFailed: string
+    copyFailedBody: string
     privacyTitle: string
     privacyLink: string
     privacyOpenFailed: string
+    guideTitle: string
+    guideLink: string
+    guideOpenFailed: string
     auditLogLink: string
   }
   auditLog: {
@@ -99,7 +109,14 @@ export type TranslationKeys = {
     hint: string
     copyId: string
     copied: string
+    copyFailed: string
+    copyFailedBody: string
     coordsUnavailable: string
+    export: string
+    exportDialogTitle: string
+    exportEmpty: string
+    exportUnavailable: string
+    exportFailed: string
   }
   media: {
     permissionDenied: string

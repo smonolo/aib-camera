@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+import { resetInstallIdCache } from './install-id'
+import { logRejected, warn } from './soft'
 import {
   DEFAULT_STAMP_SETTINGS,
   normalizeStampSettings,
@@ -30,6 +32,7 @@ export function resetStorageCaches(): void {
   capturesCache = null
   auditLogCache = null
   geocodeCacheMemory = null
+  resetInstallIdCache()
 }
 
 function sortByTakenAtDesc<T extends { takenAt: string }>(items: T[]): T[] {
@@ -77,7 +80,7 @@ function normalizeCaptureRecord(
   }
 }
 
-async function readJsonArray<T>(key: string): Promise<unknown[] | null> {
+async function readJsonArray(key: string): Promise<unknown[] | null> {
   try {
     const raw = await AsyncStorage.getItem(key)
     if (!raw) return null
@@ -101,10 +104,14 @@ export async function loadStampSettings(): Promise<StampSettings> {
 export async function saveStampSettings(
   settings: StampSettings
 ): Promise<void> {
-  await AsyncStorage.setItem(
-    SETTINGS_KEY,
-    JSON.stringify(normalizeStampSettings(settings))
-  )
+  try {
+    await AsyncStorage.setItem(
+      SETTINGS_KEY,
+      JSON.stringify(normalizeStampSettings(settings))
+    )
+  } catch (error) {
+    warn('Stamp settings save failed', error)
+  }
 }
 
 export async function loadCaptures(): Promise<CaptureRecord[]> {
@@ -122,7 +129,11 @@ export async function loadCaptures(): Promise<CaptureRecord[]> {
 
 async function saveCaptures(captures: CaptureRecord[]): Promise<void> {
   capturesCache = sortByTakenAtDesc(captures)
-  await AsyncStorage.setItem(CAPTURES_KEY, JSON.stringify(capturesCache))
+  try {
+    await AsyncStorage.setItem(CAPTURES_KEY, JSON.stringify(capturesCache))
+  } catch (error) {
+    warn('Captures save failed', error)
+  }
 }
 
 export async function addCapture(
@@ -132,10 +143,6 @@ export async function addCapture(
   const next = [record, ...existing]
   await saveCaptures(next)
   return next
-}
-
-export async function removeCapture(id: string): Promise<CaptureRecord[]> {
-  return removeCaptures([id])
 }
 
 export async function removeCaptures(ids: string[]): Promise<CaptureRecord[]> {
@@ -193,7 +200,11 @@ export async function loadAuditLog(): Promise<AuditLogEntry[]> {
 
 async function saveAuditLog(entries: AuditLogEntry[]): Promise<void> {
   auditLogCache = sortByTakenAtDesc(entries)
-  await AsyncStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(auditLogCache))
+  try {
+    await AsyncStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(auditLogCache))
+  } catch (error) {
+    warn('Audit log save failed', error)
+  }
 }
 
 export async function appendAuditLogEntry(
@@ -207,15 +218,18 @@ export async function appendAuditLogEntry(
 }
 
 export async function recordCapture(record: CaptureRecord): Promise<void> {
-  await Promise.all([
-    appendAuditLogEntry({
-      id: record.id,
-      takenAt: record.takenAt,
-      lat: record.lat,
-      lon: record.lon,
-    }),
-    addCapture(record),
-  ])
+  logRejected(
+    'recordCapture step failed',
+    await Promise.allSettled([
+      appendAuditLogEntry({
+        id: record.id,
+        takenAt: record.takenAt,
+        lat: record.lat,
+        lon: record.lon,
+      }),
+      addCapture(record),
+    ])
+  )
 }
 
 async function loadGeocodeCache(): Promise<GeocodeCacheEntry[]> {
@@ -228,7 +242,11 @@ async function loadGeocodeCache(): Promise<GeocodeCacheEntry[]> {
 
 async function saveGeocodeCache(entries: GeocodeCacheEntry[]): Promise<void> {
   geocodeCacheMemory = entries
-  await AsyncStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(entries))
+  try {
+    await AsyncStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(entries))
+  } catch (error) {
+    warn('Geocode cache save failed', error)
+  }
 }
 
 export async function upsertGeocodeCacheEntry(

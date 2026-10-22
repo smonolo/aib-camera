@@ -1,14 +1,15 @@
-import * as Haptics from 'expo-haptics'
+import * as Haptics from '@/lib/haptics'
 import { Pressable, Text, View } from 'react-native'
 
-import { formatZoomLabel, type ZoomOption } from '@/lib/camera-zoom'
+import { formatZoomChipLabel, type ZoomOption } from '@/lib/camera-zoom'
 import { fonts } from '@/lib/fonts'
-import { getLocale } from '@/lib/i18n'
-import { cameraOverlay, radii } from '@/lib/theme'
+import { usesCommaDecimal } from '@/lib/i18n'
+import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
   options: ZoomOption[]
   selectedKey: string | null
+  liveFactor: number
   onSelect: (option: ZoomOption) => void
   accessibilityPrefix: string
 }
@@ -18,10 +19,12 @@ const CHIP = 30
 export function ZoomControls({
   options,
   selectedKey,
+  liveFactor,
   onSelect,
   accessibilityPrefix,
 }: Props) {
-  const useComma = getLocale() === 'it'
+  const colors = useAppColors()
+  const useComma = usesCommaDecimal()
 
   if (options.length < 2) return null
 
@@ -34,12 +37,17 @@ export function ZoomControls({
         gap: 1,
         padding: 2,
         borderRadius: radii.full,
-        backgroundColor: cameraOverlay.fill,
+        backgroundColor: colors.surfaceMuted,
       }}
     >
       {options.map(option => {
         const active = option.key === selectedKey
-        const label = formatZoomLabel(option.factor, useComma, active)
+        const label = formatZoomChipLabel(
+          option,
+          selectedKey,
+          liveFactor,
+          useComma
+        )
 
         return (
           <Pressable
@@ -48,12 +56,13 @@ export function ZoomControls({
               void Haptics.selectionAsync()
               onSelect(option)
             }}
-            accessibilityLabel={`${accessibilityPrefix} ${formatZoomLabel(option.factor, useComma, true)}`}
+            accessibilityLabel={`${accessibilityPrefix} ${label}`}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             style={{
-              width: CHIP,
+              minWidth: CHIP,
               height: CHIP,
+              paddingHorizontal: label.length > 2 ? 7 : 0,
               borderRadius: radii.full,
               alignItems: 'center',
               justifyContent: 'center',
@@ -65,7 +74,7 @@ export function ZoomControls({
                 fontFamily: fonts.semibold,
                 fontSize: active ? 12 : 11,
                 letterSpacing: -0.2,
-                color: active ? '#171717' : cameraOverlay.text,
+                color: active ? '#171717' : colors.fg,
               }}
             >
               {label}

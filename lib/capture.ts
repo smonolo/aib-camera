@@ -1,25 +1,49 @@
 import { compositeStampOntoPhoto } from './composite'
 import { newCaptureId } from './config'
 import { writeCaptureExif } from './exif'
-import { captureGeoSnapshot } from './location'
+import { captureGeoSnapshot, emptyGeoSnapshot } from './location'
 import { saveToAibAlbum } from './media'
-import { buildCustomStampLines, buildInfoStampLines } from './stamp'
+import { persistRawPhoto } from './persist-photo'
+import { softVoid, warn } from './soft'
+import { buildStampContent } from './stamp'
 import { recordCapture, setCaptureMediaAssetId } from './storage'
 import type { CaptureRecord, GeoSnapshot, StampSettings } from './types'
 import { getSharedGeoSnapshot } from './use-live-geo'
 
 export async function resolveCaptureGeo(): Promise<GeoSnapshot> {
-  const live = getSharedGeoSnapshot()
-  const takenAt = new Date()
+  try {
+    const live = getSharedGeoSnapshot()
+    const takenAt = new Date()
 
-  if (live.lat != null && live.lon != null) {
-    return { ...live, takenAt }
+    if (live.lat != null && live.lon != null) {
+      return { ...live, takenAt }
+    }
+
+    return await captureGeoSnapshot({
+      headingHint: live.heading,
+      positionTimeoutMs: 1500,
+    })
+  } catch (error) {
+    warn('Capture geo fallback', error)
+    return emptyGeoSnapshot()
   }
+}
 
-  return captureGeoSnapshot({
-    headingHint: live.heading,
-    positionTimeoutMs: 1500,
-  })
+async function stampOrPersistRaw(
+  photoUri: string,
+  snap: GeoSnapshot,
+  settings: StampSettings
+): Promise<string> {
+  try {
+    return await compositeStampOntoPhoto(
+      photoUri,
+      buildStampContent(snap, settings),
+      settings
+    )
+  } catch (error) {
+    warn('Stamp composite failed; keeping unstamped photo', error)
+    return persistRawPhoto(photoUri)
+  }
 }
 
 export async function finalizeCapture(
@@ -27,14 +51,7 @@ export async function finalizeCapture(
   snap: GeoSnapshot,
   settings: StampSettings
 ): Promise<CaptureRecord> {
-  const stampedUri = await compositeStampOntoPhoto(
-    photoUri,
-    {
-      infoLines: buildInfoStampLines(snap, settings),
-      customLines: buildCustomStampLines(settings),
-    },
-    settings
-  )
+  const stampedUri = await stampOrPersistRaw(photoUri, snap, settings)
 
   const captureId = newCaptureId()
   const record: CaptureRecord = {
@@ -52,19 +69,20 @@ export async function finalizeCapture(
     stampConfigSnapshot: settings,
   }
 
-  await Promise.all([
+  await softVoid('EXIF step failed', () =>
     writeCaptureExif(stampedUri, snap, {
       captureId,
       customLines: settings.customLines,
-    }),
-    recordCapture(record),
-  ])
+    })
+  )
+
+  await softVoid('Capture log/gallery persist failed', () =>
+    recordCapture(record)
+  )
 
   void saveToAibAlbum(stampedUri)
     .then(assetId => setCaptureMediaAssetId(captureId, assetId))
-    .catch(error => {
-      console.warn(error)
-    })
+    .catch(error => warn('Photos album save failed', error))
 
   return record
 }

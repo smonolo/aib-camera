@@ -24,18 +24,21 @@ This policy describes how the app handles data on your device.
 | GPS coordinates, accuracy, altitude, heading | On device; burned into stamp / EXIF when available                  | Location context on the photo                  |
 | Place label (reverse geocode)                | On device; optional network lookup; local cache; may appear in EXIF | Human-readable place on the stamp              |
 | Capture ID (UUID)                            | On device (capture log); EXIF `ImageUniqueID` / `UserComment` JSON  | Identify which photos were taken with this app |
+| Install ID (UUID)                            | On device (local storage); Settings (tap to copy); CSV              | Correlate capture-log exports from one install |
 | Custom stamp text you type                   | On device (settings); may appear in EXIF description / comment      | Squad / shift notes on the photo               |
 | App settings                                 | On device (local storage)                                           | Remember stamp preferences                     |
 
 ### Capture log
 
-Each successful capture is recorded in a local **capture log** (ID, date/time, and coordinates when available). The log stays on the device even if you delete the photo from the in-app gallery or the system Photos album. It is not uploaded. You can open it from Settings and copy an ID to match a shared JPEG’s EXIF.
+Each successful capture is recorded in a local **capture log** (ID, date/time, and coordinates when available). The log stays on the device even if you delete the photo from the in-app gallery or the system Photos album. It is not uploaded. You can open it from Settings, copy an ID to match a shared JPEG’s EXIF, or export the full log as a CSV file through the system share sheet.
+
+Each app install also has a local **install ID** (UUID). Under **Settings**, you can tap **Version** or **Install ID** to copy those values. The install ID is written as the `install_id` column in CSV exports so logs from several devices can be told apart. Reinstalling the app creates a new install ID. The version string is the app/build label only (not a tracking identifier).
 
 ### EXIF metadata
 
-After the visual stamp is applied, the app attempts to write standard EXIF tags into the saved JPEG (for example `Software`, `Artist`, `ImageUniqueID`, GPS fields, and a JSON `UserComment`). If the device build cannot write EXIF, the photo is still saved with the visual stamp and the local capture log entry.
+After the visual stamp is applied, the app attempts to write standard EXIF tags into the saved JPEG (for example `Software`, `Artist`, `ImageUniqueID`, GPS fields, and a JSON `UserComment`). If the device build cannot write EXIF, the photo is still saved with the visual stamp and the local capture log entry. If stamp compositing itself fails on a constrained device, the unstamped JPEG is still kept in the in-app gallery so the shot is not lost.
 
-The developer does **not** operate a backend that receives your photos, location, settings, or capture IDs.
+The developer does **not** operate a backend that receives your photos, location, settings, capture IDs, or install IDs.
 
 ## Permissions
 
@@ -45,7 +48,7 @@ The developer does **not** operate a backend that receives your photos, location
 
 ## Sharing
 
-If you use the system share sheet (WhatsApp, Mail, Files, etc.), the shared photo (including any EXIF written into the file) leaves the app under the rules of the app or service you choose. That is outside this app’s control.
+If you use the system share sheet (WhatsApp, Mail, Files, etc.), the shared photo (including any EXIF written into the file) or an exported capture-log CSV leaves the app under the rules of the app or service you choose. That is outside this app’s control.
 
 ## Children’s privacy
 

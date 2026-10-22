@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics'
+import * as Haptics from '@/lib/haptics'
 import { Image } from 'expo-image'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useCallback, useState } from 'react'
@@ -10,11 +10,12 @@ import { IconButton } from '@/components/IconButton'
 import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
+import { useHapticBack } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
 import { SCREEN_PAD_NARROW } from '@/lib/layout'
-import { deleteCapture, sharePhoto } from '@/lib/media'
+import { deleteCaptures, sharePhotos } from '@/lib/media'
 import { getCapture } from '@/lib/storage'
-import { radii, useAppColors } from '@/lib/theme'
+import { useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
 export default function PhotoDetailScreen() {
@@ -23,6 +24,7 @@ export default function PhotoDetailScreen() {
   const colors = useAppColors()
   const copy = t()
   const { showError, showSuccess } = useToast()
+  const onBack = useHapticBack()
   const [photo, setPhoto] = useState<CaptureRecord | null | undefined>(
     undefined
   )
@@ -43,7 +45,7 @@ export default function PhotoDetailScreen() {
     if (!photo) return
     try {
       await Haptics.selectionAsync()
-      await sharePhoto(photo.uri)
+      await sharePhotos([photo.uri])
     } catch (error) {
       showError(
         copy.photos.shareFailed,
@@ -62,7 +64,7 @@ export default function PhotoDetailScreen() {
         onPress: () => {
           void (async () => {
             try {
-              await deleteCapture(photo.id)
+              await deleteCaptures([photo.id])
               showSuccess(copy.photos.deleted)
               await Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Success
@@ -118,10 +120,7 @@ export default function PhotoDetailScreen() {
         <IconButton
           sf="chevron.backward"
           material="arrow-back"
-          onPress={() => {
-            void Haptics.selectionAsync()
-            router.back()
-          }}
+          onPress={onBack}
           accessibilityLabel={copy.photos.back}
         />
         <IconButton
@@ -139,20 +138,11 @@ export default function PhotoDetailScreen() {
           marginBottom: 12,
         }}
       >
-        <View
-          style={{
-            flex: 1,
-            borderRadius: radii.md,
-            overflow: 'hidden',
-            backgroundColor: colors.surface,
-          }}
-        >
-          <Image
-            source={{ uri: photo.uri }}
-            style={{ flex: 1 }}
-            contentFit="contain"
-          />
-        </View>
+        <Image
+          source={{ uri: photo.uri }}
+          style={{ flex: 1 }}
+          contentFit="contain"
+        />
       </View>
 
       <View

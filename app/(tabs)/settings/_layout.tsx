@@ -10,13 +10,9 @@ export default function SettingsTabStackLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.canvas },
-        animation: 'slide_from_right',
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="permissions" />
-      <Stack.Screen name="appearance" />
-      <Stack.Screen name="about" />
     </Stack>
   )
 }

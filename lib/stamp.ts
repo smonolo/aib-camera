@@ -290,6 +290,16 @@ export function buildCustomStampLines(settings: StampSettings): string[] {
   return lines
 }
 
+export function buildStampContent(
+  geo: GeoSnapshot,
+  settings: StampSettings
+): { infoLines: string[]; customLines: string[] } {
+  return {
+    infoLines: buildInfoStampLines(geo, settings),
+    customLines: buildCustomStampLines(settings),
+  }
+}
+
 export function stampFontPx(settings: StampSettings): number {
   return FONT_SIZE_PX[settings.fontSize]
 }

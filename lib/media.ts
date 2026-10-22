@@ -5,28 +5,34 @@ import {
   getPermissionsAsync,
   requestPermissionsAsync,
 } from 'expo-media-library'
-import * as Sharing from 'expo-sharing'
 import { Platform, Share } from 'react-native'
 
 import { APP_NAME } from './config'
 import { t } from './i18n'
+import { shareFile } from './share'
+import { logRejected, softTry, warn } from './soft'
 import { loadCaptures, removeCaptures } from './storage'
 import type { CaptureRecord } from './types'
 import { uniqueStrings } from './util'
 
 const ALBUM_NAME = APP_NAME
-const PHOTO_GRANULAR = ['photo'] as const
+export const PHOTO_GRANULAR = ['photo'] as const
 
 async function ensureMediaLibraryPermission(
   writeOnly: boolean
 ): Promise<boolean> {
-  const current = await getPermissionsAsync(writeOnly, [...PHOTO_GRANULAR])
-  if (current.granted) return true
-
-  const requested = await requestPermissionsAsync(writeOnly, [
-    ...PHOTO_GRANULAR,
-  ])
-  return requested.granted
+  return softTry(
+    'Media library permission check failed',
+    async () => {
+      const current = await getPermissionsAsync(writeOnly, [...PHOTO_GRANULAR])
+      if (current.granted) return true
+      const requested = await requestPermissionsAsync(writeOnly, [
+        ...PHOTO_GRANULAR,
+      ])
+      return requested.granted
+    },
+    false
+  )
 }
 
 export async function saveToAibAlbum(uri: string): Promise<string> {
@@ -60,7 +66,7 @@ export async function deleteMediaLibraryAssets(
   try {
     await Asset.delete(unique.map(id => new Asset(id)))
   } catch (error) {
-    console.warn('Media library delete failed', error)
+    warn('Media library delete failed', error)
   }
 }
 
@@ -72,7 +78,7 @@ export async function deleteLocalPhotoFiles(
       const file = new File(uri)
       if (file.exists) file.delete()
     } catch (error) {
-      console.warn('Local photo delete failed', error)
+      warn('Local photo delete failed', error)
     }
   }
 }
@@ -85,21 +91,16 @@ export async function deleteCaptures(ids: string[]): Promise<CaptureRecord[]> {
   const doomed = existing.filter(item => remove.has(item.id))
   if (doomed.length === 0) return existing
 
-  await Promise.all([
-    deleteMediaLibraryAssets(doomed.map(item => item.mediaLibraryAssetId)),
-    deleteLocalPhotoFiles(doomed.map(item => item.uri)),
-    removeCaptures(ids),
-  ])
+  logRejected(
+    'deleteCaptures step failed',
+    await Promise.allSettled([
+      deleteMediaLibraryAssets(doomed.map(item => item.mediaLibraryAssetId)),
+      deleteLocalPhotoFiles(doomed.map(item => item.uri)),
+      removeCaptures(ids),
+    ])
+  )
 
   return loadCaptures()
-}
-
-export async function deleteCapture(id: string): Promise<CaptureRecord[]> {
-  return deleteCaptures([id])
-}
-
-export async function sharePhoto(uri: string): Promise<void> {
-  await sharePhotos([uri])
 }
 
 export async function sharePhotos(uris: string[]): Promise<void> {
@@ -107,39 +108,29 @@ export async function sharePhotos(uris: string[]): Promise<void> {
   const unique = uniqueStrings(uris)
   if (unique.length === 0) return
 
-  if (unique.length === 1) {
-    const uri = unique[0]!
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, {
-        mimeType: 'image/jpeg',
-        dialogTitle: copy.media.shareDialogTitle,
-        UTI: 'public.jpeg',
-      })
+  const jpegOptions = {
+    mimeType: 'image/jpeg',
+    dialogTitle: copy.media.shareDialogTitle,
+    uti: 'public.jpeg',
+    title: copy.media.shareTitle,
+  }
+
+  try {
+    if (unique.length === 1) {
+      await shareFile(unique[0]!, jpegOptions)
       return
     }
 
-    await Share.share(
-      Platform.OS === 'ios'
-        ? { url: uri }
-        : { message: uri, title: copy.media.shareTitle }
-    )
-    return
-  }
-
-  if (Platform.OS === 'ios') {
-    await Share.share({ urls: unique } as never)
-    return
-  }
-
-  for (const uri of unique) {
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, {
-        mimeType: 'image/jpeg',
-        dialogTitle: copy.media.shareDialogTitle,
-        UTI: 'public.jpeg',
-      })
-    } else {
-      await Share.share({ message: uri, title: copy.media.shareTitle })
+    if (Platform.OS === 'ios') {
+      await Share.share({ urls: unique } as never)
+      return
     }
+
+    for (const uri of unique) {
+      await shareFile(uri, jpegOptions)
+    }
+  } catch (error) {
+    warn('sharePhotos failed', error)
+    throw error
   }
 }

@@ -8,15 +8,14 @@ import {
   defaultZoomOptions,
   factorFromCameraZoom,
   factorFromPinchScale,
-  formatLiveZoomFactor,
+  formatZoomChipLabel,
   formatZoomLabel,
+  snapMajorZoomFactor,
   lensBaseFactor,
-  nearestZoomOption,
   pickDefaultOption,
   pinchFactorRange,
-  pinchProgress,
-  pinchStepMarks,
   resolveAbsoluteFactor,
+  type ZoomOption,
 } from '@/lib/camera-zoom'
 
 describe('formatZoomLabel', () => {
@@ -31,15 +30,53 @@ describe('formatZoomLabel', () => {
   })
 })
 
-describe('formatLiveZoomFactor', () => {
-  it('shows one decimal for fractional zoom', () => {
-    expect(formatLiveZoomFactor(8.24, false)).toBe('8.2×')
-    expect(formatLiveZoomFactor(8.24, true)).toBe('8,2×')
+describe('snapMajorZoomFactor', () => {
+  it('keeps ultra-wide and whole-number steps only', () => {
+    expect(snapMajorZoomFactor(0.5)).toBe(0.5)
+    expect(snapMajorZoomFactor(0.7)).toBe(0.5)
+    expect(snapMajorZoomFactor(1.2)).toBe(1)
+    expect(snapMajorZoomFactor(2.4)).toBe(2)
+    expect(snapMajorZoomFactor(2.6)).toBe(3)
+    expect(snapMajorZoomFactor(4.2)).toBe(4)
+    expect(snapMajorZoomFactor(7.8)).toBe(8)
+  })
+})
+
+describe('formatZoomChipLabel', () => {
+  const ultra: ZoomOption = {
+    key: 'ultraWide',
+    kind: 'ultraWide',
+    factor: 0.5,
+    zoom: 0,
+  }
+  const wide: ZoomOption = {
+    key: 'wide',
+    kind: 'wide',
+    factor: 1,
+    zoom: 0,
+  }
+  const tele: ZoomOption = {
+    key: 'tele',
+    kind: 'tele',
+    factor: 2,
+    zoom: 0,
+  }
+
+  it('keeps 0.5× and 1× fixed even when active above base', () => {
+    expect(formatZoomChipLabel(ultra, 'ultraWide', 0.9, false)).toBe('0.5×')
+    expect(formatZoomChipLabel(wide, 'wide', 1.7, false)).toBe('1×')
   })
 
-  it('keeps clean labels for chip factors', () => {
-    expect(formatLiveZoomFactor(1, false)).toBe('1×')
-    expect(formatLiveZoomFactor(0.5, true)).toBe('0,5×')
+  it('keeps tele nominal when inactive or at/below 2×', () => {
+    expect(formatZoomChipLabel(tele, 'wide', 4, false)).toBe('2')
+    expect(formatZoomChipLabel(tele, 'tele', 2, false)).toBe('2×')
+    expect(formatZoomChipLabel(tele, 'tele', 1.8, false)).toBe('2×')
+  })
+
+  it('shows major live steps only on the active tele chip above 2×', () => {
+    expect(formatZoomChipLabel(tele, 'tele', 3, false)).toBe('3×')
+    expect(formatZoomChipLabel(tele, 'tele', 4.2, true)).toBe('4×')
+    expect(formatZoomChipLabel(tele, 'tele', 2.4, false)).toBe('2×')
   })
 })
 
@@ -183,47 +220,14 @@ describe('factorFromPinchScale', () => {
   })
 })
 
-describe('pinch meter helpers', () => {
-  const options = buildIosZoomOptions(['Back Ultra Wide Camera', 'Back Camera'])
-
+describe('pinchFactorRange', () => {
   it('exposes a factor range starting at ultra-wide', () => {
-    const range = pinchFactorRange(options)
-    expect(range.min).toBe(0.5)
-    expect(range.max).toBeGreaterThan(range.min)
-  })
-
-  it('maps absolute factor onto a 0–1 progress value', () => {
-    expect(pinchProgress(options, 0.5)).toBe(0)
-    expect(pinchProgress(options, pinchFactorRange(options).max)).toBe(1)
-  })
-
-  it('places step marks at each discrete zoom chip', () => {
-    const marks = pinchStepMarks(options)
-    expect(marks.map(mark => mark.factor)).toEqual([0.5, 1, 2])
-    expect(marks[0]?.progress).toBe(0)
-    expect(marks[1]?.progress).toBeGreaterThan(0)
-    expect(marks[1]?.progress).toBeLessThan(1)
-    expect(marks[2]?.progress).toBeGreaterThan(marks[1]!.progress)
-  })
-})
-
-describe('nearestZoomOption', () => {
-  it('picks the closest discrete chip by absolute factor', () => {
     const options = buildIosZoomOptions([
       'Back Ultra Wide Camera',
       'Back Camera',
     ])
-    expect(nearestZoomOption(options, 0.55)?.key).toBe('ultraWide')
-    expect(nearestZoomOption(options, 0.9)?.key).toBe('wide')
-  })
-
-  it('picks digital tele when closer on Android', () => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: 'android',
-    })
-    const androidOptions = defaultZoomOptions()
-    expect(nearestZoomOption(androidOptions, 1.8)?.key).toBe('tele-digital')
-    expect(nearestZoomOption(androidOptions, 1.1)?.key).toBe('wide')
+    const range = pinchFactorRange(options)
+    expect(range.min).toBe(0.5)
+    expect(range.max).toBeGreaterThan(range.min)
   })
 })

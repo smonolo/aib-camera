@@ -1,5 +1,6 @@
 import * as Location from 'expo-location'
 
+import { softTry } from './soft'
 import { findNearestGeocodeCache, upsertGeocodeCacheEntry } from './storage'
 import type { GeoSnapshot } from './types'
 
@@ -17,8 +18,8 @@ export function resetGeocodeMemory(): void {
   lastGeocodeAddress = null
 }
 
-function emptySnapshot(
-  takenAt: Date,
+export function emptyGeoSnapshot(
+  takenAt: Date = new Date(),
   heading: number | null = null
 ): GeoSnapshot {
   return {
@@ -51,16 +52,24 @@ export async function withTimeout<T>(
 }
 
 async function hasForegroundLocationPermission(): Promise<boolean> {
-  const current = await Location.getForegroundPermissionsAsync()
-  return current.granted
+  return softTry(
+    'Location permission check failed',
+    async () => (await Location.getForegroundPermissionsAsync()).granted,
+    false
+  )
 }
 
 export async function ensureForegroundLocationPermission(): Promise<boolean> {
-  const current = await Location.getForegroundPermissionsAsync()
-  if (current.granted) return true
-  if (!current.canAskAgain) return false
-  const requested = await Location.requestForegroundPermissionsAsync()
-  return requested.granted
+  return softTry(
+    'Location permission request failed',
+    async () => {
+      const current = await Location.getForegroundPermissionsAsync()
+      if (current.granted) return true
+      if (!current.canAskAgain) return false
+      return (await Location.requestForegroundPermissionsAsync()).granted
+    },
+    false
+  )
 }
 
 export function geocodeCellKey(latitude: number, longitude: number): string {
@@ -180,7 +189,7 @@ export async function captureGeoSnapshot(
 
   const granted = await hasForegroundLocationPermission()
   if (!granted) {
-    return emptySnapshot(takenAt, headingHint)
+    return emptyGeoSnapshot(takenAt, headingHint)
   }
 
   try {
@@ -223,7 +232,7 @@ export async function captureGeoSnapshot(
       takenAt,
     }
   } catch {
-    return emptySnapshot(takenAt, headingHint)
+    return emptyGeoSnapshot(takenAt, headingHint)
   }
 }
 

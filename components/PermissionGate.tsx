@@ -1,5 +1,5 @@
 import { useCameraPermissions } from 'expo-camera'
-import * as Haptics from 'expo-haptics'
+import * as Haptics from '@/lib/haptics'
 import * as Linking from 'expo-linking'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
@@ -10,6 +10,7 @@ import { Button } from '@/components/Button'
 import { fonts } from '@/lib/fonts'
 import { useOnAppActive } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
+import { warn } from '@/lib/soft'
 import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
@@ -52,7 +53,11 @@ export function PermissionGate({ children }: Props) {
     try {
       if (cameraBlocked) {
         setHint(copy.permissions.cameraBlockedHint)
-        await Linking.openSettings()
+        try {
+          await Linking.openSettings()
+        } catch (error) {
+          warn('Open settings failed', error)
+        }
         return
       }
       const result = await requestCameraPermission()
@@ -65,6 +70,9 @@ export function PermissionGate({ children }: Props) {
       } else {
         setHint(copy.permissions.cameraDeniedHint)
       }
+    } catch (error) {
+      warn('Camera permission request failed', error)
+      setHint(copy.permissions.cameraDeniedHint)
     } finally {
       setBusy(false)
       await refreshCamera()

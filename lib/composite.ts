@@ -1,4 +1,4 @@
-import { Directory, File, Paths } from 'expo-file-system'
+import { File } from 'expo-file-system'
 import {
   FontWeight,
   ImageFormat,
@@ -6,9 +6,13 @@ import {
   type SkCanvas,
   type SkFont,
   type SkPaint,
+  type SkTypeface,
 } from '@shopify/react-native-skia'
+import { Image } from 'react-native'
 
+import { STAMP_FONT_ASSET } from './fonts'
 import { t } from './i18n'
+import { capturesDirectory } from './persist-photo'
 import { stampLayoutMetrics, wrapTextToWidth } from './stamp'
 import type { StampSettings } from './types'
 
@@ -17,17 +21,38 @@ type StampBurnInContent = {
   customLines: string[]
 }
 
-function resolveFont(size: number) {
+let stampTypefacePromise: Promise<SkTypeface | null> | null = null
+
+function loadStampTypeface(): Promise<SkTypeface | null> {
+  if (!stampTypefacePromise) {
+    stampTypefacePromise = (async () => {
+      try {
+        const { uri } = Image.resolveAssetSource(STAMP_FONT_ASSET)
+        if (!uri) return null
+        const data = await Skia.Data.fromURI(uri)
+        return Skia.Typeface.MakeFreeTypeFaceFromData(data)
+      } catch {
+        return null
+      }
+    })()
+  }
+  return stampTypefacePromise
+}
+
+function systemFont(size: number): SkFont {
   const mgr = Skia.FontMgr.System()
   const style = { weight: FontWeight.SemiBold }
-  let typeface = mgr.matchFamilyStyle('Helvetica', style)
-  if (!typeface) {
-    typeface = mgr.matchFamilyStyle('sans-serif', style)
-  }
-  if (!typeface) {
-    typeface = mgr.matchFamilyStyle('Roboto', style)
-  }
+  const typeface =
+    mgr.matchFamilyStyle('Helvetica', style) ??
+    mgr.matchFamilyStyle('sans-serif', style) ??
+    mgr.matchFamilyStyle('Roboto', style)
   return Skia.Font(typeface, size)
+}
+
+async function resolveFont(size: number): Promise<SkFont> {
+  const typeface = await loadStampTypeface()
+  if (typeface) return Skia.Font(typeface, size)
+  return systemFont(size)
 }
 
 function drawStampBox({
@@ -112,7 +137,7 @@ export async function compositeStampOntoPhoto(
   const height = image.height()
   const { scale, fontSize, lineGap, edgePad, boxPadX, boxPadY, bgAlpha } =
     stampLayoutMetrics(width, settings, { minScale: 1 })
-  const font = resolveFont(fontSize)
+  const font = await resolveFont(fontSize)
   const blockWidth = width - edgePad * 2
 
   const surface = Skia.Surface.MakeOffscreen(width, height)
@@ -171,13 +196,8 @@ export async function compositeStampOntoPhoto(
   const snapshot = surface.makeImageSnapshot()
   const encoded = snapshot.encodeToBytes(ImageFormat.JPEG, 92)
 
-  const capturesDir = new Directory(Paths.document, 'captures')
-  if (!capturesDir.exists) {
-    capturesDir.create({ intermediates: true, idempotent: true })
-  }
-
   const filename = `aib-${Date.now()}.jpg`
-  const outFile = new File(capturesDir, filename)
+  const outFile = new File(capturesDirectory(), filename)
   outFile.create({ overwrite: true })
   outFile.write(encoded)
 

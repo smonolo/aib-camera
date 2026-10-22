@@ -1,7 +1,6 @@
-import * as Haptics from 'expo-haptics'
-import { router, useLocalSearchParams } from 'expo-router'
+import * as Haptics from '@/lib/haptics'
 import { useEffect, useState } from 'react'
-import { ScrollView, Text, TextInput, View } from 'react-native'
+import { ScrollView, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -12,10 +11,11 @@ import {
   ToggleRow,
 } from '@/components/SettingsUI'
 import { fonts } from '@/lib/fonts'
+import { useHapticBack } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
-import { SCREEN_PAD, tabScrollBottomPad } from '@/lib/layout'
+import { SCREEN_PAD } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
-import { formatStampDateTime, parseCustomLines } from '@/lib/stamp'
+import { parseCustomLines } from '@/lib/stamp'
 import { radii, useAppColors } from '@/lib/theme'
 import type {
   DateTimeFormat,
@@ -23,11 +23,11 @@ import type {
   StampOpacityStep,
 } from '@/lib/types'
 
-export default function SettingsAppearanceScreen() {
+export default function AppearanceScreen() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
   const copy = t()
-  const { from } = useLocalSearchParams<{ from?: string }>()
+  const onBack = useHapticBack()
   const { settings, updateSettings, ready } = useStampSettings()
   const [customDraft, setCustomDraft] = useState(
     settings.customLines.join('\n')
@@ -50,23 +50,9 @@ export default function SettingsAppearanceScreen() {
     await updateSettings({ customLines: parseCustomLines(value) })
   }
 
-  const dateFormatExample = formatStampDateTime(
-    new Date(),
-    settings.dateTimeFormat
-  )
-
-  const onBack = () => {
-    void Haptics.selectionAsync()
-    if (from === 'camera') {
-      router.navigate('/')
-      return
-    }
-    router.back()
-  }
-
   return (
     <SettingsSubscreenShell
-      title={copy.settings.appearance}
+      title={copy.settings.configuration}
       backLabel={copy.photos.back}
       onBack={onBack}
     >
@@ -74,7 +60,7 @@ export default function SettingsAppearanceScreen() {
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: SCREEN_PAD,
-          paddingBottom: tabScrollBottomPad(insets.bottom),
+          paddingBottom: Math.max(insets.bottom, 24),
         }}
         keyboardShouldPersistTaps="handled"
       >
@@ -150,17 +136,6 @@ export default function SettingsAppearanceScreen() {
               { value: 'iso', label: copy.settings.formatIso },
             ]}
           />
-          <Text
-            style={{
-              fontFamily: fonts.regular,
-              fontSize: 13,
-              lineHeight: 18,
-              color: colors.muted,
-              marginTop: 8,
-            }}
-          >
-            {dateFormatExample}
-          </Text>
         </View>
 
         <FieldLabel color={colors.muted}>{copy.settings.fontSize}</FieldLabel>

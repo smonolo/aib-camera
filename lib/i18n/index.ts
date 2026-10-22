@@ -2,8 +2,7 @@ import { en } from './en'
 import { it } from './it'
 import type { TranslationKeys } from './types'
 
-export type AppLocale = 'it' | 'en'
-export type { TranslationKeys }
+type AppLocale = 'it' | 'en'
 
 const DEFAULT_LOCALE: AppLocale = 'it'
 
@@ -16,6 +15,10 @@ let activeLocale: AppLocale = DEFAULT_LOCALE
 
 export function getLocale(): AppLocale {
   return activeLocale
+}
+
+export function usesCommaDecimal(): boolean {
+  return getLocale() === 'it'
 }
 
 export function t(): TranslationKeys {

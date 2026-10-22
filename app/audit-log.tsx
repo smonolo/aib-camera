@@ -1,6 +1,5 @@
-import * as Clipboard from 'expo-clipboard'
-import * as Haptics from 'expo-haptics'
-import { router, useFocusEffect } from 'expo-router'
+import * as Haptics from '@/lib/haptics'
+import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
@@ -11,9 +10,14 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { IconButton } from '@/components/IconButton'
 import { SettingsSubscreenShell } from '@/components/SettingsUI'
 import { useToast } from '@/components/Toast'
+import { exportAuditLogCsv } from '@/lib/audit-csv'
+import { copyText } from '@/lib/clipboard'
+import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
+import { useHapticBack } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
 import { SCREEN_PAD } from '@/lib/layout'
 import { formatLatLon, formatStampDateTime } from '@/lib/stamp'
@@ -25,8 +29,10 @@ export default function AuditLogScreen() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
   const copy = t()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
+  const onBack = useHapticBack()
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -42,20 +48,42 @@ export default function AuditLogScreen() {
 
   const onCopy = async (id: string) => {
     await Haptics.selectionAsync()
-    await Clipboard.setStringAsync(id)
-    showSuccess(copy.auditLog.copied)
+    if (await copyText(id)) showSuccess(copy.auditLog.copied)
+    else showError(copy.auditLog.copyFailed, copy.auditLog.copyFailedBody)
   }
 
-  const onBack = () => {
-    void Haptics.selectionAsync()
-    router.back()
+  const onExport = async () => {
+    if (!entries || entries.length === 0 || exporting) return
+    setExporting(true)
+    try {
+      await Haptics.selectionAsync()
+      await exportAuditLogCsv(entries)
+    } catch (error) {
+      showError(
+        copy.auditLog.exportFailed,
+        errorMessage(error, copy.auditLog.exportFailed)
+      )
+    } finally {
+      setExporting(false)
+    }
   }
+
+  const canExport = entries != null && entries.length > 0 && !exporting
 
   return (
     <SettingsSubscreenShell
       title={copy.auditLog.title}
       backLabel={copy.photos.back}
       onBack={onBack}
+      headerRight={
+        <IconButton
+          sf="square.and.arrow.up"
+          material="ios-share"
+          onPress={() => void onExport()}
+          accessibilityLabel={copy.auditLog.export}
+          disabled={!canExport}
+        />
+      }
     >
       {entries == null ? (
         <View

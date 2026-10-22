@@ -1,19 +1,9 @@
-import { Platform, Text, useWindowDimensions, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Text, View } from 'react-native'
 
+import { fonts } from '@/lib/fonts'
 import { useStampSettings } from '@/lib/settings-context'
-import {
-  buildCustomStampLines,
-  buildInfoStampLines,
-  stampLayoutMetrics,
-} from '@/lib/stamp'
+import { buildStampContent, stampLayoutMetrics } from '@/lib/stamp'
 import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
-
-const STAMP_FONT_FAMILY = Platform.select({
-  ios: 'Helvetica',
-  android: 'sans-serif-medium',
-  default: 'System',
-})
 
 type StampBoxProps = ReturnType<typeof stampLayoutMetrics> & {
   lines: string[]
@@ -49,8 +39,7 @@ function StampBox({
         <Text
           key={`stamp-${index}-${line.slice(0, 12)}`}
           style={{
-            fontFamily: STAMP_FONT_FAMILY,
-            fontWeight: '600',
+            fontFamily: fonts.semibold,
             fontSize,
             lineHeight: fontSize + 2,
             color: '#FFFFFF',
@@ -75,22 +64,20 @@ function StampBox({
 }
 
 type Props = {
-  bottomClearance: number
+  frameWidth: number
 }
 
-export function StampOverlay({ bottomClearance }: Props) {
-  const insets = useSafeAreaInsets()
-  const { width: windowWidth } = useWindowDimensions()
+export function StampOverlay({ frameWidth }: Props) {
   const { settings } = useStampSettings()
   const geo = useLiveGeoSnapshot()
 
-  const metrics = stampLayoutMetrics(windowWidth, settings)
+  const width = Math.max(1, frameWidth)
+  const metrics = stampLayoutMetrics(width, settings)
   const boxProps = {
     ...metrics,
-    width: Math.max(1, windowWidth - metrics.edgePad * 2),
+    width: Math.max(1, width - metrics.edgePad * 2),
   }
-  const infoLines = buildInfoStampLines(geo, settings)
-  const customLines = buildCustomStampLines(settings)
+  const { infoLines, customLines } = buildStampContent(geo, settings)
 
   return (
     <View
@@ -100,7 +87,7 @@ export function StampOverlay({ bottomClearance }: Props) {
       <View
         style={{
           position: 'absolute',
-          top: insets.top + metrics.edgePad,
+          top: metrics.edgePad,
           left: metrics.edgePad,
         }}
       >
@@ -111,7 +98,7 @@ export function StampOverlay({ bottomClearance }: Props) {
         <View
           style={{
             position: 'absolute',
-            bottom: bottomClearance + metrics.edgePad,
+            bottom: metrics.edgePad,
             left: metrics.edgePad,
           }}
         >

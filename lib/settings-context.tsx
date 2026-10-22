@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 
+import { warn } from './soft'
 import { loadStampSettings, saveStampSettings } from './storage'
 import {
   DEFAULT_STAMP_SETTINGS,
@@ -34,11 +35,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true
-    loadStampSettings().then(loaded => {
-      if (!active) return
-      setSettings(normalizeStampSettings(loaded))
-      setReady(true)
-    })
+    loadStampSettings()
+      .then(loaded => {
+        if (!active) return
+        setSettings(normalizeStampSettings(loaded))
+        setReady(true)
+      })
+      .catch(error => {
+        warn('Stamp settings load failed; using defaults', error)
+        if (!active) return
+        setSettings(DEFAULT_STAMP_SETTINGS)
+        setReady(true)
+      })
     return () => {
       active = false
     }
