@@ -23,14 +23,13 @@ export type TranslationKeys = {
     flash: string
     flashOn: string
     flashOff: string
+    stampSettings: string
     shutter: string
     recentPhoto: string
+    processingPhoto: string
     zoom: string
-    acquiringGps: string
     captureFailed: string
     captureFailedBody: string
-    hudExpand: string
-    hudCollapse: string
   }
   stamp: {
     noCoordinates: string

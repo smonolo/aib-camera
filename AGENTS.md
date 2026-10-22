@@ -4,7 +4,7 @@ This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** field
 
 ## Product constraints
 
-- **Unofficial.** Never present the app as built by, endorsed by, or affiliated with Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any public institution. No official logos, seals, institutional names in defaults, bundle IDs, copy, or docs. Neutral volunteer wording only (e.g. default stamp `AIB Camera`, placeholders like “Squadra Nord”).
+- **Unofficial.** Never present the app as built by, endorsed by, or affiliated with Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any public institution. No official logos, seals, institutional names in defaults, bundle IDs, copy, or docs. Neutral volunteer wording only (e.g. custom-text placeholders like “Squadra Nord”).
 - **Local-first.** Capture, stamp (Skia), in-app gallery, capture log, and share must work offline. Network is only for reverse geocode (optional, cached).
 - **Camera is required; location is optional.** Never block the camera behind GPS permission. Stamp unavailable fields with clear fallback copy.
 - **Shutter must stay fast.** Prefer live HUD geo (`getSharedGeoSnapshot`) over waiting on a high-accuracy fix. Bound GPS/geocode/heading with short timeouts.
@@ -52,16 +52,17 @@ Run typecheck and unit tests (and lint when configured) before declaring any tas
 
 ## Key modules
 
-| Area                                 | Where                                                                                 |
-| ------------------------------------ | ------------------------------------------------------------------------------------- |
-| Geo snapshot, geocode cache, heading | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                            |
-| Stamp lines / formatters             | `lib/stamp.ts`                                                                        |
-| JPEG burn-in                         | `lib/composite.ts`                                                                    |
-| EXIF (post-stamp)                    | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                |
-| Capture UUID + gallery + audit log   | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`)                  |
-| System Photos save/delete + cleanup  | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                   |
-| Settings + persistence               | `app/(tabs)/settings/` hub + permissions/appearance/about; `lib/settings-context.tsx` |
-| Permissions gate                     | `components/PermissionGate.tsx` (camera hard; location soft)                          |
+| Area                                      | Where                                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| Geo snapshot, geocode cache, heading      | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                            |
+| Stamp lines / formatters                  | `lib/stamp.ts`                                                                        |
+| JPEG burn-in                              | `lib/composite.ts`                                                                    |
+| Capture finalize (stamp → EXIF → gallery) | `lib/capture.ts`                                                                      |
+| EXIF (post-stamp)                         | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                |
+| Capture UUID + gallery + audit log        | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`)                  |
+| System Photos save/delete + cleanup       | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                   |
+| Settings + persistence                    | `app/(tabs)/settings/` hub + permissions/appearance/about; `lib/settings-context.tsx` |
+| Permissions gate                          | `components/PermissionGate.tsx` (camera hard; location soft)                          |
 
 ## Building with EAS
 

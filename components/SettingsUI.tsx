@@ -38,27 +38,36 @@ export function SettingsSubscreenShell({
           minHeight: 40,
         }}
       >
-        <IconButton
-          sf="chevron.backward"
-          material="arrow-back"
-          onPress={onBack}
-          accessibilityLabel={backLabel}
-        />
-        <Text
+        <View style={{ zIndex: 1 }}>
+          <IconButton
+            sf="chevron.backward"
+            material="arrow-back"
+            onPress={onBack}
+            accessibilityLabel={backLabel}
+          />
+        </View>
+        <View
           pointerEvents="none"
           style={{
             position: 'absolute',
             left: SCREEN_PAD_NARROW,
             right: SCREEN_PAD_NARROW,
-            textAlign: 'center',
-            fontFamily: fonts.semibold,
-            fontSize: 17,
-            color: colors.fg,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-          numberOfLines={1}
         >
-          {title}
-        </Text>
+          <Text
+            style={{
+              textAlign: 'center',
+              fontFamily: fonts.semibold,
+              fontSize: 17,
+              color: colors.fg,
+            }}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+        </View>
         <View style={{ width: 40, height: 40 }} />
       </View>
       {children}

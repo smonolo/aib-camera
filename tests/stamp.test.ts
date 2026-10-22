@@ -1,6 +1,5 @@
 import {
   buildCustomStampLines,
-  buildHudLines,
   buildInfoStampLines,
   formatGalleryDayLabel,
   formatLatLon,
@@ -8,6 +7,7 @@ import {
   galleryDayKey,
   parseCustomLines,
   stampFontPx,
+  stampLayoutMetrics,
   wrapTextToWidth,
 } from '@/lib/stamp'
 import { DEFAULT_STAMP_SETTINGS, type GeoSnapshot } from '@/lib/types'
@@ -129,13 +129,13 @@ describe('buildCustomStampLines', () => {
 describe('stampFontPx', () => {
   it('maps font size tokens', () => {
     expect(stampFontPx({ ...DEFAULT_STAMP_SETTINGS, fontSize: 'small' })).toBe(
-      16
+      20
     )
     expect(stampFontPx({ ...DEFAULT_STAMP_SETTINGS, fontSize: 'medium' })).toBe(
       24
     )
     expect(stampFontPx({ ...DEFAULT_STAMP_SETTINGS, fontSize: 'large' })).toBe(
-      32
+      28
     )
   })
 })
@@ -163,20 +163,24 @@ describe('wrapTextToWidth', () => {
   })
 })
 
-describe('buildHudLines', () => {
-  it('uses compact coords while acquiring GPS', () => {
-    const lines = buildHudLines(geo({ lat: null, lon: null, address: null }), {
-      expanded: false,
+describe('stampLayoutMetrics', () => {
+  it('scales font and padding from the reference width', () => {
+    const metrics = stampLayoutMetrics(1080, {
+      ...DEFAULT_STAMP_SETTINGS,
+      fontSize: 'medium',
+      opacity: 0.5,
     })
-    expect(lines[0]).toMatch(/\d{2}\/\d{2}\/\d{4}/)
-    expect(lines).toContain('Acquisizione GPS…')
+    expect(metrics.scale).toBe(1)
+    expect(metrics.fontSize).toBe(Math.round(24 * 1.85))
+    expect(metrics.edgePad).toBe(28)
+    expect(metrics.bgAlpha).toBe(0.5)
   })
 
-  it('expands meta details when requested', () => {
-    const lines = buildHudLines(geo(), { expanded: true })
-    expect(lines.some(line => line.includes('45.464200'))).toBe(true)
-    expect(lines.some(line => line.includes('±8.4 m'))).toBe(true)
-    expect(lines.some(line => line.includes('Milano'))).toBe(true)
+  it('honors minScale for burn-in on small images', () => {
+    const metrics = stampLayoutMetrics(540, DEFAULT_STAMP_SETTINGS, {
+      minScale: 1,
+    })
+    expect(metrics.scale).toBe(1)
   })
 })
 

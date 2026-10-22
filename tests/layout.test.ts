@@ -1,7 +1,9 @@
 import { Platform } from 'react-native'
 
 import {
+  CAMERA,
   cameraBottomChrome,
+  cameraStampBottomClearance,
   TAB_BAR_CLEARANCE,
   tabScrollBottomPad,
 } from '@/lib/layout'
@@ -29,5 +31,19 @@ describe('layout helpers', () => {
     Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' })
     expect(tabScrollBottomPad(34)).toBe(34 + TAB_BAR_CLEARANCE)
     expect(cameraBottomChrome(34)).toBe(62)
+  })
+
+  it('stacks stamp clearance above camera chrome', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    })
+    expect(cameraStampBottomClearance(34)).toBe(
+      16 +
+        CAMERA.chromePad +
+        CAMERA.shutterRow +
+        CAMERA.zoomBlockGap +
+        CAMERA.zoomRowApprox
+    )
   })
 })

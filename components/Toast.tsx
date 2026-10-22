@@ -267,5 +267,3 @@ export function useToast() {
   }
   return ctx
 }
-
-export { errorMessage } from '@/lib/errors'

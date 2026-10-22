@@ -116,6 +116,12 @@
       "expo-font",
       "expo-status-bar",
       "expo-system-ui",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ],
       "expo-web-browser"
     ],
     "experiments": {

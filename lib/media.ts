@@ -12,6 +12,7 @@ import { APP_NAME } from './config'
 import { t } from './i18n'
 import { loadCaptures, removeCaptures } from './storage'
 import type { CaptureRecord } from './types'
+import { uniqueStrings } from './util'
 
 const ALBUM_NAME = APP_NAME
 const PHOTO_GRANULAR = ['photo'] as const
@@ -28,7 +29,6 @@ async function ensureMediaLibraryPermission(
   return requested.granted
 }
 
-/** Saves into the «AIB Camera» album. Returns the media-library asset id. */
 export async function saveToAibAlbum(uri: string): Promise<string> {
   const granted = await ensureMediaLibraryPermission(true)
   if (!granted) {
@@ -48,14 +48,10 @@ export async function saveToAibAlbum(uri: string): Promise<string> {
   return asset.id
 }
 
-/**
- * Deletes assets from the system Photos / MediaStore library.
- * Best-effort: no-ops when permission is denied or an asset is already gone.
- */
 export async function deleteMediaLibraryAssets(
-  assetIds: string[]
+  assetIds: Array<string | null | undefined>
 ): Promise<void> {
-  const unique = [...new Set(assetIds.filter(Boolean))]
+  const unique = uniqueStrings(assetIds)
   if (unique.length === 0) return
 
   const granted = await ensureMediaLibraryPermission(false)
@@ -68,10 +64,10 @@ export async function deleteMediaLibraryAssets(
   }
 }
 
-/** Removes local capture JPEGs from app documents storage. Best-effort. */
-export async function deleteLocalPhotoFiles(uris: string[]): Promise<void> {
-  const unique = [...new Set(uris.filter(Boolean))]
-  for (const uri of unique) {
+export async function deleteLocalPhotoFiles(
+  uris: Array<string | null | undefined>
+): Promise<void> {
+  for (const uri of uniqueStrings(uris)) {
     try {
       const file = new File(uri)
       if (file.exists) file.delete()
@@ -81,10 +77,6 @@ export async function deleteLocalPhotoFiles(uris: string[]): Promise<void> {
   }
 }
 
-/**
- * Deletes photos from the in-app gallery, local files, and system Photos album.
- * Audit log entries are kept. Media-library and file deletes are best-effort.
- */
 export async function deleteCaptures(ids: string[]): Promise<CaptureRecord[]> {
   if (ids.length === 0) return loadCaptures()
 
@@ -93,14 +85,9 @@ export async function deleteCaptures(ids: string[]): Promise<CaptureRecord[]> {
   const doomed = existing.filter(item => remove.has(item.id))
   if (doomed.length === 0) return existing
 
-  const assetIds = doomed
-    .map(item => item.mediaLibraryAssetId)
-    .filter((id): id is string => typeof id === 'string' && id.length > 0)
-  const uris = doomed.map(item => item.uri)
-
   await Promise.all([
-    deleteMediaLibraryAssets(assetIds),
-    deleteLocalPhotoFiles(uris),
+    deleteMediaLibraryAssets(doomed.map(item => item.mediaLibraryAssetId)),
+    deleteLocalPhotoFiles(doomed.map(item => item.uri)),
     removeCaptures(ids),
   ])
 
@@ -117,7 +104,7 @@ export async function sharePhoto(uri: string): Promise<void> {
 
 export async function sharePhotos(uris: string[]): Promise<void> {
   const copy = t()
-  const unique = [...new Set(uris.filter(Boolean))]
+  const unique = uniqueStrings(uris)
   if (unique.length === 0) return
 
   if (unique.length === 1) {

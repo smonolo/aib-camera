@@ -53,10 +53,6 @@ function formatCoordinates(lat: number, lon: number): string {
   return `${Math.abs(lat).toFixed(6)}° ${latHem}, ${Math.abs(lon).toFixed(6)}° ${lonHem}`
 }
 
-function formatShortCoordinates(lat: number, lon: number): string {
-  return formatLatLon(lat, lon, 4)
-}
-
 function formatAccuracy(meters: number): string {
   const rounded =
     meters < 10 ? Math.round(meters * 10) / 10 : Math.round(meters)
@@ -294,57 +290,31 @@ export function buildCustomStampLines(settings: StampSettings): string[] {
   return lines
 }
 
-export function buildHudLines(
-  geo: GeoSnapshot,
-  options?: {
-    addressMaxChars?: number
-    expanded?: boolean
-  }
-): string[] {
-  const copy = t()
-  const lines: string[] = []
-  const expanded = options?.expanded ?? false
-  const addressMaxChars = options?.addressMaxChars ?? (expanded ? 42 : 28)
-
-  if (expanded) {
-    lines.push(formatStampDateTime(geo.takenAt, 'it-full'))
-
-    if (geo.lat != null && geo.lon != null) {
-      lines.push(formatCoordinates(geo.lat, geo.lon))
-    } else {
-      lines.push(copy.stamp.noCoordinates)
-    }
-
-    const metaParts: string[] = []
-    if (geo.accuracy != null) metaParts.push(formatAccuracy(geo.accuracy))
-    if (geo.altitude != null) metaParts.push(formatAltitude(geo.altitude))
-    if (geo.heading != null) metaParts.push(formatHeading(geo.heading))
-    if (metaParts.length > 0) lines.push(metaParts.join(' · '))
-
-    lines.push(
-      ...wrapAddress(
-        geo.address?.trim() || copy.stamp.noAddress,
-        addressMaxChars
-      )
-    )
-    return lines
-  }
-
-  lines.push(formatStampDateTime(geo.takenAt, 'it-short'))
-
-  if (geo.lat != null && geo.lon != null) {
-    lines.push(formatShortCoordinates(geo.lat, geo.lon))
-  } else {
-    lines.push(copy.camera.acquiringGps)
-  }
-
-  if (geo.address?.trim()) {
-    lines.push(...wrapAddress(geo.address, addressMaxChars).slice(0, 1))
-  }
-
-  return lines
-}
-
 export function stampFontPx(settings: StampSettings): number {
   return FONT_SIZE_PX[settings.fontSize]
+}
+
+export function stampLayoutMetrics(
+  referenceWidth: number,
+  settings: StampSettings,
+  options?: { minScale?: number }
+) {
+  const scale = Math.max(referenceWidth / 1080, options?.minScale ?? 0)
+  const fontSize = Math.round(stampFontPx(settings) * scale * 1.85)
+  const lineGap = Math.round(fontSize * 0.32)
+  const edgePad = Math.round(28 * scale)
+  const boxPadX = Math.round(22 * scale)
+  const boxPadY = Math.round(18 * scale)
+  const radius = Math.round(14 * scale)
+  const bgAlpha = Math.min(1, Math.max(0, settings.opacity))
+  return {
+    scale,
+    fontSize,
+    lineGap,
+    edgePad,
+    boxPadX,
+    boxPadY,
+    radius,
+    bgAlpha,
+  }
 }

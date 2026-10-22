@@ -18,7 +18,6 @@ export type ResolvedZoom = {
 
 const ASSUMED_DEVICE_MAX_ZOOM = 125
 
-/** Soft cap for freeform pinch beyond the top discrete chip. */
 const PINCH_MAX_FACTOR_MULTIPLIER = 4
 const PINCH_MAX_FACTOR_FLOOR = 8
 
@@ -37,7 +36,6 @@ export function formatZoomLabel(
   return active ? `${base}×` : base
 }
 
-/** Live pinch readout, e.g. `8,2×` / `8.2×`. */
 export function formatLiveZoomFactor(
   factor: number,
   useComma: boolean
@@ -175,16 +173,11 @@ export function pickDefaultOption(options: ZoomOption[]): ZoomOption | null {
   return options.find(option => option.kind === 'wide') ?? options[0]
 }
 
-/** CameraView zoom is a 0–1 fraction of the device max zoom. */
 export function clampCameraZoom(value: number): number {
   if (!Number.isFinite(value)) return 0
   return Math.min(1, Math.max(0, value))
 }
 
-/**
- * Optical / labeled base for an option (what CameraView zoom=0 shows).
- * Digital tele keeps the wide lens base of 1×.
- */
 export function lensBaseFactor(option: ZoomOption): number {
   if (option.kind === 'ultraWide') return 0.5
   if (option.key === 'tele-digital') return 1
@@ -238,10 +231,6 @@ export function currentAbsoluteFactor(
   return factorFromCameraZoom(lensBaseFactor(option), zoom)
 }
 
-/**
- * Map a continuous magnification factor onto the best lens + CameraView zoom.
- * Enables pinch transitions such as 1× → 0.5× (ultra-wide).
- */
 export function resolveAbsoluteFactor(
   options: ZoomOption[],
   absoluteFactor: number
@@ -261,10 +250,6 @@ export function resolveAbsoluteFactor(
   return { option, zoom, factor }
 }
 
-/**
- * How strongly a pinch scale maps onto absolute magnification.
- * `next = startFactor * scale ** PINCH_FACTOR_EXPO`
- */
 export const PINCH_FACTOR_EXPO = 1
 
 export function factorFromPinchScale(
@@ -286,7 +271,6 @@ export function pinchProgress(
   return Math.min(1, Math.max(0, (absoluteFactor - min) / (max - min)))
 }
 
-/** Progress positions (0–1) for each discrete zoom chip along the pinch meter. */
 export function pinchStepMarks(
   options: ZoomOption[]
 ): { key: string; factor: number; progress: number }[] {
@@ -308,7 +292,6 @@ export function pinchStepMarks(
     }))
 }
 
-/** Nearest discrete chip for the current absolute factor after a pinch. */
 export function nearestZoomOption(
   options: ZoomOption[],
   absoluteFactor: number

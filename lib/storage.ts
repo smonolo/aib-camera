@@ -138,7 +138,6 @@ export async function removeCapture(id: string): Promise<CaptureRecord[]> {
   return removeCaptures([id])
 }
 
-/** Removes captures from the in-app gallery index only (keeps audit log). */
 export async function removeCaptures(ids: string[]): Promise<CaptureRecord[]> {
   if (ids.length === 0) return loadCaptures()
   const remove = new Set(ids)

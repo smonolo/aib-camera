@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -27,6 +27,7 @@ export default function SettingsAppearanceScreen() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
   const copy = t()
+  const { from } = useLocalSearchParams<{ from?: string }>()
   const { settings, updateSettings, ready } = useStampSettings()
   const [customDraft, setCustomDraft] = useState(
     settings.customLines.join('\n')
@@ -56,6 +57,10 @@ export default function SettingsAppearanceScreen() {
 
   const onBack = () => {
     void Haptics.selectionAsync()
+    if (from === 'camera') {
+      router.navigate('/')
+      return
+    }
     router.back()
   }
 

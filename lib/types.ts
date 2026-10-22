@@ -21,7 +21,6 @@ export type StampSettings = {
 export type CaptureRecord = {
   id: string
   uri: string
-  /** System Photos/MediaStore asset id when saved to the «AIB Camera» album. */
   mediaLibraryAssetId: string | null
   takenAt: string
   lat: number | null
@@ -52,9 +51,13 @@ export type GeoSnapshot = {
 }
 
 export const FONT_SIZE_PX: Record<StampFontSize, number> = {
-  small: 16,
+  small: 20,
   medium: 24,
-  large: 32,
+  large: 28,
+}
+
+export function cloneStampSettings(settings: StampSettings): StampSettings {
+  return { ...settings, customLines: [...settings.customLines] }
 }
 
 export const DEFAULT_STAMP_SETTINGS: StampSettings = {
@@ -64,11 +67,11 @@ export const DEFAULT_STAMP_SETTINGS: StampSettings = {
   showAccuracy: true,
   showAltitude: true,
   showHeading: true,
-  customLines: ['AIB Camera'],
-  dateTimeFormat: 'it-full',
+  customLines: [],
+  dateTimeFormat: 'it-short',
   fontSize: 'medium',
   textColor: '#FFFFFF',
-  opacity: 0.5,
+  opacity: 0,
 }
 
 export function normalizeStampSettings(

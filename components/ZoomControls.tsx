@@ -13,7 +13,7 @@ type Props = {
   accessibilityPrefix: string
 }
 
-const CHIP = 36
+const CHIP = 30
 
 export function ZoomControls({
   options,
@@ -31,8 +31,8 @@ export function ZoomControls({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 2,
-        padding: 3,
+        gap: 1,
+        padding: 2,
         borderRadius: radii.full,
         backgroundColor: cameraOverlay.fill,
       }}
@@ -63,7 +63,7 @@ export function ZoomControls({
             <Text
               style={{
                 fontFamily: fonts.semibold,
-                fontSize: active ? 13 : 12,
+                fontSize: active ? 12 : 11,
                 letterSpacing: -0.2,
                 color: active ? '#171717' : cameraOverlay.text,
               }}

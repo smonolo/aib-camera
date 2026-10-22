@@ -9,7 +9,7 @@ import {
 } from '@shopify/react-native-skia'
 
 import { t } from './i18n'
-import { stampFontPx, wrapTextToWidth } from './stamp'
+import { stampLayoutMetrics, wrapTextToWidth } from './stamp'
 import type { StampSettings } from './types'
 
 type StampBurnInContent = {
@@ -110,15 +110,10 @@ export async function compositeStampOntoPhoto(
 
   const width = image.width()
   const height = image.height()
-  const scale = Math.max(width / 1080, 1)
-  const fontSize = Math.round(stampFontPx(settings) * scale * 1.85)
-  const lineGap = Math.round(fontSize * 0.32)
-  const edgePad = Math.round(28 * scale)
-  const boxPadX = Math.round(22 * scale)
-  const boxPadY = Math.round(18 * scale)
+  const { scale, fontSize, lineGap, edgePad, boxPadX, boxPadY, bgAlpha } =
+    stampLayoutMetrics(width, settings, { minScale: 1 })
   const font = resolveFont(fontSize)
   const blockWidth = width - edgePad * 2
-  const bgAlpha = Math.min(1, Math.max(0, settings.opacity))
 
   const surface = Skia.Surface.MakeOffscreen(width, height)
   if (!surface) {

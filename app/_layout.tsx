@@ -10,10 +10,11 @@ import {
 import { Stack } from 'expo-router'
 import { ThemeProvider } from 'expo-router/react-navigation'
 import * as SplashScreen from 'expo-splash-screen'
+import { NavigationBar } from 'expo-navigation-bar'
 import { StatusBar } from 'expo-status-bar'
 import * as SystemUI from 'expo-system-ui'
 import { useEffect } from 'react'
-import { Text, TextInput, View } from 'react-native'
+import { Platform, Text, TextInput, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
 
@@ -75,6 +76,11 @@ export default function RootLayout() {
     )
   }, [colorScheme])
 
+  useEffect(() => {
+    if (Platform.OS !== 'android') return
+    NavigationBar.setStyle(colorScheme === 'dark' ? 'light' : 'dark')
+  }, [colorScheme])
+
   if (!fontsReady) {
     return <View style={{ flex: 1, backgroundColor: colors.canvas }} />
   }
@@ -85,6 +91,11 @@ export default function RootLayout() {
         <SettingsProvider>
           <ToastProvider>
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            {Platform.OS === 'android' ? (
+              <NavigationBar
+                style={colorScheme === 'dark' ? 'light' : 'dark'}
+              />
+            ) : null}
             <Stack
               screenOptions={{
                 headerShadowVisible: false,

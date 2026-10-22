@@ -2,15 +2,9 @@ import { CameraView, type FlashMode } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
 import { Image } from 'expo-image'
 import { useKeepAwake } from 'expo-keep-awake'
-import { router, useFocusEffect } from 'expo-router'
+import { router, useFocusEffect, type Href } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  Text,
-  View,
-} from 'react-native'
+import { ActivityIndicator, Platform, Pressable, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   runOnJS,
@@ -21,11 +15,10 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AppIcon } from '@/components/AppIcon'
-import { CameraHud } from '@/components/CameraHud'
-
+import { CameraChromeButton } from '@/components/CameraChromeButton'
 import { PermissionGate } from '@/components/PermissionGate'
-import { errorMessage, useToast } from '@/components/Toast'
+import { StampOverlay } from '@/components/StampOverlay'
+import { useToast } from '@/components/Toast'
 import { ZoomControls } from '@/components/ZoomControls'
 import { ZoomPinchMeter } from '@/components/ZoomPinchMeter'
 import {
@@ -36,28 +29,24 @@ import {
   resolveAbsoluteFactor,
   type ZoomOption,
 } from '@/lib/camera-zoom'
-import { compositeStampOntoPhoto } from '@/lib/composite'
-import { newCaptureId } from '@/lib/config'
-import { writeCaptureExif } from '@/lib/exif'
-import { fonts } from '@/lib/fonts'
+import { finalizeCapture, resolveCaptureGeo } from '@/lib/capture'
+import { errorMessage } from '@/lib/errors'
 import { t } from '@/lib/i18n'
-import { cameraBottomChrome } from '@/lib/layout'
-import { captureGeoSnapshot } from '@/lib/location'
-import { saveToAibAlbum } from '@/lib/media'
-import { useStampSettings } from '@/lib/settings-context'
-import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
 import {
-  getLatestCapture,
-  recordCapture,
-  setCaptureMediaAssetId,
-} from '@/lib/storage'
+  CAMERA,
+  cameraBottomChrome,
+  cameraStampBottomClearance,
+} from '@/lib/layout'
+import { useStampSettings } from '@/lib/settings-context'
+import { getLatestCapture } from '@/lib/storage'
 import { cameraOverlay, radii } from '@/lib/theme'
-import { getSharedGeoSnapshot } from '@/lib/use-live-geo'
-import type { CaptureRecord, GeoSnapshot } from '@/lib/types'
-
-const RECENT_THUMB_SIZE = 52
-const RECENT_THUMB_RADIUS = 10
-const RECENT_THUMB_INSET = 36
+import {
+  cloneStampSettings,
+  type CaptureRecord,
+  type GeoSnapshot,
+  type StampSettings,
+} from '@/lib/types'
+import { createSerialQueue } from '@/lib/util'
 
 export default function CameraScreen() {
   return (
@@ -74,8 +63,12 @@ function CameraExperience() {
   const { settings } = useStampSettings()
   const { showError } = useToast()
   const copy = t()
+  const enqueue = useRef(createSerialQueue()).current
+
   const [flash, setFlash] = useState<FlashMode>('off')
-  const [capturing, setCapturing] = useState(false)
+  const [shutterBusy, setShutterBusy] = useState(false)
+  const [pendingProcessing, setPendingProcessing] = useState(0)
+  const shutterBusyRef = useRef(false)
   const [cameraReady, setCameraReady] = useState(false)
   const [availableLenses, setAvailableLenses] = useState<string[]>([])
   const [selectedLens, setSelectedLens] = useState<string | undefined>()
@@ -112,9 +105,7 @@ function CameraExperience() {
   }, [shutterFlash])
 
   const zoomOptions = useMemo(() => {
-    if (Platform.OS === 'ios') {
-      return buildIosZoomOptions(availableLenses)
-    }
+    if (Platform.OS === 'ios') return buildIosZoomOptions(availableLenses)
     return defaultZoomOptions()
   }, [availableLenses])
 
@@ -187,8 +178,7 @@ function CameraExperience() {
   const refreshLenses = useCallback(async () => {
     if (Platform.OS !== 'ios' || !cameraRef.current) return
     try {
-      const lenses = await cameraRef.current.getAvailableLensesAsync()
-      setAvailableLenses(lenses)
+      setAvailableLenses(await cameraRef.current.getAvailableLensesAsync())
     } catch {}
   }, [])
 
@@ -203,14 +193,83 @@ function CameraExperience() {
     router.push(`/photo/${latestCapture.id}`)
   }, [latestCapture])
 
+  const toggleFlash = useCallback(async () => {
+    await Haptics.selectionAsync()
+    setFlash(current => (current === 'off' ? 'on' : 'off'))
+  }, [])
+
+  const openStampSettings = useCallback(() => {
+    void Haptics.selectionAsync()
+    router.push('/settings/appearance?from=camera' as Href)
+  }, [])
+
+  const reportCaptureError = useCallback(
+    (error: unknown) => {
+      console.error(error)
+      showError(
+        copy.camera.captureFailed,
+        errorMessage(error, copy.camera.captureFailedBody)
+      )
+    },
+    [copy.camera.captureFailed, copy.camera.captureFailedBody, showError]
+  )
+
+  const queueCapture = useCallback(
+    (photoUri: string, snap: GeoSnapshot, stampSettings: StampSettings) => {
+      setPendingProcessing(count => count + 1)
+      void enqueue(async () => {
+        try {
+          setLatestCapture(await finalizeCapture(photoUri, snap, stampSettings))
+        } catch (error) {
+          reportCaptureError(error)
+        } finally {
+          setPendingProcessing(count => Math.max(0, count - 1))
+        }
+      })
+    },
+    [enqueue, reportCaptureError]
+  )
+
+  const takePhoto = useCallback(async () => {
+    if (!cameraRef.current || !cameraReady || shutterBusyRef.current) return
+
+    shutterBusyRef.current = true
+    setShutterBusy(true)
+    playShutterFlash()
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+
+    try {
+      const snap = await resolveCaptureGeo()
+      const stampSettings = cloneStampSettings(settings)
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 1,
+        shutterSound: true,
+      })
+
+      if (!photo?.uri) throw new Error(copy.camera.captureFailed)
+
+      queueCapture(photo.uri, snap, stampSettings)
+    } catch (error) {
+      reportCaptureError(error)
+    } finally {
+      shutterBusyRef.current = false
+      setShutterBusy(false)
+    }
+  }, [
+    cameraReady,
+    copy.camera.captureFailed,
+    playShutterFlash,
+    queueCapture,
+    reportCaptureError,
+    settings,
+  ])
+
   const swipeToPhotos = useMemo(
     () =>
       Gesture.Pan()
         .activeOffsetX([-40, 40])
         .onEnd(event => {
-          if (event.translationX < -80) {
-            runOnJS(openPhotos)()
-          }
+          if (event.translationX < -80) runOnJS(openPhotos)()
         }),
     [openPhotos]
   )
@@ -218,7 +277,7 @@ function CameraExperience() {
   const pinchToZoom = useMemo(
     () =>
       Gesture.Pinch()
-        .enabled(cameraReady && !capturing)
+        .enabled(cameraReady && !shutterBusy)
         .onBegin(() => {
           pinchStartFactor.value = liveFactorShared.value
           runOnJS(beginPinchZoom)(pinchStartFactor.value)
@@ -231,7 +290,7 @@ function CameraExperience() {
         }),
     [
       cameraReady,
-      capturing,
+      shutterBusy,
       beginPinchZoom,
       updatePinchZoom,
       endPinchZoom,
@@ -240,96 +299,27 @@ function CameraExperience() {
     ]
   )
 
-  const cameraGestures = useMemo(
-    () => Gesture.Simultaneous(swipeToPhotos, pinchToZoom),
-    [swipeToPhotos, pinchToZoom]
+  const doubleTapFlash = useMemo(
+    () =>
+      Gesture.Tap()
+        .numberOfTaps(2)
+        .maxDuration(280)
+        .onEnd(() => {
+          runOnJS(toggleFlash)()
+        }),
+    [toggleFlash]
   )
 
-  const toggleFlash = async () => {
-    await Haptics.selectionAsync()
-    setFlash(current => (current === 'off' ? 'on' : 'off'))
-  }
-
-  const takePhoto = async () => {
-    if (!cameraRef.current || !cameraReady || capturing) return
-
-    setCapturing(true)
-    playShutterFlash()
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-
-    try {
-      const snap = await resolveCaptureGeo()
-
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 1,
-        shutterSound: true,
-      })
-
-      if (!photo?.uri) {
-        throw new Error(copy.camera.captureFailed)
-      }
-
-      const infoLines = buildInfoStampLines(snap, settings)
-      const customLines = buildCustomStampLines(settings)
-
-      await new Promise<void>(resolve => {
-        requestIdleCallback(() => resolve(), { timeout: 500 })
-      })
-
-      const stampedUri = await compositeStampOntoPhoto(
-        photo.uri,
-        { infoLines, customLines },
-        settings
-      )
-
-      const captureId = newCaptureId()
-      const takenAt = snap.takenAt.toISOString()
-      const record: CaptureRecord = {
-        id: captureId,
-        uri: stampedUri,
-        mediaLibraryAssetId: null,
-        takenAt,
-        lat: snap.lat,
-        lon: snap.lon,
-        accuracy: snap.accuracy,
-        altitude: snap.altitude,
-        heading: snap.heading,
-        address: snap.address,
-        customText: settings.customLines,
-        stampConfigSnapshot: settings,
-      }
-
-      await Promise.all([
-        writeCaptureExif(stampedUri, snap, {
-          captureId,
-          customLines: settings.customLines,
-        }),
-        recordCapture(record),
-      ])
-
-      setLatestCapture(record)
-
-      void saveToAibAlbum(stampedUri)
-        .then(assetId => setCaptureMediaAssetId(captureId, assetId))
-        .catch(error => {
-          console.warn(error)
-        })
-
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    } catch (error) {
-      console.error(error)
-      showError(
-        copy.camera.captureFailed,
-        errorMessage(error, copy.camera.captureFailedBody)
-      )
-    } finally {
-      setCapturing(false)
-    }
-  }
+  const cameraGestures = useMemo(
+    () => Gesture.Simultaneous(swipeToPhotos, pinchToZoom, doubleTapFlash),
+    [swipeToPhotos, pinchToZoom, doubleTapFlash]
+  )
 
   const bottomChrome = cameraBottomChrome(insets.bottom)
   const flashOn = flash === 'on'
-  const flashFg = flashOn ? '#171717' : '#FAFAFA'
+  const thumbTop = (CAMERA.shutterRow - CAMERA.thumbSize) / 2
+  const sideButtonTop = (CAMERA.shutterRow - CAMERA.sideButton) / 2
+  const showThumb = latestCapture != null || pendingProcessing > 0
 
   return (
     <GestureDetector gesture={cameraGestures}>
@@ -366,52 +356,18 @@ function CameraExperience() {
           ]}
         />
 
-        <View
-          pointerEvents="box-none"
-          className="absolute left-0 right-0 top-0 flex-row items-start justify-between px-4"
-          style={{ paddingTop: insets.top + 10 }}
-        >
-          <Pressable
-            onPress={toggleFlash}
-            accessibilityLabel={
-              flashOn ? copy.camera.flashOn : copy.camera.flashOff
-            }
-            style={{
-              height: 40,
-              borderRadius: radii.full,
-              paddingHorizontal: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              backgroundColor: flashOn ? '#FACC15' : cameraOverlay.fill,
-            }}
-          >
-            <AppIcon
-              sf={flashOn ? 'bolt.fill' : 'bolt.slash.fill'}
-              material={flashOn ? 'flash-on' : 'flash-off'}
-              size={18}
-              color={flashFg}
-            />
-            <Text
-              style={{
-                fontFamily: fonts.semibold,
-                color: flashFg,
-                fontSize: 13,
-              }}
-            >
-              {copy.camera.flash}
-            </Text>
-          </Pressable>
-
-          <CameraHud />
-        </View>
+        <StampOverlay
+          bottomClearance={cameraStampBottomClearance(insets.bottom)}
+        />
 
         <View
           pointerEvents="box-none"
           className="absolute bottom-0 left-0 right-0 items-center"
-          style={{ paddingBottom: bottomChrome + 4 }}
+          style={{ paddingBottom: bottomChrome + CAMERA.chromePad }}
         >
-          <View style={{ alignItems: 'center', marginBottom: 14 }}>
+          <View
+            style={{ alignItems: 'center', marginBottom: CAMERA.zoomBlockGap }}
+          >
             <ZoomPinchMeter
               options={zoomOptions}
               factor={pinchFactor}
@@ -428,88 +384,121 @@ function CameraExperience() {
           <View
             style={{
               width: '100%',
-              height: 74,
+              height: CAMERA.shutterRow,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            {latestCapture ? (
+            {showThumb ? (
               <Pressable
                 onPress={openLatestPhoto}
-                accessibilityLabel={copy.camera.recentPhoto}
+                disabled={!latestCapture}
+                accessibilityLabel={
+                  pendingProcessing > 0 && !latestCapture
+                    ? copy.camera.processingPhoto
+                    : copy.camera.recentPhoto
+                }
                 style={{
                   position: 'absolute',
-                  left: RECENT_THUMB_INSET,
-                  width: RECENT_THUMB_SIZE,
-                  height: RECENT_THUMB_SIZE,
-                  borderRadius: RECENT_THUMB_RADIUS,
+                  left: CAMERA.thumbInset,
+                  top: thumbTop,
+                  width: CAMERA.thumbSize,
+                  height: CAMERA.thumbSize,
+                  borderRadius: CAMERA.thumbRadius,
                   borderWidth: 1.5,
                   borderColor: cameraOverlay.stroke,
                   backgroundColor: 'rgba(0,0,0,0.35)',
-                  padding: 0,
                 }}
               >
                 <View
                   style={{
                     flex: 1,
-                    borderRadius: RECENT_THUMB_RADIUS - 1.5,
+                    borderRadius: CAMERA.thumbRadius - 1.5,
                     overflow: 'hidden',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Image
-                    source={{ uri: latestCapture.uri }}
-                    style={{ width: '100%', height: '100%' }}
-                    contentFit="cover"
-                  />
+                  {latestCapture ? (
+                    <Image
+                      source={{ uri: latestCapture.uri }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                    />
+                  ) : null}
+                  {pendingProcessing > 0 ? (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(0,0,0,0.45)',
+                      }}
+                    >
+                      <ActivityIndicator color="#FAFAFA" />
+                    </View>
+                  ) : null}
                 </View>
               </Pressable>
             ) : null}
 
             <Pressable
               onPress={takePhoto}
-              disabled={!cameraReady || capturing}
+              disabled={!cameraReady || shutterBusy}
               accessibilityLabel={copy.camera.shutter}
               style={{
-                width: 74,
-                height: 74,
+                width: CAMERA.shutterOuter,
+                height: CAMERA.shutterOuter,
                 borderRadius: radii.full,
                 borderWidth: 4,
                 borderColor: 'rgba(255,255,255,0.85)',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'transparent',
+                opacity: shutterBusy ? 0.7 : 1,
               }}
             >
               <View
                 style={{
-                  width: 60,
-                  height: 60,
+                  width: CAMERA.shutterInner,
+                  height: CAMERA.shutterInner,
                   borderRadius: radii.full,
                   backgroundColor: '#FFFFFF',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
-              >
-                {capturing ? <ActivityIndicator color="#171717" /> : null}
-              </View>
+              />
             </Pressable>
+
+            <CameraChromeButton
+              onPress={toggleFlash}
+              accessibilityLabel={
+                flashOn ? copy.camera.flashOn : copy.camera.flashOff
+              }
+              sf={flashOn ? 'bolt.fill' : 'bolt.slash.fill'}
+              material={flashOn ? 'flash-on' : 'flash-off'}
+              color={flashOn ? '#171717' : '#FAFAFA'}
+              backgroundColor={flashOn ? '#FACC15' : cameraOverlay.fill}
+              style={{
+                right: CAMERA.thumbInset + CAMERA.sideButton + CAMERA.sideGap,
+                top: sideButtonTop,
+              }}
+            />
+
+            <CameraChromeButton
+              onPress={openStampSettings}
+              accessibilityLabel={copy.camera.stampSettings}
+              sf="gearshape.fill"
+              material="settings"
+              style={{
+                right: CAMERA.thumbInset,
+                top: sideButtonTop,
+              }}
+            />
           </View>
         </View>
       </View>
     </GestureDetector>
   )
-}
-
-async function resolveCaptureGeo(): Promise<GeoSnapshot> {
-  const live = getSharedGeoSnapshot()
-  const takenAt = new Date()
-
-  if (live.lat != null && live.lon != null) {
-    return { ...live, takenAt }
-  }
-
-  return captureGeoSnapshot({
-    headingHint: live.heading,
-    positionTimeoutMs: 1500,
-  })
 }

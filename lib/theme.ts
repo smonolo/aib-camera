@@ -76,7 +76,6 @@ export const radii = {
 export const cameraOverlay = {
   fill: 'rgba(0,0,0,0.42)',
   text: 'rgba(255,255,255,0.92)',
-  /** Soft gray stroke for HUD corners, recent-thumb border, etc. */
   stroke: 'rgba(255,255,255,0.4)',
 } as const
 

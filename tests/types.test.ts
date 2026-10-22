@@ -1,4 +1,18 @@
-import { DEFAULT_STAMP_SETTINGS, normalizeStampSettings } from '@/lib/types'
+import {
+  cloneStampSettings,
+  DEFAULT_STAMP_SETTINGS,
+  normalizeStampSettings,
+} from '@/lib/types'
+
+describe('cloneStampSettings', () => {
+  it('copies custom lines by value', () => {
+    const original = { ...DEFAULT_STAMP_SETTINGS, customLines: ['one'] }
+    const cloned = cloneStampSettings(original)
+    cloned.customLines.push('two')
+    expect(original.customLines).toEqual(['one'])
+    expect(cloned.customLines).toEqual(['one', 'two'])
+  })
+})
 
 describe('normalizeStampSettings', () => {
   it('returns defaults for empty input', () => {

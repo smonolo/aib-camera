@@ -12,7 +12,7 @@ Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.js
 
 ## Features
 
-- Live camera HUD (time, coords, accuracy, altitude, compass heading, place)
+- Live stamp overlay on the camera (same fields, font size, and opacity as the burned-in stamp)
 - Burn-in stamp via Skia (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
 - Per-capture UUID plus an on-device **capture log** (Settings) that keeps ID, date, and coords even after gallery deletes
@@ -49,7 +49,7 @@ npm run smoke-checklist   # prints the device QA checklist
 | Path          | Role                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------- |
 | `app/`        | Expo Router screens (tabs: camera, gallery, settings/*; `photo/[id]`; `audit-log`)        |
-| `components/` | UI (HUD, permissions, buttons, surfaces)                                                  |
+| `components/` | UI (stamp overlay, permissions, buttons, surfaces)                                        |
 | `lib/`        | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config |
 | `tests/`      | jest-expo unit tests                                                                      |
 | `assets/`     | Icons and splash                                                                          |
