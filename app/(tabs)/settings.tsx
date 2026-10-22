@@ -1,8 +1,15 @@
 import * as Haptics from 'expo-haptics'
 import * as Linking from 'expo-linking'
 import * as Location from 'expo-location'
+import { router, type Href } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react'
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -274,17 +281,24 @@ export default function SettingsScreen() {
             body={versionLabel}
             colors={colors}
           />
-          <InfoRow
-            title={copy.settings.disclaimerTitle}
-            body={copy.settings.disclaimerBody}
-            colors={colors}
+          <NavRow
+            label={copy.settings.auditLogLink}
+            accessibilityRole="button"
+            sf="chevron.right"
+            material="chevron-right"
+            showDivider
+            onPress={() => {
+              void (async () => {
+                await Haptics.selectionAsync()
+                router.push('/audit-log' as Href)
+              })()
+            }}
           />
-          <InfoRow
-            title={copy.settings.privacyTitle}
-            body={copy.settings.privacyBody}
-            colors={colors}
-          />
-          <Pressable
+          <NavRow
+            label={copy.settings.privacyLink}
+            accessibilityRole="link"
+            sf="arrow.up.right"
+            material="open-in-new"
             onPress={() => {
               void (async () => {
                 await Haptics.selectionAsync()
@@ -298,34 +312,7 @@ export default function SettingsScreen() {
                 }
               })()
             }}
-            accessibilityRole="link"
-            accessibilityLabel={copy.settings.privacyLink}
-            style={{
-              minHeight: 52,
-              paddingHorizontal: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <Text
-              style={{
-                flex: 1,
-                fontFamily: fonts.semibold,
-                fontSize: 15,
-                color: colors.fg,
-              }}
-            >
-              {copy.settings.privacyLink}
-            </Text>
-            <AppIcon
-              sf="arrow.up.right"
-              material="open-in-new"
-              size={18}
-              color={colors.muted}
-            />
-          </Pressable>
+          />
         </CardGroup>
       </ScrollView>
     </View>
@@ -371,6 +358,54 @@ function InfoRow({
         {body}
       </Text>
     </View>
+  )
+}
+
+function NavRow({
+  label,
+  onPress,
+  accessibilityRole,
+  sf,
+  material,
+  showDivider = false,
+}: {
+  label: string
+  onPress: () => void
+  accessibilityRole: 'button' | 'link'
+  sf: ComponentProps<typeof AppIcon>['sf']
+  material: ComponentProps<typeof AppIcon>['material']
+  showDivider?: boolean
+}) {
+  const colors = useAppColors()
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={label}
+      style={{
+        minHeight: 52,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        borderBottomWidth: showDivider ? 1 : 0,
+        borderBottomColor: colors.border,
+      }}
+    >
+      <Text
+        style={{
+          flex: 1,
+          fontFamily: fonts.semibold,
+          fontSize: 15,
+          color: colors.fg,
+        }}
+      >
+        {label}
+      </Text>
+      <AppIcon sf={sf} material={material} size={18} color={colors.muted} />
+    </Pressable>
   )
 }
 

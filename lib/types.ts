@@ -32,6 +32,13 @@ export type CaptureRecord = {
   stampConfigSnapshot: StampSettings
 }
 
+export type AuditLogEntry = {
+  id: string
+  takenAt: string
+  lat: number | null
+  lon: number | null
+}
+
 export type GeoSnapshot = {
   lat: number | null
   lon: number | null

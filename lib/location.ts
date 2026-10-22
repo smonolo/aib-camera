@@ -12,6 +12,11 @@ const HEADING_TIMEOUT_MS = 800
 let lastGeocodeKey = ''
 let lastGeocodeAddress: string | null = null
 
+export function resetGeocodeMemory(): void {
+  lastGeocodeKey = ''
+  lastGeocodeAddress = null
+}
+
 function emptySnapshot(
   takenAt: Date,
   heading: number | null = null
@@ -27,17 +32,22 @@ function emptySnapshot(
   }
 }
 
-async function withTimeout<T>(
+export async function withTimeout<T>(
   promise: Promise<T>,
   ms: number,
   label = 'timeout'
 ): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(label)), ms)
-    }),
-  ])
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(label)), ms)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
 }
 
 async function hasForegroundLocationPermission(): Promise<boolean> {
@@ -53,11 +63,13 @@ export async function ensureForegroundLocationPermission(): Promise<boolean> {
   return requested.granted
 }
 
-function geocodeCellKey(latitude: number, longitude: number): string {
+export function geocodeCellKey(latitude: number, longitude: number): string {
   return `${latitude.toFixed(GEOCODE_CELL_DECIMALS)},${longitude.toFixed(GEOCODE_CELL_DECIMALS)}`
 }
 
-function formatAddress(parts: Location.LocationGeocodedAddress): string {
+export function formatGeocodeAddress(
+  parts: Location.LocationGeocodedAddress
+): string {
   const streetBits = [parts.street, parts.streetNumber]
     .filter(Boolean)
     .join(' ')
@@ -84,7 +96,7 @@ function formatAddress(parts: Location.LocationGeocodedAddress): string {
   return bits.filter(bit => bit && String(bit).trim().length > 0).join(' · ')
 }
 
-function headingFromLocationHeading(
+export function headingFromLocationHeading(
   heading: Location.LocationHeadingObject
 ): number | null {
   if (heading.trueHeading >= 0) {
@@ -96,11 +108,10 @@ function headingFromLocationHeading(
   return null
 }
 
-function normalizeHeadingDegrees(value: number): number {
+export function normalizeHeadingDegrees(value: number): number {
   const wrapped = ((value % 360) + 360) % 360
   return Math.round(wrapped)
 }
-
 async function reverseGeocodeSafe(
   latitude: number,
   longitude: number
@@ -117,7 +128,7 @@ async function reverseGeocodeSafe(
       'geocode-timeout'
     )
     const first = results[0]
-    const formatted = first ? formatAddress(first) : null
+    const formatted = first ? formatGeocodeAddress(first) : null
     if (formatted) {
       lastGeocodeKey = key
       lastGeocodeAddress = formatted

@@ -97,13 +97,23 @@ export default function RootLayout() {
                 },
               }}
             >
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="(tabs)"
+                options={{ headerShown: false, title: '' }}
+              />
               <Stack.Screen
                 name="photo/[id]"
                 options={{
                   headerShown: false,
                   presentation: 'card',
                   animation: 'fade',
+                }}
+              />
+              <Stack.Screen
+                name="audit-log"
+                options={{
+                  headerShown: false,
+                  presentation: 'card',
                 }}
               />
             </Stack>

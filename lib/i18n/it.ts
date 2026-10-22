@@ -89,14 +89,18 @@ export const it: TranslationKeys = {
     locationOpenSettings: 'Apri Impostazioni per abilitare',
     about: 'Informazioni',
     versionLabel: 'Versione',
-    disclaimerTitle: 'App indipendente',
-    disclaimerBody:
-      'AIB Camera è un progetto volontario non ufficiale. Non è realizzata, patrocinata né affiliata a Protezione Civile, Vigili del Fuoco, Regione Lombardia o altre istituzioni pubbliche.',
     privacyTitle: 'Privacy',
-    privacyBody:
-      'Foto, impostazioni e galleria restano sul dispositivo. Nessun account, nessun analytics e nessun sync cloud. La posizione e la rete servono solo al timbro (geocoding opzionale).',
     privacyLink: 'Apri informativa privacy',
     privacyOpenFailed: 'Impossibile aprire il link. Controlla la connessione.',
+    auditLogLink: 'Apri registro scatti',
+  },
+  auditLog: {
+    title: 'Registro scatti',
+    empty: 'Nessuno scatto registrato.',
+    hint: 'Tocca una riga per copiare l’ID. Le voci restano qui dopo le eliminazioni dalla galleria.',
+    copyId: 'Copia ID',
+    copied: 'ID copiato',
+    coordsUnavailable: 'Nessun GPS',
   },
   media: {
     permissionDenied:

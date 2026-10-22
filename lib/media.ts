@@ -7,9 +7,10 @@ import {
 import * as Sharing from 'expo-sharing'
 import { Platform, Share } from 'react-native'
 
+import { APP_NAME } from './config'
 import { t } from './i18n'
 
-const ALBUM_NAME = 'AIB Camera'
+const ALBUM_NAME = APP_NAME
 const PHOTO_GRANULAR = ['photo'] as const
 
 async function ensureMediaLibraryPermission(): Promise<boolean> {

@@ -1,4 +1,5 @@
 import { t } from './i18n'
+import { ROME_TZ } from './time'
 import {
   FONT_SIZE_PX,
   type DateTimeFormat,
@@ -6,8 +7,11 @@ import {
   type StampSettings,
 } from './types'
 
-const ROME_TZ = 'Europe/Rome'
 const ADDRESS_MAX_CHARS = 38
+
+export function formatLatLon(lat: number, lon: number, digits = 5): string {
+  return `${lat.toFixed(digits)}, ${lon.toFixed(digits)}`
+}
 
 export function formatStampDateTime(
   date: Date,
@@ -50,7 +54,7 @@ function formatCoordinates(lat: number, lon: number): string {
 }
 
 function formatShortCoordinates(lat: number, lon: number): string {
-  return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
+  return formatLatLon(lat, lon, 4)
 }
 
 function formatAccuracy(meters: number): string {

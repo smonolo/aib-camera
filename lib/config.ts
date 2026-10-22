@@ -1,5 +1,8 @@
+import * as Crypto from 'expo-crypto'
 import Constants from 'expo-constants'
 import { Platform } from 'react-native'
+
+export const APP_NAME = 'AIB Camera'
 
 type Extra = {
   privacyPolicyUrl?: string
@@ -24,4 +27,8 @@ export function appVersionLabel(): string {
           Constants.nativeBuildVersion)
         : null
   return build ? `${version} (${build})` : version
+}
+
+export function newCaptureId(): string {
+  return Crypto.randomUUID()
 }

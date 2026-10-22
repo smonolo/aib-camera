@@ -5,10 +5,12 @@ This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** field
 ## Product constraints
 
 - **Unofficial.** Never present the app as built by, endorsed by, or affiliated with Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any public institution. No official logos, seals, institutional names in defaults, bundle IDs, copy, or docs. Neutral volunteer wording only (e.g. default stamp `AIB Camera`, placeholders like “Squadra Nord”).
-- **Local-first.** Capture, stamp (Skia), in-app gallery, and share must work offline. Network is only for reverse geocode (optional, cached).
+- **Local-first.** Capture, stamp (Skia), in-app gallery, capture log, and share must work offline. Network is only for reverse geocode (optional, cached).
 - **Camera is required; location is optional.** Never block the camera behind GPS permission. Stamp unavailable fields with clear fallback copy.
 - **Shutter must stay fast.** Prefer live HUD geo (`getSharedGeoSnapshot`) over waiting on a high-accuracy fix. Bound GPS/geocode/heading with short timeouts.
-- **In-app gallery is the source of truth.** System album «AIB Camera» is best-effort; save must succeed even if media-library permission is denied.
+- **In-app gallery is the source of truth for photos.** System album «AIB Camera» is best-effort; save must succeed even if media-library permission is denied.
+- **Capture log is append-only.** Each shot gets a UUID written to EXIF when possible and stored in the local audit log; gallery deletes must not remove audit entries.
+- **EXIF write is best-effort.** Missing native Exify (Expo Go / stale binary) must not fail capture; stamp + gallery + audit log still succeed.
 - **Stamp timezone** is always `Europe/Rome`. Default locale copy is Italian (`lib/i18n`); keep IT and EN catalogs in sync.
 - **Do not** add cloud sync, auth, or regional dispatch integrations unless explicitly requested.
 
@@ -30,30 +32,34 @@ npx expo start              # start the dev server
 npx expo lint               # lint (may require ESLint setup)
 npx tsc --noEmit            # typecheck
 npm run typecheck           # same
+npm test                    # unit tests (jest-expo, tests/)
+npm run test:watch          # watch mode
 npm run format              # Prettier
 npm run smoke-checklist     # print device QA checklist
 npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
 ```
 
-Run typecheck (and lint when configured) before declaring any task done. Verify camera/GPS/compass changes on a **physical device**.
+Run typecheck and unit tests (and lint when configured) before declaring any task done. Verify camera/GPS/compass/EXIF changes on a **physical device** with a **development build** when native modules are involved.
 
 ## Navigation & Routing
 
 - Use **Expo Router** for all navigation. Routes live in **`app/`** (not `src/app/`) — every file there is a screen; `_layout.tsx` files define navigators.
-- Keep non-route code in `components/` and `lib/`.
+- Keep non-route code in `components/` and `lib/`. Unit tests live in **`tests/`**.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
 ## Key modules
 
-| Area                                 | Where                                                        |
-| ------------------------------------ | ------------------------------------------------------------ |
-| Geo snapshot, geocode cache, heading | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`   |
-| Stamp lines / formatters             | `lib/stamp.ts`                                               |
-| JPEG burn-in                         | `lib/composite.ts`                                           |
-| Settings + persistence               | `lib/types.ts`, `lib/settings-context.tsx`, `lib/storage.ts` |
-| Permissions gate                     | `components/PermissionGate.tsx` (camera hard; location soft) |
+| Area                                 | Where                                                                  |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| Geo snapshot, geocode cache, heading | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`             |
+| Stamp lines / formatters             | `lib/stamp.ts`                                                         |
+| JPEG burn-in                         | `lib/composite.ts`                                                     |
+| EXIF (post-stamp)                    | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing) |
+| Capture UUID + gallery + audit log   | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`)   |
+| Settings + persistence               | `lib/types.ts`, `lib/settings-context.tsx`, `lib/storage.ts`           |
+| Permissions gate                     | `components/PermissionGate.tsx` (camera hard; location soft)           |
 
 ## Building with EAS
 
@@ -64,6 +70,7 @@ Docs: https://docs.expo.dev/eas/index.md
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
+- Expo Go only includes its bundled native modules. After adding a library with native code (including Exify), the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+- Keep markdown docs (`README.md`, `PRIVACY.md`, `AGENTS.md`) aligned when product behavior changes.
 - Do not commit secrets. Do not create git commits unless the user asks.

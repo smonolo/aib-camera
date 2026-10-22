@@ -3,14 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   DEFAULT_STAMP_SETTINGS,
   normalizeStampSettings,
+  type AuditLogEntry,
   type CaptureRecord,
   type StampSettings,
 } from './types'
 
 const SETTINGS_KEY = 'aib-camera.settings.v1'
 const CAPTURES_KEY = 'aib-camera.captures.v1'
+const AUDIT_LOG_KEY = 'aib-camera.audit-log.v1'
 const GEOCODE_CACHE_KEY = 'aib-camera.geocode-cache.v1'
-
 const GEOCODE_CACHE_MAX = 80
 
 type GeocodeCacheEntry = {
@@ -22,12 +23,32 @@ type GeocodeCacheEntry = {
 }
 
 let capturesCache: CaptureRecord[] | null = null
+let auditLogCache: AuditLogEntry[] | null = null
 let geocodeCacheMemory: GeocodeCacheEntry[] | null = null
 
-function sortByTakenAtDesc(captures: CaptureRecord[]): CaptureRecord[] {
-  return [...captures].sort(
+export function resetStorageCaches(): void {
+  capturesCache = null
+  auditLogCache = null
+  geocodeCacheMemory = null
+}
+
+function sortByTakenAtDesc<T extends { takenAt: string }>(items: T[]): T[] {
+  return [...items].sort(
     (a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
   )
+}
+
+function normalizeAuditLogEntry(
+  raw: Partial<AuditLogEntry>
+): AuditLogEntry | null {
+  if (typeof raw.id !== 'string' || !raw.id.trim()) return null
+  if (typeof raw.takenAt !== 'string' || !raw.takenAt.trim()) return null
+  return {
+    id: raw.id,
+    takenAt: raw.takenAt,
+    lat: typeof raw.lat === 'number' ? raw.lat : null,
+    lon: typeof raw.lon === 'number' ? raw.lon : null,
+  }
 }
 
 function normalizeCaptureRecord(raw: CaptureRecord): CaptureRecord {
@@ -37,6 +58,17 @@ function normalizeCaptureRecord(raw: CaptureRecord): CaptureRecord {
     altitude: raw.altitude ?? null,
     heading: raw.heading ?? null,
     stampConfigSnapshot: normalizeStampSettings(raw.stampConfigSnapshot),
+  }
+}
+
+async function readJsonArray<T>(key: string): Promise<unknown[] | null> {
+  try {
+    const raw = await AsyncStorage.getItem(key)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
   }
 }
 
@@ -62,21 +94,14 @@ export async function saveStampSettings(
 export async function loadCaptures(): Promise<CaptureRecord[]> {
   if (capturesCache) return capturesCache
 
-  try {
-    const raw = await AsyncStorage.getItem(CAPTURES_KEY)
-    if (!raw) {
-      capturesCache = []
-      return capturesCache
-    }
-    const parsed = JSON.parse(raw) as CaptureRecord[]
-    capturesCache = Array.isArray(parsed)
-      ? sortByTakenAtDesc(parsed.map(normalizeCaptureRecord))
-      : []
-    return capturesCache
-  } catch {
-    capturesCache = []
-    return capturesCache
-  }
+  const parsed = await readJsonArray(CAPTURES_KEY)
+  capturesCache =
+    parsed == null
+      ? []
+      : sortByTakenAtDesc(
+          (parsed as CaptureRecord[]).map(normalizeCaptureRecord)
+        )
+  return capturesCache
 }
 
 async function saveCaptures(captures: CaptureRecord[]): Promise<void> {
@@ -111,22 +136,54 @@ export async function getCapture(id: string): Promise<CaptureRecord | null> {
   return existing.find(item => item.id === id) ?? null
 }
 
+export async function loadAuditLog(): Promise<AuditLogEntry[]> {
+  if (auditLogCache) return auditLogCache
+
+  const parsed = await readJsonArray(AUDIT_LOG_KEY)
+  auditLogCache =
+    parsed == null
+      ? []
+      : sortByTakenAtDesc(
+          (parsed as Partial<AuditLogEntry>[])
+            .map(normalizeAuditLogEntry)
+            .filter((entry): entry is AuditLogEntry => entry != null)
+        )
+  return auditLogCache
+}
+
+async function saveAuditLog(entries: AuditLogEntry[]): Promise<void> {
+  auditLogCache = sortByTakenAtDesc(entries)
+  await AsyncStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(auditLogCache))
+}
+
+export async function appendAuditLogEntry(
+  entry: AuditLogEntry
+): Promise<AuditLogEntry[]> {
+  const existing = await loadAuditLog()
+  if (existing.some(item => item.id === entry.id)) return existing
+  const next = [entry, ...existing]
+  await saveAuditLog(next)
+  return next
+}
+
+export async function recordCapture(record: CaptureRecord): Promise<void> {
+  await Promise.all([
+    appendAuditLogEntry({
+      id: record.id,
+      takenAt: record.takenAt,
+      lat: record.lat,
+      lon: record.lon,
+    }),
+    addCapture(record),
+  ])
+}
+
 async function loadGeocodeCache(): Promise<GeocodeCacheEntry[]> {
   if (geocodeCacheMemory) return geocodeCacheMemory
 
-  try {
-    const raw = await AsyncStorage.getItem(GEOCODE_CACHE_KEY)
-    if (!raw) {
-      geocodeCacheMemory = []
-      return geocodeCacheMemory
-    }
-    const parsed = JSON.parse(raw) as GeocodeCacheEntry[]
-    geocodeCacheMemory = Array.isArray(parsed) ? parsed : []
-    return geocodeCacheMemory
-  } catch {
-    geocodeCacheMemory = []
-    return geocodeCacheMemory
-  }
+  const parsed = await readJsonArray(GEOCODE_CACHE_KEY)
+  geocodeCacheMemory = parsed == null ? [] : (parsed as GeocodeCacheEntry[])
+  return geocodeCacheMemory
 }
 
 async function saveGeocodeCache(entries: GeocodeCacheEntry[]): Promise<void> {

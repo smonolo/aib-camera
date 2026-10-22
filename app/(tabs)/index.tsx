@@ -33,6 +33,8 @@ import {
   type ZoomOption,
 } from '@/lib/camera-zoom'
 import { compositeStampOntoPhoto } from '@/lib/composite'
+import { newCaptureId } from '@/lib/config'
+import { writeCaptureExif } from '@/lib/exif'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { cameraBottomChrome } from '@/lib/layout'
@@ -40,7 +42,7 @@ import { captureGeoSnapshot } from '@/lib/location'
 import { saveToAibAlbum } from '@/lib/media'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
-import { addCapture } from '@/lib/storage'
+import { recordCapture } from '@/lib/storage'
 import { cameraOverlay, radii } from '@/lib/theme'
 import { getSharedGeoSnapshot } from '@/lib/use-live-geo'
 import type { GeoSnapshot } from '@/lib/types'
@@ -150,15 +152,7 @@ function CameraExperience() {
 
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
-        exif: true,
         shutterSound: true,
-        additionalExif:
-          snap.lat != null && snap.lon != null
-            ? {
-                GPSLatitude: snap.lat,
-                GPSLongitude: snap.lon,
-              }
-            : undefined,
       })
 
       if (!photo?.uri) {
@@ -178,19 +172,28 @@ function CameraExperience() {
         settings
       )
 
-      await addCapture({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        uri: stampedUri,
-        takenAt: snap.takenAt.toISOString(),
-        lat: snap.lat,
-        lon: snap.lon,
-        accuracy: snap.accuracy,
-        altitude: snap.altitude,
-        heading: snap.heading,
-        address: snap.address,
-        customText: settings.customLines,
-        stampConfigSnapshot: settings,
-      })
+      const captureId = newCaptureId()
+      const takenAt = snap.takenAt.toISOString()
+
+      await Promise.all([
+        writeCaptureExif(stampedUri, snap, {
+          captureId,
+          customLines: settings.customLines,
+        }),
+        recordCapture({
+          id: captureId,
+          uri: stampedUri,
+          takenAt,
+          lat: snap.lat,
+          lon: snap.lon,
+          accuracy: snap.accuracy,
+          altitude: snap.altitude,
+          heading: snap.heading,
+          address: snap.address,
+          customText: settings.customLines,
+          stampConfigSnapshot: settings,
+        }),
+      ])
 
       void saveToAibAlbum(stampedUri).catch(error => {
         console.warn(error)

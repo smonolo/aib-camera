@@ -85,12 +85,18 @@ export type TranslationKeys = {
     locationOpenSettings: string
     about: string
     versionLabel: string
-    disclaimerTitle: string
-    disclaimerBody: string
     privacyTitle: string
-    privacyBody: string
     privacyLink: string
     privacyOpenFailed: string
+    auditLogLink: string
+  }
+  auditLog: {
+    title: string
+    empty: string
+    hint: string
+    copyId: string
+    copied: string
+    coordsUnavailable: string
   }
   media: {
     permissionDenied: string
