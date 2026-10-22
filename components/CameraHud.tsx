@@ -28,7 +28,6 @@ const HUD_MAX_WIDTH_EXPANDED = 300
 const CORNER_STROKE = 1.5
 const CORNER_INSET = 6
 const CORNER_ARM = 4
-const CORNER_COLOR = 'rgba(255,255,255,0.4)'
 
 const TIMING = {
   duration: 240,
@@ -134,8 +133,8 @@ export function CameraHud() {
               borderBottomLeftRadius: Math.max(0, radii.md - CORNER_INSET),
               borderLeftWidth: CORNER_STROKE,
               borderBottomWidth: CORNER_STROKE,
-              borderLeftColor: CORNER_COLOR,
-              borderBottomColor: CORNER_COLOR,
+              borderLeftColor: cameraOverlay.stroke,
+              borderBottomColor: cameraOverlay.stroke,
             }}
           />
         </Animated.View>

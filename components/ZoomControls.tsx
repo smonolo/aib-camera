@@ -32,7 +32,6 @@ export function ZoomControls({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 2,
-        marginBottom: 14,
         padding: 3,
         borderRadius: radii.full,
         backgroundColor: cameraOverlay.fill,

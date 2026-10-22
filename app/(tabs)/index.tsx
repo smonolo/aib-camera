@@ -27,10 +27,13 @@ import { CameraHud } from '@/components/CameraHud'
 import { PermissionGate } from '@/components/PermissionGate'
 import { errorMessage, useToast } from '@/components/Toast'
 import { ZoomControls } from '@/components/ZoomControls'
+import { ZoomPinchMeter } from '@/components/ZoomPinchMeter'
 import {
   buildIosZoomOptions,
+  currentAbsoluteFactor,
   defaultZoomOptions,
   pickDefaultOption,
+  resolveAbsoluteFactor,
   type ZoomOption,
 } from '@/lib/camera-zoom'
 import { compositeStampOntoPhoto } from '@/lib/composite'
@@ -79,7 +82,13 @@ function CameraExperience() {
   const [zoom, setZoom] = useState(0)
   const [selectedZoomKey, setSelectedZoomKey] = useState<string | null>(null)
   const [latestCapture, setLatestCapture] = useState<CaptureRecord | null>(null)
+  const [pinching, setPinching] = useState(false)
+  const [pinchFactor, setPinchFactor] = useState(1)
+  const pinchFactorRef = useRef(1)
+  const pinchingRef = useRef(false)
   const shutterFlash = useSharedValue(0)
+  const pinchStartFactor = useSharedValue(1)
+  const liveFactorShared = useSharedValue(1)
   const shutterFlashStyle = useAnimatedStyle(() => ({
     opacity: shutterFlash.value,
   }))
@@ -114,6 +123,51 @@ function CameraExperience() {
     if (option.lens) setSelectedLens(option.lens)
     setZoom(option.zoom)
   }, [])
+
+  const applyResolvedZoom = useCallback(
+    (factor: number) => {
+      const resolved = resolveAbsoluteFactor(zoomOptions, factor)
+      if (!resolved) return
+
+      pinchFactorRef.current = resolved.factor
+      setPinchFactor(resolved.factor)
+      setZoom(resolved.zoom)
+      setSelectedZoomKey(resolved.option.key)
+      if (resolved.option.lens) setSelectedLens(resolved.option.lens)
+    },
+    [zoomOptions]
+  )
+
+  useEffect(() => {
+    const factor = currentAbsoluteFactor(zoomOptions, selectedZoomKey, zoom)
+    liveFactorShared.value = factor
+    if (!pinching) {
+      pinchFactorRef.current = factor
+      setPinchFactor(factor)
+    }
+  }, [zoomOptions, selectedZoomKey, zoom, pinching, liveFactorShared])
+
+  const beginPinchZoom = useCallback((startFactor: number) => {
+    pinchingRef.current = true
+    pinchFactorRef.current = startFactor
+    setPinchFactor(startFactor)
+    setPinching(true)
+  }, [])
+
+  const updatePinchZoom = useCallback(
+    (absoluteFactor: number) => {
+      if (!pinchingRef.current) return
+      applyResolvedZoom(absoluteFactor)
+    },
+    [applyResolvedZoom]
+  )
+
+  const endPinchZoom = useCallback(() => {
+    if (!pinchingRef.current) return
+    pinchingRef.current = false
+    applyResolvedZoom(pinchFactorRef.current)
+    setPinching(false)
+  }, [applyResolvedZoom])
 
   useEffect(() => {
     if (zoomOptions.length === 0) {
@@ -159,6 +213,36 @@ function CameraExperience() {
           }
         }),
     [openPhotos]
+  )
+
+  const pinchToZoom = useMemo(
+    () =>
+      Gesture.Pinch()
+        .enabled(cameraReady && !capturing)
+        .onBegin(() => {
+          pinchStartFactor.value = liveFactorShared.value
+          runOnJS(beginPinchZoom)(pinchStartFactor.value)
+        })
+        .onUpdate(event => {
+          runOnJS(updatePinchZoom)(pinchStartFactor.value * event.scale)
+        })
+        .onFinalize(() => {
+          runOnJS(endPinchZoom)()
+        }),
+    [
+      cameraReady,
+      capturing,
+      beginPinchZoom,
+      updatePinchZoom,
+      endPinchZoom,
+      pinchStartFactor,
+      liveFactorShared,
+    ]
+  )
+
+  const cameraGestures = useMemo(
+    () => Gesture.Simultaneous(swipeToPhotos, pinchToZoom),
+    [swipeToPhotos, pinchToZoom]
   )
 
   const toggleFlash = async () => {
@@ -248,7 +332,7 @@ function CameraExperience() {
   const flashFg = flashOn ? '#171717' : '#FAFAFA'
 
   return (
-    <GestureDetector gesture={swipeToPhotos}>
+    <GestureDetector gesture={cameraGestures}>
       <View className="flex-1 bg-black">
         <CameraView
           ref={cameraRef}
@@ -327,12 +411,19 @@ function CameraExperience() {
           className="absolute bottom-0 left-0 right-0 items-center"
           style={{ paddingBottom: bottomChrome + 4 }}
         >
-          <ZoomControls
-            options={zoomOptions}
-            selectedKey={selectedZoomKey}
-            onSelect={applyZoomOption}
-            accessibilityPrefix={copy.camera.zoom}
-          />
+          <View style={{ alignItems: 'center', marginBottom: 14 }}>
+            <ZoomPinchMeter
+              options={zoomOptions}
+              factor={pinchFactor}
+              visible={pinching}
+            />
+            <ZoomControls
+              options={zoomOptions}
+              selectedKey={selectedZoomKey}
+              onSelect={applyZoomOption}
+              accessibilityPrefix={copy.camera.zoom}
+            />
+          </View>
 
           <View
             style={{
@@ -353,7 +444,7 @@ function CameraExperience() {
                   height: RECENT_THUMB_SIZE,
                   borderRadius: RECENT_THUMB_RADIUS,
                   borderWidth: 1.5,
-                  borderColor: 'rgba(255,255,255,0.28)',
+                  borderColor: cameraOverlay.stroke,
                   backgroundColor: 'rgba(0,0,0,0.35)',
                   padding: 0,
                 }}
