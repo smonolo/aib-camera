@@ -22,7 +22,7 @@ export async function persistRawPhoto(photoUri: string): Promise<string> {
     const source = new File(photoUri)
     const bytes = new Uint8Array(await source.arrayBuffer())
     outFile.create({ overwrite: true })
-    outFile.write(bytes)
+    await outFile.write(bytes)
     return outFile.uri
   } catch (error) {
     warn('Raw photo persist failed; returning original URI', error)

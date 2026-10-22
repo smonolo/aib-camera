@@ -51,7 +51,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 )
 
-jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' })
+jest.spyOn(Share, 'share').mockResolvedValue({
+  action: 'sharedAction',
+  activityType: undefined,
+})
 
 function capture(overrides: Partial<CaptureRecord> = {}): CaptureRecord {
   return {

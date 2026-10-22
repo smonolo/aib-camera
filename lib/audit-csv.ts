@@ -54,7 +54,7 @@ export async function exportAuditLogCsv(
   const file = new File(Paths.cache, auditLogCsvFilename())
   try {
     file.create({ overwrite: true })
-    file.write(buildAuditLogCsv(entries, installId))
+    await file.write(buildAuditLogCsv(entries, installId))
   } catch (error) {
     warn('Audit CSV write failed', error)
     throw new Error(t().auditLog.exportUnavailable)

@@ -7,8 +7,7 @@ import {
   Geist_700Bold,
   useFonts,
 } from '@expo-google-fonts/geist'
-import { Stack } from 'expo-router'
-import { ThemeProvider } from 'expo-router/react-navigation'
+import { Stack, ThemeProvider } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { NavigationBar } from 'expo-navigation-bar'
 import { StatusBar } from 'expo-status-bar'

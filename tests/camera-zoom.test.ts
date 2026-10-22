@@ -15,8 +15,16 @@ import {
   pickDefaultOption,
   pinchFactorRange,
   resolveAbsoluteFactor,
+  type CameraLensInfo,
   type ZoomOption,
 } from '@/lib/camera-zoom'
+
+function lens(
+  localizedName: string,
+  deviceType = `AVCaptureDeviceType${localizedName.replace(/\s+/g, '')}`
+): CameraLensInfo {
+  return { deviceType, localizedName }
+}
 
 describe('formatZoomLabel', () => {
   it('formats integer and half factors', () => {
@@ -83,10 +91,16 @@ describe('formatZoomChipLabel', () => {
 describe('buildIosZoomOptions', () => {
   it('classifies ultra-wide, wide, and tele lenses', () => {
     const options = buildIosZoomOptions([
-      'Back Dual Camera',
-      'Back Ultra Wide Camera',
-      'Back Camera',
-      'Back Telephoto Camera',
+      lens('Back Dual Camera'),
+      lens(
+        'Back Ultra Wide Camera',
+        'AVCaptureDeviceTypeBuiltInUltraWideCamera'
+      ),
+      lens('Back Camera', 'AVCaptureDeviceTypeBuiltInWideAngleCamera'),
+      lens(
+        'Back Telephoto Camera',
+        'AVCaptureDeviceTypeBuiltInTelephotoCamera'
+      ),
     ])
 
     expect(options.map(option => option.kind)).toEqual([
@@ -94,15 +108,16 @@ describe('buildIosZoomOptions', () => {
       'wide',
       'tele',
     ])
-    expect(options.find(option => option.kind === 'ultraWide')?.factor).toBe(
-      0.5
-    )
+    expect(options.find(option => option.kind === 'ultraWide')).toMatchObject({
+      factor: 0.5,
+      lens: 'AVCaptureDeviceTypeBuiltInUltraWideCamera',
+    })
     expect(options.find(option => option.kind === 'wide')?.zoom).toBe(0)
     expect(options.find(option => option.kind === 'tele')?.zoom).toBe(0)
   })
 
   it('adds digital 2× tele when only a wide lens exists', () => {
-    const options = buildIosZoomOptions(['Back Wide Angle Camera'])
+    const options = buildIosZoomOptions([lens('Back Wide Angle Camera')])
     expect(options).toHaveLength(2)
     expect(options[1]).toMatchObject({
       key: 'tele-digital',
@@ -114,7 +129,10 @@ describe('buildIosZoomOptions', () => {
 
   it('ignores composite / virtual lenses', () => {
     expect(
-      buildIosZoomOptions(['Back Dual Wide Camera', 'TrueDepth Camera'])
+      buildIosZoomOptions([
+        lens('Back Dual Wide Camera'),
+        lens('TrueDepth Camera'),
+      ])
     ).toEqual([])
   })
 })
@@ -147,9 +165,9 @@ describe('defaultZoomOptions', () => {
 describe('pickDefaultOption', () => {
   it('prefers wide when present', () => {
     const options = buildIosZoomOptions([
-      'Back Ultra Wide Camera',
-      'Back Camera',
-      'Back Telephoto Camera',
+      lens('Back Ultra Wide Camera'),
+      lens('Back Camera'),
+      lens('Back Telephoto Camera'),
     ])
     expect(pickDefaultOption(options)?.kind).toBe('wide')
   })
@@ -170,9 +188,9 @@ describe('clampCameraZoom', () => {
 
 describe('absolute factor mapping', () => {
   const options = buildIosZoomOptions([
-    'Back Ultra Wide Camera',
-    'Back Camera',
-    'Back Telephoto Camera',
+    lens('Back Ultra Wide Camera'),
+    lens('Back Camera'),
+    lens('Back Telephoto Camera'),
   ])
 
   it('uses the correct lens base for each option', () => {
@@ -223,8 +241,8 @@ describe('factorFromPinchScale', () => {
 describe('pinchFactorRange', () => {
   it('exposes a factor range starting at ultra-wide', () => {
     const options = buildIosZoomOptions([
-      'Back Ultra Wide Camera',
-      'Back Camera',
+      lens('Back Ultra Wide Camera'),
+      lens('Back Camera'),
     ])
     const range = pinchFactorRange(options)
     expect(range.min).toBe(0.5)

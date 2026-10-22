@@ -68,6 +68,11 @@ function normalizedZoomForFactor(
   return Math.min(1, Math.log(factor) / Math.log(assumedMax))
 }
 
+export type CameraLensInfo = {
+  deviceType: string
+  localizedName: string
+}
+
 function classifyLensName(name: string): ZoomKind | null {
   const n = name.toLowerCase()
 
@@ -80,19 +85,23 @@ function classifyLensName(name: string): ZoomKind | null {
   }
 
   if (
-    /ultra\s*-?\s*wide|ultrawide|ultra\s*grandangolare|grandangolo\s*ultra|ultra\s*weit|super\s*wide/.test(
+    /ultrawide|ultra\s*-?\s*wide|builtinultrawide|ultra\s*grandangolare|grandangolo\s*ultra|ultra\s*weit|super\s*wide/.test(
       n
     )
   ) {
     return 'ultraWide'
   }
 
-  if (/telephoto|teleobiettivo|t[eé]l[eé]objectif|\btele\b/.test(n)) {
+  if (
+    /telephoto|builtintelephoto|teleobiettivo|t[eé]l[eé]objectif|\btele\b/.test(
+      n
+    )
+  ) {
     return 'tele'
   }
 
   if (
-    /wide\s*angle|grandangolare|weitwinkel|wide|fotocamera|camera|arri[eè]re|back|rear|posteriore/.test(
+    /wideangle|wide\s*angle|builtinwide|grandangolare|weitwinkel|wide|fotocamera|camera|arri[eè]re|back|rear|posteriore/.test(
       n
     )
   ) {
@@ -102,13 +111,19 @@ function classifyLensName(name: string): ZoomKind | null {
   return null
 }
 
-export function buildIosZoomOptions(lenses: string[]): ZoomOption[] {
+function classifyLens(lens: CameraLensInfo): ZoomKind | null {
+  return (
+    classifyLensName(lens.deviceType) ?? classifyLensName(lens.localizedName)
+  )
+}
+
+export function buildIosZoomOptions(lenses: CameraLensInfo[]): ZoomOption[] {
   const byKind = new Map<ZoomKind, string>()
 
   for (const lens of lenses) {
-    const kind = classifyLensName(lens)
+    const kind = classifyLens(lens)
     if (!kind || byKind.has(kind)) continue
-    byKind.set(kind, lens)
+    byKind.set(kind, lens.deviceType)
   }
 
   const options: ZoomOption[] = []

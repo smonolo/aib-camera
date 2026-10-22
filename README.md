@@ -26,7 +26,7 @@ Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.js
 
 ## Stack
 
-Expo SDK 57 · Expo Router · React Native · NativeWind · Skia · TypeScript · jest-expo
+Expo SDK 58 · Expo Router · React Native · NativeWind · Skia · TypeScript · jest-expo
 
 ## Setup
 
@@ -69,7 +69,7 @@ npm run smoke-checklist   # prints the device QA checklist
 
 ## Device compatibility & fallbacks
 
-Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 57). Non-critical native features must never block capture:
+Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 58). Non-critical native features must never block capture:
 
 | Area                                | Fallback when unavailable                                 |
 | ----------------------------------- | --------------------------------------------------------- |

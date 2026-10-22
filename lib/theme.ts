@@ -1,8 +1,4 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  type Theme,
-} from 'expo-router/react-navigation'
+import { DarkTheme, DefaultTheme, type Theme } from 'expo-router'
 import { useEffect, useState } from 'react'
 import {
   Appearance,

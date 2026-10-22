@@ -33,6 +33,7 @@ import {
   factorFromPinchScale,
   pickDefaultOption,
   resolveAbsoluteFactor,
+  type CameraLensInfo,
   type ZoomOption,
 } from '@/lib/camera-zoom'
 import { finalizeCapture, resolveCaptureGeo } from '@/lib/capture'
@@ -73,7 +74,7 @@ function CameraExperience() {
   const [pendingProcessing, setPendingProcessing] = useState(0)
   const shutterBusyRef = useRef(false)
   const [cameraReady, setCameraReady] = useState(false)
-  const [availableLenses, setAvailableLenses] = useState<string[]>([])
+  const [availableLenses, setAvailableLenses] = useState<CameraLensInfo[]>([])
   const [selectedLens, setSelectedLens] = useState<string | undefined>()
   const [zoom, setZoom] = useState(0)
   const [selectedZoomKey, setSelectedZoomKey] = useState<string | null>(null)

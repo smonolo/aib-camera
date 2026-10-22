@@ -27,9 +27,9 @@ function loadStampTypeface(): Promise<SkTypeface | null> {
   if (!stampTypefacePromise) {
     stampTypefacePromise = (async () => {
       try {
-        const { uri } = Image.resolveAssetSource(STAMP_FONT_ASSET)
-        if (!uri) return null
-        const data = await Skia.Data.fromURI(uri)
+        const resolved = Image.resolveAssetSource(STAMP_FONT_ASSET)
+        if (!resolved?.uri) return null
+        const data = await Skia.Data.fromURI(resolved.uri)
         return Skia.Typeface.MakeFreeTypeFaceFromData(data)
       } catch {
         return null
@@ -199,7 +199,7 @@ export async function compositeStampOntoPhoto(
   const filename = `aib-${Date.now()}.jpg`
   const outFile = new File(capturesDirectory(), filename)
   outFile.create({ overwrite: true })
-  outFile.write(encoded)
+  await outFile.write(encoded)
 
   return outFile.uri
 }
