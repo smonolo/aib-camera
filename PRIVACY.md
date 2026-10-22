@@ -12,7 +12,7 @@ This policy describes how the app handles data on your device.
 - There is **no account**, **no analytics SDK**, and **no cloud sync** operated by the developer.
 - **Camera** is required to take photos.
 - **Location** is optional and used only to stamp coordinates, altitude, heading, and place on the photo, and to write matching fields into JPEG EXIF when possible.
-- **Photos library** access is optional and used only to save stamped photos to an album named «AIB Camera».
+- **Photos library** access is optional and used to save stamped photos to an album named «AIB Camera», and to remove those copies when you delete photos in the app.
 - Network is used only for **optional reverse geocoding** (turning GPS into a place label) when a connection is available. Nearby place labels may be cached on device for offline reuse.
 
 ## Data the app processes
@@ -41,7 +41,7 @@ The developer does **not** operate a backend that receives your photos, location
 
 - **Camera** — required to take photos.
 - **Location (when in use)** — optional. If denied, you can still shoot; geo lines on the stamp show as unavailable, and GPS EXIF fields are omitted.
-- **Photo library / media** — optional, write-oriented: save stamped photos to the «AIB Camera» album. The in-app gallery remains the source of truth even if this permission is denied.
+- **Photo library / media** — optional: save stamped photos to the «AIB Camera» album and delete those copies when you remove photos in the app. The in-app gallery remains the source of truth even if this permission is denied.
 
 ## Sharing
 

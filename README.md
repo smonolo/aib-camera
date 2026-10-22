@@ -19,6 +19,8 @@ Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.js
 - Settings toggles for datetime, coordinates, place, accuracy, altitude, heading
 - Locality-first place labels + persistent geocode cache for offline reuse
 - In-app gallery (source of truth) + optional Photos album «AIB Camera»
+- Recent-shot thumbnail beside the shutter (opens photo detail)
+- Deleting from the app also removes the copy in Photos when available; capture log stays
 - System share sheet (WhatsApp, Mail, …)
 - Camera required; GPS optional — shutter works without location or cell coverage
 
@@ -46,7 +48,7 @@ npm run smoke-checklist   # prints the device QA checklist
 
 | Path          | Role                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------- |
-| `app/`        | Expo Router screens (tabs: camera, gallery, settings; `photo/[id]`; `audit-log`)          |
+| `app/`        | Expo Router screens (tabs: camera, gallery, settings/*; `photo/[id]`; `audit-log`)        |
 | `components/` | UI (HUD, permissions, buttons, surfaces)                                                  |
 | `lib/`        | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config |
 | `tests/`      | jest-expo unit tests                                                                      |
@@ -58,6 +60,7 @@ npm run smoke-checklist   # prints the device QA checklist
 - Shutter uses live HUD geo when available so capture does not wait on a slow GPS fix.
 - Reverse geocode is time-bounded; on failure the app uses the nearest cached place (~2.5 km).
 - Save always persists to the in-app gallery; the system Photos album is best-effort.
+- Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.
 - EXIF write is best-effort (skipped if the native module is missing); stamp, gallery, and capture log still succeed.
 - The capture log is append-only locally and is not cleared when photos are deleted from the gallery.
 - Screen stays awake on the camera tab.

@@ -22,7 +22,8 @@ import { getLocale, t } from '@/lib/i18n'
 import { SCREEN_PAD_NARROW, tabScrollBottomPad } from '@/lib/layout'
 import { sharePhotos } from '@/lib/media'
 import { formatGalleryDayLabel, galleryDayKey } from '@/lib/stamp'
-import { loadCaptures, removeCaptures } from '@/lib/storage'
+import { deleteCaptures } from '@/lib/media'
+import { loadCaptures } from '@/lib/storage'
 import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
@@ -131,7 +132,7 @@ export default function PhotosScreen() {
           void (async () => {
             setBusy('delete')
             try {
-              await removeCaptures(selectedCaptures.map(item => item.id))
+              await deleteCaptures(selectedCaptures.map(item => item.id))
               await refresh()
               showSuccess(
                 count === 1 ? copy.photos.deleted : copy.photos.deletedMany

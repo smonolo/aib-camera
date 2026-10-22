@@ -21,6 +21,8 @@ export type StampSettings = {
 export type CaptureRecord = {
   id: string
   uri: string
+  /** System Photos/MediaStore asset id when saved to the «AIB Camera» album. */
+  mediaLibraryAssetId: string | null
   takenAt: string
   lat: number | null
   lon: number | null

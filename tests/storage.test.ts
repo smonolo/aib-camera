@@ -5,6 +5,7 @@ import {
   appendAuditLogEntry,
   findNearestGeocodeCache,
   getCapture,
+  getLatestCapture,
   loadAuditLog,
   loadCaptures,
   loadStampSettings,
@@ -12,6 +13,7 @@ import {
   removeCaptures,
   resetStorageCaches,
   saveStampSettings,
+  setCaptureMediaAssetId,
   upsertGeocodeCacheEntry,
 } from '@/lib/storage'
 import { DEFAULT_STAMP_SETTINGS, type CaptureRecord } from '@/lib/types'
@@ -24,6 +26,7 @@ function capture(overrides: Partial<CaptureRecord> = {}): CaptureRecord {
   return {
     id: '11111111-2222-4333-8444-555555555555',
     uri: 'file:///captures/aib-1.jpg',
+    mediaLibraryAssetId: null,
     takenAt: '2024-07-15T14:30:45.000Z',
     lat: 45.46,
     lon: 9.19,
@@ -60,6 +63,7 @@ describe('captures', () => {
     const list = await loadCaptures()
     expect(list.map(item => item.id)).toEqual(['newer', 'older'])
     expect(await getCapture('newer')).toMatchObject({ id: 'newer' })
+    expect(await getLatestCapture()).toMatchObject({ id: 'newer' })
   })
 
   it('removes selected captures', async () => {
@@ -67,6 +71,35 @@ describe('captures', () => {
     await addCapture(capture({ id: 'drop' }))
     await removeCaptures(['drop'])
     expect((await loadCaptures()).map(item => item.id)).toEqual(['keep'])
+  })
+
+  it('stores media library asset ids', async () => {
+    await addCapture(capture({ id: 'shot' }))
+    await setCaptureMediaAssetId('shot', 'asset-9')
+    expect(await getCapture('shot')).toMatchObject({
+      mediaLibraryAssetId: 'asset-9',
+    })
+  })
+
+  it('normalizes legacy captures without mediaLibraryAssetId', async () => {
+    await AsyncStorage.setItem(
+      'aib-camera.captures.v1',
+      JSON.stringify([
+        {
+          id: 'legacy',
+          uri: 'file:///captures/legacy.jpg',
+          takenAt: '2024-07-15T14:30:45.000Z',
+          lat: 45.46,
+          lon: 9.19,
+          customText: ['AIB Camera'],
+          stampConfigSnapshot: DEFAULT_STAMP_SETTINGS,
+        },
+      ])
+    )
+    resetStorageCaches()
+
+    const loaded = await getCapture('legacy')
+    expect(loaded?.mediaLibraryAssetId).toBeNull()
   })
 })
 

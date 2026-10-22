@@ -17,7 +17,7 @@
         "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione per attività di antincendio boschivo.",
         "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto.",
         "NSPhotoLibraryAddUsageDescription": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
-        "NSPhotoLibraryUsageDescription": "AIB Camera può accedere alla libreria per gestire le foto salvate."
+        "NSPhotoLibraryUsageDescription": "AIB Camera può accedere alla libreria Foto per salvare e rimuovere le foto scattate con l'app."
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -105,7 +105,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
+          "photosPermission": "AIB Camera può salvare e rimuovere le foto timbrate nell'album AIB Camera.",
           "savePhotosPermission": "AIB Camera salva le foto con timbro nell'album AIB Camera.",
           "isAccessMediaLocationEnabled": false,
           "granularPermissions": ["photo"]

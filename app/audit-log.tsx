@@ -11,11 +11,11 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { IconButton } from '@/components/IconButton'
+import { SettingsSubscreenShell } from '@/components/SettingsUI'
 import { useToast } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
-import { SCREEN_PAD, SCREEN_PAD_NARROW } from '@/lib/layout'
+import { SCREEN_PAD } from '@/lib/layout'
 import { formatLatLon, formatStampDateTime } from '@/lib/stamp'
 import { loadAuditLog } from '@/lib/storage'
 import { useAppColors } from '@/lib/theme'
@@ -52,38 +52,11 @@ export default function AuditLogScreen() {
   }
 
   return (
-    <View
-      className="flex-1 bg-canvas dark:bg-canvas-inverse"
-      style={{ paddingTop: insets.top + 8 }}
+    <SettingsSubscreenShell
+      title={copy.auditLog.title}
+      backLabel={copy.photos.back}
+      onBack={onBack}
     >
-      <View
-        style={{
-          paddingHorizontal: SCREEN_PAD_NARROW,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          marginBottom: 12,
-        }}
-      >
-        <IconButton
-          sf="chevron.backward"
-          material="arrow-back"
-          onPress={onBack}
-          accessibilityLabel={copy.photos.back}
-        />
-        <Text
-          style={{
-            flex: 1,
-            fontFamily: fonts.semibold,
-            fontSize: 17,
-            color: colors.fg,
-          }}
-          numberOfLines={1}
-        >
-          {copy.auditLog.title}
-        </Text>
-      </View>
-
       {entries == null ? (
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
@@ -115,7 +88,10 @@ export default function AuditLogScreen() {
           keyExtractor={item => item.id}
           initialNumToRender={20}
           windowSize={11}
+          style={{ flex: 1 }}
+          alwaysBounceVertical
           contentContainerStyle={{
+            flexGrow: 1,
             paddingHorizontal: SCREEN_PAD,
             paddingTop: 4,
             paddingBottom: insets.bottom + 24,
@@ -144,7 +120,7 @@ export default function AuditLogScreen() {
           )}
         />
       )}
-    </View>
+    </SettingsSubscreenShell>
   )
 }
 

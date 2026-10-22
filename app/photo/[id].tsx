@@ -11,8 +11,8 @@ import { errorMessage, useToast } from '@/components/Toast'
 import { fonts } from '@/lib/fonts'
 import { t } from '@/lib/i18n'
 import { SCREEN_PAD_NARROW } from '@/lib/layout'
-import { sharePhoto } from '@/lib/media'
-import { getCapture, removeCapture } from '@/lib/storage'
+import { deleteCapture, sharePhoto } from '@/lib/media'
+import { getCapture } from '@/lib/storage'
 import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
@@ -61,7 +61,7 @@ export default function PhotoDetailScreen() {
         onPress: () => {
           void (async () => {
             try {
-              await removeCapture(photo.id)
+              await deleteCapture(photo.id)
               showSuccess(copy.photos.deleted)
               await Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Success

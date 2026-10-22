@@ -1,7 +1,8 @@
 import { CameraView, type FlashMode } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
+import { Image } from 'expo-image'
 import { useKeepAwake } from 'expo-keep-awake'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -42,10 +43,18 @@ import { captureGeoSnapshot } from '@/lib/location'
 import { saveToAibAlbum } from '@/lib/media'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildCustomStampLines, buildInfoStampLines } from '@/lib/stamp'
-import { recordCapture } from '@/lib/storage'
+import {
+  getLatestCapture,
+  recordCapture,
+  setCaptureMediaAssetId,
+} from '@/lib/storage'
 import { cameraOverlay, radii } from '@/lib/theme'
 import { getSharedGeoSnapshot } from '@/lib/use-live-geo'
-import type { GeoSnapshot } from '@/lib/types'
+import type { CaptureRecord, GeoSnapshot } from '@/lib/types'
+
+const RECENT_THUMB_SIZE = 52
+const RECENT_THUMB_RADIUS = 10
+const RECENT_THUMB_INSET = 36
 
 export default function CameraScreen() {
   return (
@@ -69,10 +78,21 @@ function CameraExperience() {
   const [selectedLens, setSelectedLens] = useState<string | undefined>()
   const [zoom, setZoom] = useState(0)
   const [selectedZoomKey, setSelectedZoomKey] = useState<string | null>(null)
+  const [latestCapture, setLatestCapture] = useState<CaptureRecord | null>(null)
   const shutterFlash = useSharedValue(0)
   const shutterFlashStyle = useAnimatedStyle(() => ({
     opacity: shutterFlash.value,
   }))
+
+  const refreshLatestCapture = useCallback(async () => {
+    setLatestCapture(await getLatestCapture())
+  }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshLatestCapture()
+    }, [refreshLatestCapture])
+  )
 
   const playShutterFlash = useCallback(() => {
     shutterFlash.value = 0
@@ -122,6 +142,12 @@ function CameraExperience() {
     void Haptics.selectionAsync()
     router.push('/gallery')
   }, [])
+
+  const openLatestPhoto = useCallback(() => {
+    if (!latestCapture) return
+    void Haptics.selectionAsync()
+    router.push(`/photo/${latestCapture.id}`)
+  }, [latestCapture])
 
   const swipeToPhotos = useMemo(
     () =>
@@ -174,30 +200,36 @@ function CameraExperience() {
 
       const captureId = newCaptureId()
       const takenAt = snap.takenAt.toISOString()
+      const record: CaptureRecord = {
+        id: captureId,
+        uri: stampedUri,
+        mediaLibraryAssetId: null,
+        takenAt,
+        lat: snap.lat,
+        lon: snap.lon,
+        accuracy: snap.accuracy,
+        altitude: snap.altitude,
+        heading: snap.heading,
+        address: snap.address,
+        customText: settings.customLines,
+        stampConfigSnapshot: settings,
+      }
 
       await Promise.all([
         writeCaptureExif(stampedUri, snap, {
           captureId,
           customLines: settings.customLines,
         }),
-        recordCapture({
-          id: captureId,
-          uri: stampedUri,
-          takenAt,
-          lat: snap.lat,
-          lon: snap.lon,
-          accuracy: snap.accuracy,
-          altitude: snap.altitude,
-          heading: snap.heading,
-          address: snap.address,
-          customText: settings.customLines,
-          stampConfigSnapshot: settings,
-        }),
+        recordCapture(record),
       ])
 
-      void saveToAibAlbum(stampedUri).catch(error => {
-        console.warn(error)
-      })
+      setLatestCapture(record)
+
+      void saveToAibAlbum(stampedUri)
+        .then(assetId => setCaptureMediaAssetId(captureId, assetId))
+        .catch(error => {
+          console.warn(error)
+        })
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } catch (error) {
@@ -302,34 +334,75 @@ function CameraExperience() {
             accessibilityPrefix={copy.camera.zoom}
           />
 
-          <Pressable
-            onPress={takePhoto}
-            disabled={!cameraReady || capturing}
-            accessibilityLabel={copy.camera.shutter}
+          <View
             style={{
-              width: 74,
+              width: '100%',
               height: 74,
-              borderRadius: radii.full,
-              borderWidth: 4,
-              borderColor: 'rgba(255,255,255,0.85)',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'transparent',
             }}
           >
-            <View
+            {latestCapture ? (
+              <Pressable
+                onPress={openLatestPhoto}
+                accessibilityLabel={copy.camera.recentPhoto}
+                style={{
+                  position: 'absolute',
+                  left: RECENT_THUMB_INSET,
+                  width: RECENT_THUMB_SIZE,
+                  height: RECENT_THUMB_SIZE,
+                  borderRadius: RECENT_THUMB_RADIUS,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.28)',
+                  backgroundColor: 'rgba(0,0,0,0.35)',
+                  padding: 0,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    borderRadius: RECENT_THUMB_RADIUS - 1.5,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Image
+                    source={{ uri: latestCapture.uri }}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
+                  />
+                </View>
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              onPress={takePhoto}
+              disabled={!cameraReady || capturing}
+              accessibilityLabel={copy.camera.shutter}
               style={{
-                width: 60,
-                height: 60,
+                width: 74,
+                height: 74,
                 borderRadius: radii.full,
-                backgroundColor: '#FFFFFF',
+                borderWidth: 4,
+                borderColor: 'rgba(255,255,255,0.85)',
                 alignItems: 'center',
                 justifyContent: 'center',
+                backgroundColor: 'transparent',
               }}
             >
-              {capturing ? <ActivityIndicator color="#171717" /> : null}
-            </View>
-          </Pressable>
+              <View
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: radii.full,
+                  backgroundColor: '#FFFFFF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {capturing ? <ActivityIndicator color="#171717" /> : null}
+              </View>
+            </Pressable>
+          </View>
         </View>
       </View>
     </GestureDetector>

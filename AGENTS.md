@@ -9,6 +9,7 @@ This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** field
 - **Camera is required; location is optional.** Never block the camera behind GPS permission. Stamp unavailable fields with clear fallback copy.
 - **Shutter must stay fast.** Prefer live HUD geo (`getSharedGeoSnapshot`) over waiting on a high-accuracy fix. Bound GPS/geocode/heading with short timeouts.
 - **In-app gallery is the source of truth for photos.** System album «AIB Camera» is best-effort; save must succeed even if media-library permission is denied.
+- **Gallery deletes also remove the system Photos copy** when an album asset id was stored; local JPEG cleanup is best-effort. Capture log entries always remain.
 - **Capture log is append-only.** Each shot gets a UUID written to EXIF when possible and stored in the local audit log; gallery deletes must not remove audit entries.
 - **EXIF write is best-effort.** Missing native Exify (Expo Go / stale binary) must not fail capture; stamp + gallery + audit log still succeed.
 - **Stamp timezone** is always `Europe/Rome`. Default locale copy is Italian (`lib/i18n`); keep IT and EN catalogs in sync.
@@ -51,15 +52,16 @@ Run typecheck and unit tests (and lint when configured) before declaring any tas
 
 ## Key modules
 
-| Area                                 | Where                                                                  |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| Geo snapshot, geocode cache, heading | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`             |
-| Stamp lines / formatters             | `lib/stamp.ts`                                                         |
-| JPEG burn-in                         | `lib/composite.ts`                                                     |
-| EXIF (post-stamp)                    | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing) |
-| Capture UUID + gallery + audit log   | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`)   |
-| Settings + persistence               | `lib/types.ts`, `lib/settings-context.tsx`, `lib/storage.ts`           |
-| Permissions gate                     | `components/PermissionGate.tsx` (camera hard; location soft)           |
+| Area                                 | Where                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| Geo snapshot, geocode cache, heading | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                            |
+| Stamp lines / formatters             | `lib/stamp.ts`                                                                        |
+| JPEG burn-in                         | `lib/composite.ts`                                                                    |
+| EXIF (post-stamp)                    | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                |
+| Capture UUID + gallery + audit log   | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`)                  |
+| System Photos save/delete + cleanup  | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                   |
+| Settings + persistence               | `app/(tabs)/settings/` hub + permissions/appearance/about; `lib/settings-context.tsx` |
+| Permissions gate                     | `components/PermissionGate.tsx` (camera hard; location soft)                          |
 
 ## Building with EAS
 

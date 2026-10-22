@@ -24,6 +24,7 @@ export type TranslationKeys = {
     flashOn: string
     flashOff: string
     shutter: string
+    recentPhoto: string
     zoom: string
     acquiringGps: string
     captureFailed: string
@@ -79,10 +80,13 @@ export type TranslationKeys = {
     sizeLarge: string
     opacity: string
     permissions: string
+    appearance: string
+    cameraPermission: string
     locationPermission: string
-    locationAllowed: string
-    locationAsk: string
-    locationOpenSettings: string
+    photosPermission: string
+    permissionAllowed: string
+    permissionAsk: string
+    permissionOpenSettings: string
     about: string
     versionLabel: string
     privacyTitle: string

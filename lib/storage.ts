@@ -51,12 +51,28 @@ function normalizeAuditLogEntry(
   }
 }
 
-function normalizeCaptureRecord(raw: CaptureRecord): CaptureRecord {
+function normalizeCaptureRecord(
+  raw: Partial<CaptureRecord> & Pick<CaptureRecord, 'id' | 'uri' | 'takenAt'>
+): CaptureRecord {
   return {
-    ...raw,
-    accuracy: raw.accuracy ?? null,
-    altitude: raw.altitude ?? null,
-    heading: raw.heading ?? null,
+    id: raw.id,
+    uri: raw.uri,
+    mediaLibraryAssetId:
+      typeof raw.mediaLibraryAssetId === 'string' && raw.mediaLibraryAssetId
+        ? raw.mediaLibraryAssetId
+        : null,
+    takenAt: raw.takenAt,
+    lat: typeof raw.lat === 'number' ? raw.lat : null,
+    lon: typeof raw.lon === 'number' ? raw.lon : null,
+    accuracy: typeof raw.accuracy === 'number' ? raw.accuracy : null,
+    altitude: typeof raw.altitude === 'number' ? raw.altitude : null,
+    heading: typeof raw.heading === 'number' ? raw.heading : null,
+    address: typeof raw.address === 'string' ? raw.address : null,
+    customText: Array.isArray(raw.customText)
+      ? raw.customText.filter(
+          (line): line is string => typeof line === 'string'
+        )
+      : [],
     stampConfigSnapshot: normalizeStampSettings(raw.stampConfigSnapshot),
   }
 }
@@ -122,6 +138,7 @@ export async function removeCapture(id: string): Promise<CaptureRecord[]> {
   return removeCaptures([id])
 }
 
+/** Removes captures from the in-app gallery index only (keeps audit log). */
 export async function removeCaptures(ids: string[]): Promise<CaptureRecord[]> {
   if (ids.length === 0) return loadCaptures()
   const remove = new Set(ids)
@@ -131,9 +148,33 @@ export async function removeCaptures(ids: string[]): Promise<CaptureRecord[]> {
   return next
 }
 
+export async function setCaptureMediaAssetId(
+  id: string,
+  mediaLibraryAssetId: string
+): Promise<CaptureRecord | null> {
+  const existing = await loadCaptures()
+  const index = existing.findIndex(item => item.id === id)
+  if (index < 0) return null
+
+  const current = existing[index]!
+  const nextRecord: CaptureRecord = {
+    ...current,
+    mediaLibraryAssetId,
+  }
+  const next = [...existing]
+  next[index] = nextRecord
+  await saveCaptures(next)
+  return nextRecord
+}
+
 export async function getCapture(id: string): Promise<CaptureRecord | null> {
   const existing = await loadCaptures()
   return existing.find(item => item.id === id) ?? null
+}
+
+export async function getLatestCapture(): Promise<CaptureRecord | null> {
+  const existing = await loadCaptures()
+  return existing[0] ?? null
 }
 
 export async function loadAuditLog(): Promise<AuditLogEntry[]> {
