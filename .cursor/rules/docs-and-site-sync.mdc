@@ -8,6 +8,6 @@ alwaysApply: true
 After any change to product behavior, UX, permissions, privacy, capture/stamp/gallery/settings, or release notes — **before finishing** — update every affected surface:
 
 1. **Repo markdown**: `README.md`, `PRIVACY.md`, `AGENTS.md`, and any other `*.md` that describes the changed behavior.
-2. **Public site** (if available locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guida.vue`, `privacy.vue`), `content/aib-camera/`, `layouts/aib-camera.vue`, and related CSS/assets. If that path is missing, skip and say so briefly.
+2. **Public site** (if available locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guida.vue`, `privacy.vue`, `terms.vue`), `content/aib-camera/`, `layouts/aib-camera.vue`, and related CSS/assets. If that path is missing, skip and say so briefly.
 
 Keep IT/EN copy aligned where both exist. Preserve unofficial volunteer framing (no institutional affiliation). Do not leave docs or the site describing old behavior.

@@ -61,6 +61,6 @@ If this policy changes in a material way, the “Last updated” date above will
 
 ## Contact
 
-Developer site: [smnl.dev](https://smnl.dev) · Policy URL: [smnl.dev/aib-camera/privacy](https://smnl.dev/aib-camera/privacy)
+Developer site: [smnl.dev](https://smnl.dev) · Policy URL: [smnl.dev/aib-camera/privacy](https://smnl.dev/aib-camera/privacy) · Terms: [smnl.dev/aib-camera/terms](https://smnl.dev/aib-camera/terms)
 
 For privacy questions about AIB Camera, email [stefano@smnl.dev](mailto:stefano@smnl.dev).

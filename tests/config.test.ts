@@ -5,6 +5,7 @@ import {
   appVersionLabel,
   newCaptureId,
   privacyPolicyUrl,
+  termsOfUseUrl,
   userGuideUrl,
 } from '@/lib/config'
 
@@ -15,6 +16,7 @@ jest.mock('expo-constants', () => ({
     android: { versionCode: 7 },
     extra: {
       privacyPolicyUrl: 'https://example.test/privacy',
+      termsOfUseUrl: 'https://example.test/terms',
       userGuideUrl: 'https://example.test/guida',
     },
   },
@@ -42,6 +44,10 @@ describe('config', () => {
 
   it('reads the privacy policy URL from expo config', () => {
     expect(privacyPolicyUrl()).toBe('https://example.test/privacy')
+  })
+
+  it('reads the terms of use URL from expo config', () => {
+    expect(termsOfUseUrl()).toBe('https://example.test/terms')
   })
 
   it('reads the user guide URL from expo config', () => {

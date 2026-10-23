@@ -21,7 +21,12 @@ import {
 } from '@/components/SettingsUI'
 import { useToast } from '@/components/Toast'
 import { copyText } from '@/lib/clipboard'
-import { appVersionLabel, privacyPolicyUrl, userGuideUrl } from '@/lib/config'
+import {
+  appVersionLabel,
+  privacyPolicyUrl,
+  termsOfUseUrl,
+  userGuideUrl,
+} from '@/lib/config'
 import { fonts } from '@/lib/fonts'
 import { useOnAppActive } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
@@ -241,6 +246,7 @@ export default function SettingsScreen() {
             accessibilityRole="link"
             sf="arrow.up.right"
             material="open-in-new"
+            showDivider
             onPress={() => {
               void (async () => {
                 await Haptics.selectionAsync()
@@ -250,6 +256,25 @@ export default function SettingsScreen() {
                   showError(
                     copy.settings.privacyTitle,
                     copy.settings.privacyOpenFailed
+                  )
+                }
+              })()
+            }}
+          />
+          <NavRow
+            label={copy.settings.termsLink}
+            accessibilityRole="link"
+            sf="arrow.up.right"
+            material="open-in-new"
+            onPress={() => {
+              void (async () => {
+                await Haptics.selectionAsync()
+                try {
+                  await WebBrowser.openBrowserAsync(termsOfUseUrl())
+                } catch {
+                  showError(
+                    copy.settings.termsTitle,
+                    copy.settings.termsOpenFailed
                   )
                 }
               })()

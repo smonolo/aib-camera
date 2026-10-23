@@ -80,7 +80,7 @@ Docs: https://docs.expo.dev/eas/index.md
 Whenever you change app behavior, UX, permissions, privacy, capture/stamp/gallery/settings, or release/build notes — **before declaring the task done** — update all user- and agent-facing docs that the change affects:
 
 1. **In-repo markdown** (this repo): `README.md`, `PRIVACY.md`, `AGENTS.md`, and any other `*.md` that describes the changed behavior.
-2. **Marketing / public site** (sibling monorepo, if present locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guida.vue`, `privacy.vue`), `content/aib-camera/` (e.g. `guida-operativa.md`), `layouts/aib-camera.vue`, and related CSS/assets under that app. Skip the site only if that path is missing; say so briefly when skipping.
+2. **Marketing / public site** (sibling monorepo, if present locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guida.vue`, `privacy.vue`, `terms.vue`), `content/aib-camera/` (e.g. `guida-operativa.md`), `layouts/aib-camera.vue`, and related CSS/assets under that app. Skip the site only if that path is missing; say so briefly when skipping.
 
 Keep copy consistent across IT/EN where both exist, and preserve the **unofficial volunteer** framing (no institutional affiliation). Do not leave docs or the site describing old behavior.
 

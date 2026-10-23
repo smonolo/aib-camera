@@ -114,6 +114,9 @@ export type TranslationKeys = {
     privacyTitle: string
     privacyLink: string
     privacyOpenFailed: string
+    termsTitle: string
+    termsLink: string
+    termsOpenFailed: string
     guideTitle: string
     guideLink: string
     guideOpenFailed: string

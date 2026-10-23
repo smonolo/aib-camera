@@ -10,6 +10,8 @@ User-facing version: `1.0.0` · iOS `buildNumber`: `6` · Android `versionCode`:
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
+Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`https://smnl.dev/aib-camera/terms`).
+
 ## Features
 
 - Letterboxed camera preview with black chrome; flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center; live stamp overlay (same fields, font size, and opacity as the burned-in stamp)
@@ -88,7 +90,7 @@ Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 58). Non-criti
 
 Before uploading binaries (local or EAS):
 
-1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and paste that URL into App Store Connect / Play Console.
+1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and [TERMS.md](./TERMS.md) at `extra.termsOfUseUrl`; paste the privacy URL into App Store Connect / Play Console as required.
 2. Prepare store screenshots (iPhone 6.9″ required; iPad not required — `supportsTablet: false`). Play also needs a 512×512 icon and 1024×500 feature graphic.
 3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Mention on-device EXIF and capture-log IDs if asked about identifiers.
 4. Increment `version` for user-visible releases; increment `ios.buildNumber` for every App Store binary (and `android.versionCode` when shipping Play).
