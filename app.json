@@ -2,7 +2,7 @@
   "expo": {
     "name": "AIB Camera",
     "slug": "aib-camera",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "aibcamera",
@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "dev.smnl.aibcamera",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "infoPlist": {
         "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto con data, ora e posizione per attività di antincendio boschivo.",
         "NSLocationWhenInUseUsageDescription": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto.",
@@ -46,23 +46,12 @@
       "package": "dev.smnl.aibcamera",
       "versionCode": 1,
       "userInterfaceStyle": "automatic",
-      "adaptiveIcon": {
-        "backgroundColor": "#AF2525",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO"
       ]
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -78,13 +67,12 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon-light.png",
-          "imageWidth": 180,
-          "resizeMode": "contain",
-          "backgroundColor": "#111111",
+          "backgroundColor": "#F5F5F5",
           "dark": {
-            "backgroundColor": "#111111",
-            "image": "./assets/images/splash-icon-dark.png"
-          }
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#111111"
+          },
+          "imageWidth": 200
         }
       ],
       [
