@@ -113,6 +113,42 @@ describe('buildInfoStampLines', () => {
     })
     expect(lines).toEqual([])
   })
+
+  it('labels aimed targets and shows distance in meta', () => {
+    const lines = buildInfoStampLines(
+      geo({
+        isAimedTarget: true,
+        targetDistanceM: 200,
+        accuracy: null,
+        altitude: null,
+      }),
+      DEFAULT_STAMP_SETTINGS
+    )
+    expect(lines).toContain('Punto mirato (stimato)')
+    expect(lines.some(line => line.includes('~200 m'))).toBe(true)
+    expect(lines.every(line => !line.includes('±'))).toBe(true)
+  })
+
+  it('places the aimed label before coordinates', () => {
+    const lines = buildInfoStampLines(
+      geo({
+        isAimedTarget: true,
+        targetDistanceM: 100,
+        accuracy: null,
+        altitude: null,
+      }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showAccuracy: false,
+        showAltitude: false,
+        showHeading: false,
+        showAddress: false,
+      }
+    )
+    expect(lines[0]).toBe('Punto mirato (stimato)')
+    expect(lines[1]).toContain('45.464200')
+  })
 })
 
 describe('buildCustomStampLines', () => {

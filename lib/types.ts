@@ -48,6 +48,19 @@ export type GeoSnapshot = {
   heading: number | null
   address: string | null
   takenAt: Date
+  isAimedTarget?: boolean
+  targetDistanceM?: number | null
+}
+
+export type GeoSourceMode = 'me' | 'target'
+
+export type StickyTarget = {
+  lat: number
+  lon: number
+  address: string | null
+  distanceM: number
+  lockedHeading: number
+  lockedAt: string
 }
 
 export const FONT_SIZE_PX: Record<StampFontSize, number> = {

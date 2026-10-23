@@ -24,6 +24,21 @@ export type TranslationKeys = {
     flashOn: string
     flashOff: string
     stampSettings: string
+    aim: string
+    aimTitle: string
+    aimHint: string
+    aimDistance: string
+    aimDistancePlaceholder: string
+    aimLock: string
+    aimClear: string
+    aimClose: string
+    aimModeMe: string
+    aimModeTarget: string
+    aimToggle: string
+    aimNoGps: string
+    aimNoHeading: string
+    aimBadDistance: string
+    aimLocked: string
     shutter: string
     recentPhoto: string
     processingPhoto: string
@@ -34,6 +49,7 @@ export type TranslationKeys = {
   stamp: {
     noCoordinates: string
     noAddress: string
+    aimedPoint: string
   }
   photos: {
     title: string

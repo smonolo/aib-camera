@@ -21,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { AimTargetControls } from '@/components/AimTargetControls'
 import { CameraChromeButton } from '@/components/CameraChromeButton'
 import { PermissionGate } from '@/components/PermissionGate'
 import { StampOverlay } from '@/components/StampOverlay'
@@ -381,6 +382,7 @@ function CameraExperience() {
                   right: CAMERA.thumbInset,
                 }}
               />
+              <AimTargetControls topInset={insets.top} />
             </View>
 
             <View

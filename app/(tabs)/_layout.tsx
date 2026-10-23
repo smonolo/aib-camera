@@ -1,4 +1,4 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs'
+import { NativeTabs } from 'expo-router/native-tabs'
 import { DynamicColorIOS, Platform } from 'react-native'
 
 import { fonts } from '@/lib/fonts'

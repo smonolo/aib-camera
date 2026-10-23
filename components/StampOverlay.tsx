@@ -3,7 +3,7 @@ import { Text, View } from 'react-native'
 import { fonts } from '@/lib/fonts'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildStampContent, stampLayoutMetrics } from '@/lib/stamp'
-import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
+import { useEffectiveGeoSnapshot } from '@/lib/geo-source'
 
 type StampBoxProps = ReturnType<typeof stampLayoutMetrics> & {
   lines: string[]
@@ -69,7 +69,7 @@ type Props = {
 
 export function StampOverlay({ frameWidth }: Props) {
   const { settings } = useStampSettings()
-  const geo = useLiveGeoSnapshot()
+  const geo = useEffectiveGeoSnapshot()
 
   const width = Math.max(1, frameWidth)
   const metrics = stampLayoutMetrics(width, settings)

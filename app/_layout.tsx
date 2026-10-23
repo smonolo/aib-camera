@@ -19,6 +19,7 @@ import 'react-native-reanimated'
 
 import { ToastProvider } from '@/components/Toast'
 import { fonts, setCustomFontsReady } from '@/lib/fonts'
+import { hydrateGeoSource } from '@/lib/geo-source'
 import { warn } from '@/lib/soft'
 import { SettingsProvider } from '@/lib/settings-context'
 import {
@@ -78,6 +79,10 @@ export default function RootLayout() {
     if (fontsReady) applyDefaultFont()
     void SplashScreen.hideAsync().catch(() => {})
   }, [uiReady, fontsReady])
+
+  useEffect(() => {
+    void hydrateGeoSource()
+  }, [])
 
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(
@@ -143,6 +148,14 @@ export default function RootLayout() {
                 options={{
                   headerShown: false,
                   presentation: 'card',
+                }}
+              />
+              <Stack.Screen
+                name="aim-target"
+                options={{
+                  headerShown: false,
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
                 }}
               />
             </Stack>

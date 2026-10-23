@@ -71,12 +71,19 @@ function formatHeading(degrees: number): string {
   return `${Math.round(normalized)}° ${CARDINALS[index]}`
 }
 
+function formatTargetDistance(meters: number): string {
+  return `~${Math.round(meters)} m`
+}
+
 function buildMetaStampLine(
   geo: GeoSnapshot,
   settings: StampSettings
 ): string | null {
   const parts: string[] = []
 
+  if (geo.isAimedTarget && geo.targetDistanceM != null) {
+    parts.push(formatTargetDistance(geo.targetDistanceM))
+  }
   if (settings.showAccuracy && geo.accuracy != null) {
     parts.push(formatAccuracy(geo.accuracy))
   }
@@ -261,6 +268,10 @@ export function buildInfoStampLines(
 
   if (settings.showDateTime) {
     lines.push(formatStampDateTime(geo.takenAt, settings.dateTimeFormat))
+  }
+
+  if (geo.isAimedTarget) {
+    lines.push(copy.stamp.aimedPoint)
   }
 
   if (settings.showCoordinates) {

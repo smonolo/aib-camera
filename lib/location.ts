@@ -121,6 +121,13 @@ export function normalizeHeadingDegrees(value: number): number {
   const wrapped = ((value % 360) + 360) % 360
   return Math.round(wrapped)
 }
+export async function reverseGeocodeCoords(
+  latitude: number,
+  longitude: number
+): Promise<string | null> {
+  return reverseGeocodeSafe(latitude, longitude)
+}
+
 async function reverseGeocodeSafe(
   latitude: number,
   longitude: number

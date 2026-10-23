@@ -1,6 +1,7 @@
 import { compositeStampOntoPhoto } from './composite'
 import { newCaptureId } from './config'
 import { writeCaptureExif } from './exif'
+import { buildEffectiveGeoSnapshot, getGeoSourceState } from './geo-source'
 import { captureGeoSnapshot, emptyGeoSnapshot } from './location'
 import { saveToAibAlbum } from './media'
 import { persistRawPhoto } from './persist-photo'
@@ -12,17 +13,24 @@ import { getSharedGeoSnapshot } from './use-live-geo'
 
 export async function resolveCaptureGeo(): Promise<GeoSnapshot> {
   try {
-    const live = getSharedGeoSnapshot()
+    const { mode, sticky } = getGeoSourceState()
     const takenAt = new Date()
+    let live = { ...getSharedGeoSnapshot(), takenAt }
 
-    if (live.lat != null && live.lon != null) {
-      return { ...live, takenAt }
+    if (
+      (mode !== 'target' || sticky == null) &&
+      (live.lat == null || live.lon == null)
+    ) {
+      live = {
+        ...(await captureGeoSnapshot({
+          headingHint: live.heading,
+          positionTimeoutMs: 1500,
+        })),
+        takenAt,
+      }
     }
 
-    return await captureGeoSnapshot({
-      headingHint: live.heading,
-      positionTimeoutMs: 1500,
-    })
+    return buildEffectiveGeoSnapshot(live, mode, sticky)
   } catch (error) {
     warn('Capture geo fallback', error)
     return emptyGeoSnapshot()

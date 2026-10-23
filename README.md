@@ -12,7 +12,8 @@ Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.js
 
 ## Features
 
-- Letterboxed camera preview with black chrome; flash top-left, stamp configuration top-right, zoom bottom-right, shutter center; live stamp overlay (same fields, font size, and opacity as the burned-in stamp)
+- Letterboxed camera preview with black chrome; flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center; live stamp overlay (same fields, font size, and opacity as the burned-in stamp)
+- **Aimed point:** point the camera, enter distance (presets or meters), lock estimated coordinates from GPS + compass heading; toggle **Here ↔ Aimed** without losing the sticky point; stamp labels aimed coords as estimated
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
 - Per-install UUID plus an on-device **capture log** (capture ID, date, coords) that survives gallery deletes; Settings → About shows version and install ID (tap either to copy); export the full log as CSV (includes `install_id`) via the share sheet
@@ -57,7 +58,8 @@ npm run smoke-checklist   # prints the device QA checklist
 ## Emergency design notes
 
 - **Camera** is the only hard permission. Location improves the stamp but is never required to shoot.
-- Shutter uses live HUD geo when available so capture does not wait on a slow GPS fix.
+- Shutter uses live HUD geo (or a locked aimed point) when available so capture does not wait on a slow GPS fix.
+- Aimed-point mode needs GPS + compass; without them Lock soft-fails and the shutter still uses Me / unavailable copy. Aimed coords are a flat-ground estimate along heading — not a GNSS fix on the fire.
 - Reverse geocode is time-bounded; on failure the app uses the nearest cached place (~2.5 km).
 - Save always persists to the in-app gallery; the system Photos album is best-effort.
 - Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.

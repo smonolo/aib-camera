@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+import { haversineMeters } from './geo-math'
 import { resetInstallIdCache } from './install-id'
 import { logRejected, warn } from './soft'
 import {
@@ -284,20 +285,4 @@ export async function findNearestGeocodeCache(
   }
 
   return best
-}
-
-function haversineMeters(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const toRad = (deg: number) => (deg * Math.PI) / 180
-  const earth = 6371000
-  const dLat = toRad(lat2 - lat1)
-  const dLon = toRad(lon2 - lon1)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
-  return 2 * earth * Math.asin(Math.sqrt(a))
 }

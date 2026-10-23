@@ -13,12 +13,14 @@ type Props<T extends string | number> = {
   options: Option<T>[]
   value: T
   onChange: (value: T) => void
+  expand?: boolean
 }
 
 export function SegmentedControl<T extends string | number>({
   options,
   value,
   onChange,
+  expand = true,
 }: Props<T>) {
   const colors = useAppColors()
 
@@ -38,17 +40,18 @@ export function SegmentedControl<T extends string | number>({
           <Pressable
             key={String(option.value)}
             onPress={() => {
+              if (active) return
               void Haptics.selectionAsync()
               onChange(option.value)
             }}
             style={{
-              flex: 1,
+              flex: expand ? 1 : undefined,
               minHeight: 36,
               borderRadius: radii.sm,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: active ? colors.fg : 'transparent',
-              paddingHorizontal: 6,
+              paddingHorizontal: expand ? 6 : 14,
             }}
           >
             <Text
