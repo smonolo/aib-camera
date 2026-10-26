@@ -122,6 +122,12 @@ Before uploading binaries:
 4. Increment `version` for user-visible releases; increment `ios.buildNumber` for every App Store binary (and `android.versionCode` when shipping Play).
 5. Run `npm run typecheck`, `npm test`, `npx expo-doctor`, and `npm run smoke-checklist` on a physical device.
 
+## License
+
+Source code is licensed under the [PolyForm Noncommercial License 1.0.0](./LICENSE) ([SPDX: `PolyForm-Noncommercial-1.0.0`](https://spdx.org/licenses/PolyForm-Noncommercial-1.0.0.html)): noncommercial use, modification, and redistribution are allowed; commercial use of the software is not.
+
+The name **AIB Camera**, app icons, splash art, and other brand assets are **not** licensed under those terms. Do not use them for other apps, stores, or products without written permission. Third-party libraries and fonts keep their own licenses.
+
 ## Agent guidance
 
 See [AGENTS.md](./AGENTS.md) for Expo API rules, commands, and product constraints for contributors and coding agents.

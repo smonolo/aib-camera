@@ -43,6 +43,8 @@ How the app handles data is described in the [privacy policy](./PRIVACY.md) (hos
 
 The app, the “AIB Camera” name as used here, and related site materials belong to the developer, except third-party components (open-source libraries, fonts, etc.) under their own licenses. No license is granted to marks or signs of public institutions.
 
+Source code of this project is available under the [PolyForm Noncommercial License 1.0.0](./LICENSE) (noncommercial use, modification, and redistribution). The “AIB Camera” name, icons, splash art, and other brand assets are **not** included in that license — do not use them for other apps, stores, or products without written permission.
+
 ## Changes
 
 The app and these terms may change. The “Last updated” date above will be revised for material changes. Continued use after an update means you accept the revised terms.
