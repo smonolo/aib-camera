@@ -98,14 +98,15 @@ Use EAS CLI for credentials and store upload; build on your machine so Free-plan
 npx eas-cli@latest login
 npx eas-cli@latest init                    # once: link Expo project / projectId
 npx eas-cli@latest credentials             # once: Android keystore + iOS certs (stored on Expo, free)
-npx eas-cli@latest build -p android --profile production --local
-npx eas-cli@latest submit -p android --profile production
+npm run build:android:local   # AAB → builds/
+npm run submit:android
 # iOS (needs Mac + Xcode + Apple Developer):
-npx eas-cli@latest build -p ios --profile production --local
-npx eas-cli@latest submit -p ios --profile production
+npm run build:ios:local       # IPA → builds/
+npm run submit:ios
 ```
 
-- **Always pass `--local`** on `eas build`. Omitting it starts a **cloud** build and uses Free quota (15 Android / 15 iOS per month).
+- **Always pass `--local`** on `eas build` (the npm scripts do). Omitting it starts a **cloud** build and uses Free quota (15 Android / 15 iOS per month).
+- Local build artifacts are copied to **`builds/`** (`EAS_LOCAL_BUILD_ARTIFACTS_DIR`; folder is gitignored).
 - `eas submit` and `eas credentials` do not consume build credit. Play closed testing: submit profile uses track `alpha`, `releaseStatus: draft` (finish rollout in Play Console).
 - You still need Android SDK (and Xcode for iOS) installed locally.
 - Optional fallback without EAS Build: `android/keystore.properties` + `./gradlew bundleRelease` (see `android/app/build.gradle`).

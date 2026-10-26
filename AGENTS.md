@@ -76,8 +76,8 @@ Prefer **EAS CLI** for credentials + submit, but **do not use cloud builds** (th
 
 | Use                                         | Command                                                  | Counts against Free build quota? |
 | ------------------------------------------- | -------------------------------------------------------- | -------------------------------- |
-| Local store binary                          | `eas build -p android\|ios --profile production --local` | No                               |
-| Upload to Play / App Store Connect          | `eas submit -p android\|ios --profile production`        | No                               |
+| Local store binary                          | `npm run build:android:local` / `build:ios:local` (→ `builds/`) | No                               |
+| Upload to Play / App Store Connect          | `npm run submit:android` / `submit:ios`                  | No                               |
 | Manage keystores / certs                    | `eas credentials`                                        | No                               |
 | Cloud build (`eas build` without `--local`) | avoid                                                    | **Yes**                          |
 | EAS Update                                  | optional; Free includes 1K MAUs                          | MAU limit, not build credit      |
