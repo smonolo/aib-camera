@@ -1,17 +1,12 @@
 import * as Haptics from '@/lib/haptics'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ScrollView, TextInput, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { AppSheet } from '@/components/AppSheet'
 import { SegmentedControl } from '@/components/SegmentedControl'
-import {
-  CardGroup,
-  FieldLabel,
-  SettingsSubscreenShell,
-  ToggleRow,
-} from '@/components/SettingsUI'
+import { CardGroup, FieldLabel, ToggleRow } from '@/components/SettingsUI'
 import { fonts } from '@/lib/fonts'
-import { useHapticBack } from '@/lib/hooks'
+import { useDismissSheet } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
 import { SCREEN_PAD } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
@@ -22,20 +17,35 @@ import type {
   StampFontSize,
   StampOpacityStep,
 } from '@/lib/types'
+import { debounce } from '@/lib/util'
 
-export default function AppearanceScreen() {
-  const insets = useSafeAreaInsets()
+export default function ConfigurationSheet() {
   const colors = useAppColors()
   const copy = t()
-  const onBack = useHapticBack()
   const { settings, updateSettings, ready } = useStampSettings()
+  const dismissSheet = useDismissSheet()
   const [customDraft, setCustomDraft] = useState(
     settings.customLines.join('\n')
   )
 
+  const persistCustom = useMemo(
+    () =>
+      debounce((value: string) => {
+        void updateSettings({ customLines: parseCustomLines(value) })
+      }, 350),
+    [updateSettings]
+  )
+
+  useEffect(() => () => persistCustom.flush(), [persistCustom])
+
   useEffect(() => {
     if (ready) setCustomDraft(settings.customLines.join('\n'))
   }, [ready])
+
+  const dismiss = useCallback(() => {
+    persistCustom.flush()
+    dismissSheet()
+  }, [dismissSheet, persistCustom])
 
   const bump = async <K extends keyof typeof settings>(
     key: K,
@@ -45,24 +55,27 @@ export default function AppearanceScreen() {
     await updateSettings({ [key]: value } as Partial<typeof settings>)
   }
 
-  const syncCustom = async (value: string) => {
+  const onChangeCustom = (value: string) => {
     setCustomDraft(value)
-    await updateSettings({ customLines: parseCustomLines(value) })
+    persistCustom(value)
   }
 
   return (
-    <SettingsSubscreenShell
+    <AppSheet
       title={copy.settings.configuration}
-      backLabel={copy.photos.back}
-      onBack={onBack}
+      closeLabel={copy.camera.aimClose}
+      onClose={dismiss}
+      height="full"
     >
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingHorizontal: SCREEN_PAD,
-          paddingBottom: Math.max(insets.bottom, 24),
+          paddingBottom: 24,
         }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
       >
         <FieldLabel color={colors.muted}>{copy.settings.general}</FieldLabel>
         <CardGroup>
@@ -102,7 +115,8 @@ export default function AppearanceScreen() {
         <FieldLabel color={colors.muted}>{copy.settings.customText}</FieldLabel>
         <TextInput
           value={customDraft}
-          onChangeText={value => void syncCustom(value)}
+          onChangeText={onChangeCustom}
+          onBlur={() => persistCustom.flush()}
           multiline
           placeholder={copy.settings.customPlaceholder}
           placeholderTextColor={colors.placeholder}
@@ -166,6 +180,6 @@ export default function AppearanceScreen() {
           />
         </View>
       </ScrollView>
-    </SettingsSubscreenShell>
+    </AppSheet>
   )
 }

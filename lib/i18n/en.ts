@@ -29,6 +29,7 @@ export const en: TranslationKeys = {
     flashOff: 'Flash off',
     stampSettings: 'Stamp configuration',
     aim: 'Aim',
+    aimLongPressHint: 'Press and hold the viewfinder to open aim',
     aimTitle: 'Aimed point',
     aimHint:
       'Point the camera and enter the distance. Stamp coordinates will be the estimated point, not your own.',

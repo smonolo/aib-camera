@@ -29,6 +29,7 @@ export const it: TranslationKeys = {
     flashOff: 'Flash spento',
     stampSettings: 'Configurazione timbro',
     aim: 'Punta',
+    aimLongPressHint: 'Tieni premuto il mirino per aprire Punta',
     aimTitle: 'Punto mirato',
     aimHint:
       'Punta la fotocamera e indica la distanza. Le coordinate sul timbro saranno quelle del punto stimato, non le tue.',

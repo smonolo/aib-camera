@@ -3,7 +3,7 @@ import { Platform, Share } from 'react-native'
 
 import { warn } from './soft'
 
-export type ShareFileOptions = {
+type ShareFileOptions = {
   mimeType: string
   dialogTitle: string
   uti: string

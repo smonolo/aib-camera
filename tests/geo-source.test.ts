@@ -32,7 +32,6 @@ import {
   lockAimedTarget,
   resetGeoSourceForTests,
   setGeoSourceMode,
-  toggleGeoSourceMode,
 } from '@/lib/geo-source'
 import type { GeoSnapshot, StickyTarget } from '@/lib/types'
 
@@ -216,18 +215,12 @@ describe('geo source mode helpers', () => {
     expect(getGeoSourceState().mode).toBe('me')
   })
 
-  it('toggles me ↔ target when sticky exists', () => {
+  it('switches me ↔ target when sticky exists', () => {
     expect(getGeoSourceState().mode).toBe('target')
-    toggleGeoSourceMode()
+    setGeoSourceMode('me')
     expect(getGeoSourceState().mode).toBe('me')
-    toggleGeoSourceMode()
+    setGeoSourceMode('target')
     expect(getGeoSourceState().mode).toBe('target')
-  })
-
-  it('toggle is a no-op without sticky', () => {
-    resetGeoSourceForTests({ mode: 'me', sticky: null })
-    toggleGeoSourceMode()
-    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
   })
 })
 

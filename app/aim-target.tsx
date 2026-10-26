@@ -1,41 +1,46 @@
 import * as Haptics from '@/lib/haptics'
-import { router } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable, Text, TextInput, View } from 'react-native'
 
-import { IconButton } from '@/components/IconButton'
+import { AppSheet } from '@/components/AppSheet'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { useToast } from '@/components/Toast'
 import {
   clearStickyTarget,
   lockAimedTarget,
   useGeoSource,
+  type LockTargetResult,
 } from '@/lib/geo-source'
 import { AIM_DISTANCE_PRESETS, parseAimDistanceMeters } from '@/lib/geo-math'
 import { fonts } from '@/lib/fonts'
+import { useDismissSheet } from '@/lib/hooks'
 import { t } from '@/lib/i18n'
 import { SCREEN_PAD } from '@/lib/layout'
 import { radii, useAppColors } from '@/lib/theme'
 import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
 
+function aimLockErrorMessage(
+  reason: Extract<LockTargetResult, { ok: false }>['reason'],
+  camera: ReturnType<typeof t>['camera']
+): string {
+  if (reason === 'no_gps') return camera.aimNoGps
+  if (reason === 'no_heading') return camera.aimNoHeading
+  return camera.aimBadDistance
+}
+
 export default function AimTargetSheet() {
   const copy = t()
   const colors = useAppColors()
-  const insets = useSafeAreaInsets()
   const { showError, showSuccess } = useToast()
   const { sticky } = useGeoSource()
   const live = useLiveGeoSnapshot()
+  const dismiss = useDismissSheet()
   const [distanceText, setDistanceText] = useState('200')
   const [locking, setLocking] = useState(false)
 
   useEffect(() => {
     if (sticky != null) setDistanceText(String(sticky.distanceM))
   }, [sticky])
-
-  const dismiss = useCallback(() => {
-    if (router.canGoBack()) router.back()
-  }, [])
 
   const distance = parseAimDistanceMeters(distanceText)
   const presetValue = useMemo(() => {
@@ -59,13 +64,10 @@ export default function AimTargetSheet() {
     try {
       const result = await lockAimedTarget(distance)
       if (!result.ok) {
-        const message =
-          result.reason === 'no_gps'
-            ? copy.camera.aimNoGps
-            : result.reason === 'no_heading'
-              ? copy.camera.aimNoHeading
-              : copy.camera.aimBadDistance
-        showError(copy.camera.aimTitle, message)
+        showError(
+          copy.camera.aimTitle,
+          aimLockErrorMessage(result.reason, copy.camera)
+        )
         return
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -74,17 +76,7 @@ export default function AimTargetSheet() {
     } finally {
       setLocking(false)
     }
-  }, [
-    copy.camera.aimBadDistance,
-    copy.camera.aimLocked,
-    copy.camera.aimNoGps,
-    copy.camera.aimNoHeading,
-    copy.camera.aimTitle,
-    dismiss,
-    distance,
-    showError,
-    showSuccess,
-  ])
+  }, [copy.camera, dismiss, distance, showError, showSuccess])
 
   const onClear = useCallback(() => {
     void Haptics.selectionAsync()
@@ -93,49 +85,13 @@ export default function AimTargetSheet() {
   }, [dismiss])
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: SCREEN_PAD,
-          paddingTop: 14,
-          paddingBottom: 8,
-          gap: 12,
-        }}
-      >
-        <Text
-          style={{
-            flex: 1,
-            fontFamily: fonts.semibold,
-            fontSize: 18,
-            color: colors.fg,
-          }}
-          numberOfLines={1}
-        >
-          {copy.camera.aimTitle}
-        </Text>
-        <IconButton
-          sf="xmark"
-          material="close"
-          onPress={() => {
-            void Haptics.selectionAsync()
-            dismiss()
-          }}
-          accessibilityLabel={copy.camera.aimClose}
-        />
-      </View>
-
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        bounces={false}
-        contentContainerStyle={{
-          paddingHorizontal: SCREEN_PAD,
-          paddingBottom: Math.max(insets.bottom, 16) + 8,
-          gap: 14,
-        }}
-      >
+    <AppSheet
+      title={copy.camera.aimTitle}
+      closeLabel={copy.camera.aimClose}
+      onClose={dismiss}
+      height="content"
+    >
+      <View style={{ paddingHorizontal: SCREEN_PAD, gap: 14 }}>
         <Text
           style={{
             fontFamily: fonts.regular,
@@ -221,7 +177,7 @@ export default function AimTargetSheet() {
             </Text>
           </Pressable>
         ) : null}
-      </ScrollView>
-    </View>
+      </View>
+    </AppSheet>
   )
 }

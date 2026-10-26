@@ -17,7 +17,6 @@ let listeners = new Set<Listener>()
 let refCount = 0
 let positionSub: { remove: () => void } | null = null
 let headingSub: { remove: () => void } | null = null
-let clock: ReturnType<typeof setInterval> | null = null
 let startGeneration = 0
 
 function notify(next: GeoSnapshot) {
@@ -68,10 +67,6 @@ function startShared() {
     }
   })()
 
-  clock = setInterval(() => {
-    notify({ ...sharedGeo, takenAt: new Date() })
-  }, 1000)
-
   return () => {
     active = false
   }
@@ -84,10 +79,6 @@ function stopShared(cancelStart: () => void) {
   positionSub = null
   headingSub?.remove()
   headingSub = null
-  if (clock) {
-    clearInterval(clock)
-    clock = null
-  }
 }
 
 export function getSharedGeoSnapshot(): GeoSnapshot {

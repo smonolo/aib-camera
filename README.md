@@ -17,7 +17,8 @@ Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`
 ## Features
 
 - Letterboxed camera preview with black chrome; flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center; live stamp overlay (same fields, font size, and opacity as the burned-in stamp)
-- **Aimed point:** point the camera, enter distance (presets or meters), lock estimated coordinates from GPS + compass heading; toggle **Here ↔ Aimed** without losing the sticky point; stamp labels aimed coords as estimated
+- **Aimed point:** open via the **Aim** chrome button or by pressing and holding the viewfinder (~0.5 s); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets or meters), lock estimated coordinates from GPS + compass heading; toggle **Here ↔ Aimed** without losing the sticky point; stamp labels aimed coords as estimated
+- **Stamp configuration:** camera tune control opens a full-height full-width bottom sheet (same chrome as Aim; dismiss with ✕ or tap outside)
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
 - Per-install UUID plus an on-device **capture log** (capture ID, date, coords) that survives gallery deletes; Settings → About shows version and install ID (tap either to copy); export the full log as CSV (includes `install_id`) via the share sheet
@@ -54,7 +55,7 @@ npm run smoke-checklist   # prints the device QA checklist
 | Path             | Role                                                                                                    |
 | ---------------- | ------------------------------------------------------------------------------------------------------- |
 | `app/`           | Expo Router screens (tabs: camera, gallery, settings; root: `configuration`, `photo/[id]`, `audit-log`) |
-| `components/`    | UI (stamp overlay, permissions, buttons, surfaces)                                                      |
+| `components/`    | UI (stamp overlay, permissions, buttons, surfaces, `AppSheet`)                                          |
 | `lib/`           | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config               |
 | `tests/`         | jest-expo unit tests                                                                                    |
 | `assets/images/` | App icon, adaptive icon layers, splash, favicon                                                         |
@@ -69,7 +70,7 @@ npm run smoke-checklist   # prints the device QA checklist
 - Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.
 - EXIF write is best-effort (skipped if the native module is missing); stamp, gallery, and capture log still succeed.
 - The capture log is append-only locally and is not cleared when photos are deleted from the gallery; CSV export is offline via the system share sheet and includes the install ID.
-- Settings: tap **Version** or **Install ID** to copy the value; stamp configuration is only from the camera tune control.
+- Settings: tap **Version** or **Install ID** to copy the value; stamp configuration is only from the camera tune control (full-height `AppSheet`, not the Settings tab).
 - Screen stays awake on the camera tab.
 - Camera preview sits in black chrome between top chrome and shutter (grows to fill leftover height); zoom chips show live magnification above 2× like the system Camera.
 

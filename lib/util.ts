@@ -16,3 +16,51 @@ export function createSerialQueue() {
     return run
   }
 }
+
+export function debounce<T extends unknown[]>(
+  fn: (...args: T) => void,
+  waitMs: number
+): ((...args: T) => void) & { cancel: () => void; flush: () => void } {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let pending: T | null = null
+
+  const cancel = () => {
+    if (timer != null) {
+      clearTimeout(timer)
+      timer = null
+    }
+    pending = null
+  }
+
+  const flush = () => {
+    if (pending == null) {
+      cancel()
+      return
+    }
+    const args = pending
+    pending = null
+    if (timer != null) {
+      clearTimeout(timer)
+      timer = null
+    }
+    fn(...args)
+  }
+
+  const wrapped = (...args: T) => {
+    pending = args
+    if (timer != null) {
+      clearTimeout(timer)
+      timer = null
+    }
+    timer = setTimeout(() => {
+      timer = null
+      const next = pending
+      pending = null
+      if (next) fn(...next)
+    }, waitMs)
+  }
+
+  wrapped.cancel = cancel
+  wrapped.flush = flush
+  return wrapped
+}

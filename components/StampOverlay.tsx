@@ -1,16 +1,17 @@
+import { memo, useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
+import { useEffectiveGeoSnapshot } from '@/lib/geo-source'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildStampContent, stampLayoutMetrics } from '@/lib/stamp'
-import { useEffectiveGeoSnapshot } from '@/lib/geo-source'
 
 type StampBoxProps = ReturnType<typeof stampLayoutMetrics> & {
   lines: string[]
   width: number
 }
 
-function StampBox({
+const StampBox = memo(function StampBox({
   lines,
   fontSize,
   lineGap,
@@ -61,7 +62,7 @@ function StampBox({
       ))}
     </View>
   )
-}
+})
 
 type Props = {
   frameWidth: number
@@ -70,6 +71,14 @@ type Props = {
 export function StampOverlay({ frameWidth }: Props) {
   const { settings } = useStampSettings()
   const geo = useEffectiveGeoSnapshot()
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    if (!settings.showDateTime) return
+    setNow(new Date())
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [settings.showDateTime])
 
   const width = Math.max(1, frameWidth)
   const metrics = stampLayoutMetrics(width, settings)
@@ -77,7 +86,8 @@ export function StampOverlay({ frameWidth }: Props) {
     ...metrics,
     width: Math.max(1, width - metrics.edgePad * 2),
   }
-  const { infoLines, customLines } = buildStampContent(geo, settings)
+  const stampGeo = settings.showDateTime ? { ...geo, takenAt: now } : geo
+  const { infoLines, customLines } = buildStampContent(stampGeo, settings)
 
   return (
     <View

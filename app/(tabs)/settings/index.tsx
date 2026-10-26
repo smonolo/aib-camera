@@ -7,7 +7,6 @@ import {
   requestPermissionsAsync as requestMediaLibraryPermissionsAsync,
 } from 'expo-media-library'
 import { router } from 'expo-router'
-import * as WebBrowser from 'expo-web-browser'
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -20,6 +19,7 @@ import {
   PermissionRow,
 } from '@/components/SettingsUI'
 import { useToast } from '@/components/Toast'
+import { openExternalUrl } from '@/lib/browser'
 import { copyText } from '@/lib/clipboard'
 import {
   appVersionLabel,
@@ -130,6 +130,15 @@ export default function SettingsScreen() {
     else showError(copy.settings.copyFailed, copy.settings.copyFailedBody)
   }
 
+  const openLink = async (
+    url: string,
+    errorTitle: string,
+    errorBody: string
+  ) => {
+    await Haptics.selectionAsync()
+    if (!(await openExternalUrl(url))) showError(errorTitle, errorBody)
+  }
+
   return (
     <View
       className="flex-1 bg-canvas dark:bg-canvas-inverse"
@@ -227,19 +236,13 @@ export default function SettingsScreen() {
             sf="arrow.up.right"
             material="open-in-new"
             showDivider
-            onPress={() => {
-              void (async () => {
-                await Haptics.selectionAsync()
-                try {
-                  await WebBrowser.openBrowserAsync(userGuideUrl())
-                } catch {
-                  showError(
-                    copy.settings.guideTitle,
-                    copy.settings.guideOpenFailed
-                  )
-                }
-              })()
-            }}
+            onPress={() =>
+              void openLink(
+                userGuideUrl(),
+                copy.settings.guideTitle,
+                copy.settings.guideOpenFailed
+              )
+            }
           />
           <NavRow
             label={copy.settings.privacyLink}
@@ -247,38 +250,26 @@ export default function SettingsScreen() {
             sf="arrow.up.right"
             material="open-in-new"
             showDivider
-            onPress={() => {
-              void (async () => {
-                await Haptics.selectionAsync()
-                try {
-                  await WebBrowser.openBrowserAsync(privacyPolicyUrl())
-                } catch {
-                  showError(
-                    copy.settings.privacyTitle,
-                    copy.settings.privacyOpenFailed
-                  )
-                }
-              })()
-            }}
+            onPress={() =>
+              void openLink(
+                privacyPolicyUrl(),
+                copy.settings.privacyTitle,
+                copy.settings.privacyOpenFailed
+              )
+            }
           />
           <NavRow
             label={copy.settings.termsLink}
             accessibilityRole="link"
             sf="arrow.up.right"
             material="open-in-new"
-            onPress={() => {
-              void (async () => {
-                await Haptics.selectionAsync()
-                try {
-                  await WebBrowser.openBrowserAsync(termsOfUseUrl())
-                } catch {
-                  showError(
-                    copy.settings.termsTitle,
-                    copy.settings.termsOpenFailed
-                  )
-                }
-              })()
-            }}
+            onPress={() =>
+              void openLink(
+                termsOfUseUrl(),
+                copy.settings.termsTitle,
+                copy.settings.termsOpenFailed
+              )
+            }
           />
         </CardGroup>
       </ScrollView>

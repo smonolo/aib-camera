@@ -84,10 +84,6 @@ export function useAppColors(): AppColors {
   return scheme === 'dark' ? palette.dark : palette.light
 }
 
-export function useIsDark(): boolean {
-  return useAppColorScheme() === 'dark'
-}
-
 const lightTheme: Theme = {
   ...DefaultTheme,
   colors: {

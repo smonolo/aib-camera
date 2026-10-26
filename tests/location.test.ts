@@ -2,6 +2,7 @@ import * as Location from 'expo-location'
 
 import {
   captureGeoSnapshot,
+  emptyGeoSnapshot,
   ensureForegroundLocationPermission,
   formatGeocodeAddress,
   geocodeCellKey,
@@ -32,6 +33,21 @@ const mockedLocation = Location as jest.Mocked<typeof Location>
 beforeEach(() => {
   resetGeocodeMemory()
   jest.clearAllMocks()
+})
+
+describe('emptyGeoSnapshot', () => {
+  it('returns null geo fields with optional heading', () => {
+    const takenAt = new Date('2024-07-15T14:30:45.000Z')
+    expect(emptyGeoSnapshot(takenAt, 42)).toEqual({
+      lat: null,
+      lon: null,
+      accuracy: null,
+      altitude: null,
+      heading: 42,
+      address: null,
+      takenAt,
+    })
+  })
 })
 
 describe('normalizeHeadingDegrees', () => {

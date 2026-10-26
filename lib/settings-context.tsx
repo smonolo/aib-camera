@@ -54,6 +54,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateSettings = useCallback(async (patch: Partial<StampSettings>) => {
     const next = normalizeStampSettings({ ...settingsRef.current, ...patch })
+    if (JSON.stringify(next) === JSON.stringify(settingsRef.current)) return
     setSettings(next)
     await saveStampSettings(next)
   }, [])

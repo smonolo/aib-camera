@@ -9,7 +9,7 @@ This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** and w
 - **Local-first.** Capture, stamp (Skia), in-app gallery, capture log, and share must work offline. Network is only for reverse geocode (optional, cached).
 - **Camera is required; location is optional.** Never block the camera behind GPS permission. Stamp unavailable fields with clear fallback copy.
 - **Shutter must stay fast.** Prefer effective HUD geo (`getEffectiveGeoSnapshot` / live or locked aimed point) over waiting on a high-accuracy fix. Bound GPS/geocode/heading with short timeouts.
-- **Aimed target (optional).** Users can lock estimated coords from observer GPS + compass heading + entered distance (`lib/geo-math` destination + `lib/geo-source`). Sticky Me ↔ Target toggle; stamp must label aimed coords as estimated. Never block the shutter if aim lock fails.
+- **Aimed target (optional).** Users can lock estimated coords from observer GPS + compass heading + entered distance (`lib/geo-math` destination + `lib/geo-source`). Open the aim sheet from the Aim chrome control or a short press-and-hold (~0.5 s) on the viewfinder. Aim and stamp-configuration both use `AppSheet` (`transparentModal`, full width, rounded, slide from bottom; dismiss with ✕ or tap outside — no drag). Aim is content-height; configuration is full-height. Sticky Me ↔ Target toggle; stamp must label aimed coords as estimated. Never block the shutter if aim lock fails.
 - **In-app gallery is the source of truth for photos.** System album «AIB Camera» is best-effort; save must succeed even if media-library permission is denied.
 - **Gallery deletes also remove the system Photos copy** when an album asset id was stored; local JPEG cleanup is best-effort. Capture log entries always remain.
 - **Capture log is append-only.** Each shot gets a UUID written to EXIF when possible and stored in the local audit log; gallery deletes must not remove audit entries. CSV export (`lib/audit-csv.ts`) shares a local file via the system sheet — no upload. Each app install has a stable local UUID (`lib/install-id.ts`), shown in Settings (tap version or install ID to copy) and included as `install_id` on every CSV row.
@@ -55,20 +55,21 @@ Run typecheck and unit tests (and lint when configured) before declaring any tas
 
 ## Key modules
 
-| Area                                      | Where                                                                                                                                                     |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geo snapshot, geocode cache, heading      | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                                                                                                |
-| Aimed target (distance + bearing)         | `lib/geo-math.ts`, `lib/geo-source.ts`, `components/AimTargetControls.tsx`                                                                                |
-| Stamp lines / formatters                  | `lib/stamp.ts`                                                                                                                                            |
-| JPEG burn-in                              | `lib/composite.ts` (Geist SemiBold via `STAMP_FONT_ASSET` in `lib/fonts.ts`)                                                                              |
-| Capture finalize (stamp → EXIF → gallery) | `lib/capture.ts`                                                                                                                                          |
-| EXIF (post-stamp)                         | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                                                                                    |
-| Capture UUID + gallery + audit log        | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`), `lib/install-id.ts`, `lib/audit-csv.ts` (CSV export)                                |
-| System Photos save/delete + cleanup       | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                                                                                       |
-| Settings + persistence                    | `app/(tabs)/settings/` (permissions + about on one screen); stamp configuration is root `app/configuration.tsx` (camera only); `lib/settings-context.tsx` |
-| Camera letterbox (preview + chrome bands) | `lib/layout.ts` (`cameraLetterboxLayout`); preview + stamp in `app/(tabs)/index.tsx` / `components/StampOverlay.tsx`                                      |
-| Permissions gate                          | `components/PermissionGate.tsx` (camera hard; location soft)                                                                                              |
-| App icon / splash                         | `assets/images/` (`icon.png`, adaptive layers, `splash-icon-light.png` / `splash-icon-dark.png`); brand red `#AF2525`, splash bg `#111111`                |
+| Area                                      | Where                                                                                                                                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geo snapshot, geocode cache, heading      | `lib/location.ts`, `lib/use-live-geo.ts`, `lib/storage.ts`                                                                                                                  |
+| Aimed target (distance + bearing)         | `lib/geo-math.ts`, `lib/geo-source.ts`, `components/AimTargetControls.tsx`, `app/aim-target.tsx`                                                                            |
+| Camera bottom sheets (aim + stamp config) | `components/AppSheet.tsx` + `SheetHeader.tsx`; routes `app/aim-target.tsx`, `app/configuration.tsx` (`transparentModal` in `app/_layout.tsx`)                               |
+| Stamp lines / formatters                  | `lib/stamp.ts`                                                                                                                                                              |
+| JPEG burn-in                              | `lib/composite.ts` (Geist SemiBold via `STAMP_FONT_ASSET` in `lib/fonts.ts`)                                                                                                |
+| Capture finalize (stamp → EXIF → gallery) | `lib/capture.ts`                                                                                                                                                            |
+| EXIF (post-stamp)                         | `lib/exif.ts` (`@lodev09/react-native-exify`, gated if native missing)                                                                                                      |
+| Capture UUID + gallery + audit log        | `lib/config.ts` (`newCaptureId`), `lib/storage.ts` (`recordCapture`), `lib/install-id.ts`, `lib/audit-csv.ts` (CSV export)                                                  |
+| System Photos save/delete + cleanup       | `lib/media.ts` (`saveToAibAlbum`, `deleteCaptures`)                                                                                                                         |
+| Settings + persistence                    | `app/(tabs)/settings/` (permissions + about on one screen); stamp configuration is camera-only full-height `AppSheet` (`app/configuration.tsx`); `lib/settings-context.tsx` |
+| Camera letterbox (preview + chrome bands) | `lib/layout.ts` (`cameraLetterboxLayout`); preview + stamp in `app/(tabs)/index.tsx` / `components/StampOverlay.tsx`                                                        |
+| Permissions gate                          | `components/PermissionGate.tsx` (camera hard; location soft)                                                                                                                |
+| App icon / splash                         | `assets/images/` (`icon.png`, adaptive layers, `splash-icon-light.png` / `splash-icon-dark.png`); brand red `#AF2525`, splash bg `#111111`                                  |
 
 ## Building with EAS (local-first, Free plan)
 

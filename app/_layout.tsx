@@ -31,6 +31,14 @@ import {
 
 export { ErrorBoundary } from 'expo-router'
 
+const appSheetScreenOptions = {
+  headerShown: false,
+  presentation: 'transparentModal' as const,
+  animation: 'slide_from_bottom' as const,
+  contentStyle: { backgroundColor: 'transparent' },
+  gestureEnabled: false,
+}
+
 void SplashScreen.preventAutoHideAsync().catch(() => {})
 
 function applyDefaultFont() {
@@ -145,19 +153,9 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="configuration"
-                options={{
-                  headerShown: false,
-                  presentation: 'card',
-                }}
+                options={appSheetScreenOptions}
               />
-              <Stack.Screen
-                name="aim-target"
-                options={{
-                  headerShown: false,
-                  presentation: 'modal',
-                  animation: 'slide_from_bottom',
-                }}
-              />
+              <Stack.Screen name="aim-target" options={appSheetScreenOptions} />
             </Stack>
           </ToastProvider>
         </SettingsProvider>

@@ -25,6 +25,7 @@ export type TranslationKeys = {
     flashOff: string
     stampSettings: string
     aim: string
+    aimLongPressHint: string
     aimTitle: string
     aimHint: string
     aimDistance: string

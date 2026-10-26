@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AppIcon } from '@/components/AppIcon'
 import { fonts } from '@/lib/fonts'
-import { radii, useAppColors, useIsDark } from '@/lib/theme'
+import { palette, radii, useAppColorScheme, type AppColors } from '@/lib/theme'
 
 type ToastTone = 'error' | 'success' | 'info'
 
@@ -35,11 +35,6 @@ type ToastPayload = {
 }
 
 type ToastContextValue = {
-  showToast: (input: {
-    title: string
-    message?: string
-    tone?: ToastTone
-  }) => void
   showError: (title: string, message?: string) => void
   showSuccess: (title: string, message?: string) => void
 }
@@ -51,8 +46,9 @@ const SWIPE_THRESHOLD = -36
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets()
-  const colors = useAppColors()
-  const isDark = useIsDark()
+  const scheme = useAppColorScheme()
+  const colors: AppColors = scheme === 'dark' ? palette.dark : palette.light
+  const isDark = scheme === 'dark'
   const [toast, setToast] = useState<ToastPayload | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const seq = useRef(0)
@@ -115,7 +111,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      showToast,
       showError: (title: string, message?: string) =>
         showToast({ title, message, tone: 'error' }),
       showSuccess: (title: string, message?: string) =>

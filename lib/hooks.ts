@@ -16,6 +16,16 @@ export function useOnAppActive(onActive: () => void) {
   }, [])
 }
 
+export function dismissSheet() {
+  if (router.canGoBack()) router.back()
+}
+
+export function useDismissSheet() {
+  return useCallback(() => {
+    dismissSheet()
+  }, [])
+}
+
 export function useHapticBack() {
   return useCallback(() => {
     void selectionAsync()

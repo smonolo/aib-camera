@@ -175,11 +175,6 @@ export function setGeoSourceMode(mode: GeoSourceMode): void {
   setState({ ...state, mode })
 }
 
-export function toggleGeoSourceMode(): void {
-  if (state.sticky == null) return
-  setGeoSourceMode(state.mode === 'target' ? 'me' : 'target')
-}
-
 export function clearStickyTarget(): void {
   setState({ mode: 'me', sticky: null })
 }
