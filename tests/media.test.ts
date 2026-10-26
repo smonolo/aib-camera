@@ -1,7 +1,7 @@
 import { File } from 'expo-file-system'
 import { Album, Asset, getPermissionsAsync } from 'expo-media-library'
 import * as Sharing from 'expo-sharing'
-import { Platform, Share } from 'react-native'
+import { Share } from 'react-native'
 
 import {
   deleteCaptures,
@@ -219,17 +219,8 @@ describe('deleteCaptures', () => {
 })
 
 describe('sharePhotos', () => {
-  const original = Platform.OS
-
   beforeEach(() => {
     jest.clearAllMocks()
-  })
-
-  afterEach(() => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: original,
-    })
   })
 
   it('no-ops for an empty list', async () => {
@@ -248,11 +239,19 @@ describe('sharePhotos', () => {
     )
   })
 
-  it('shares multiple URLs together on iOS', async () => {
-    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' })
+  it('shares multiple photos one at a time', async () => {
+    ;(Sharing.isAvailableAsync as jest.Mock).mockResolvedValue(true)
     await sharePhotos(['file:///a.jpg', 'file:///b.jpg'])
-    expect(Share.share).toHaveBeenCalledWith({
-      urls: ['file:///a.jpg', 'file:///b.jpg'],
-    })
+    expect(Sharing.shareAsync).toHaveBeenCalledTimes(2)
+    expect(Sharing.shareAsync).toHaveBeenNthCalledWith(
+      1,
+      'file:///a.jpg',
+      expect.objectContaining({ mimeType: 'image/jpeg' })
+    )
+    expect(Sharing.shareAsync).toHaveBeenNthCalledWith(
+      2,
+      'file:///b.jpg',
+      expect.objectContaining({ mimeType: 'image/jpeg' })
+    )
   })
 })

@@ -74,13 +74,13 @@ Run typecheck and unit tests (and lint when configured) before declaring any tas
 
 Prefer **EAS CLI** for credentials + submit, but **do not use cloud builds** (those consume Free-plan quotas: 15 Android / 15 iOS per month). Run EAS CLI as `npx eas-cli@latest <command>` (or `bunx eas-cli` if using Bun).
 
-| Use                                         | Command                                                         | Counts against Free build quota? |
-| ------------------------------------------- | --------------------------------------------------------------- | -------------------------------- |
-| Local store binary                          | `npm run build:android:local` / `build:ios:local` (→ `builds/`) | No                               |
-| Upload to Play / App Store Connect          | `npm run submit:android` / `submit:android:internal` / `submit:ios` | No                          |
-| Manage keystores / certs                    | `eas credentials`                                               | No                               |
-| Cloud build (`eas build` without `--local`) | avoid                                                           | **Yes**                          |
-| EAS Update                                  | optional; Free includes 1K MAUs                                 | MAU limit, not build credit      |
+| Use                                         | Command                                                             | Counts against Free build quota? |
+| ------------------------------------------- | ------------------------------------------------------------------- | -------------------------------- |
+| Local store binary                          | `npm run build:android:local` / `build:ios:local` (→ `builds/`)     | No                               |
+| Upload to Play / App Store Connect          | `npm run submit:android` / `submit:android:internal` / `submit:ios` | No                               |
+| Manage keystores / certs                    | `eas credentials`                                                   | No                               |
+| Cloud build (`eas build` without `--local`) | avoid                                                               | **Yes**                          |
+| EAS Update                                  | optional; Free includes 1K MAUs                                     | MAU limit, not build credit      |
 
 Config: `eas.json`. Versions stay local (`cli.appVersionSource: "local"` → bump `app.json` yourself). Android submit profiles use `releaseStatus: draft`: `submit:android:internal` → track `internal`; `submit:android` → track `alpha` (closed testing). Docs: https://docs.expo.dev/eas/index.md · local builds: https://docs.expo.dev/build-reference/local-builds/
 

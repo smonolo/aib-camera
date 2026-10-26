@@ -5,7 +5,6 @@ import {
   getPermissionsAsync,
   requestPermissionsAsync,
 } from 'expo-media-library'
-import { Platform, Share } from 'react-native'
 
 import { APP_NAME } from './config'
 import { t } from './i18n'
@@ -116,16 +115,6 @@ export async function sharePhotos(uris: string[]): Promise<void> {
   }
 
   try {
-    if (unique.length === 1) {
-      await shareFile(unique[0]!, jpegOptions)
-      return
-    }
-
-    if (Platform.OS === 'ios') {
-      await Share.share({ urls: unique } as never)
-      return
-    }
-
     for (const uri of unique) {
       await shareFile(uri, jpegOptions)
     }
