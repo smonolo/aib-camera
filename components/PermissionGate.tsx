@@ -9,7 +9,7 @@ import { AppIcon } from '@/components/AppIcon'
 import { Button } from '@/components/Button'
 import { fonts } from '@/lib/fonts'
 import { useOnAppActive } from '@/lib/hooks'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { warn } from '@/lib/soft'
 import { radii, useAppColors } from '@/lib/theme'
 
@@ -20,7 +20,7 @@ type Props = {
 export function PermissionGate({ children }: Props) {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
-  const copy = t()
+  const { copy } = useI18n()
   const [cameraPermission, requestCameraPermission, getCameraPermission] =
     useCameraPermissions()
   const [busy, setBusy] = useState(false)

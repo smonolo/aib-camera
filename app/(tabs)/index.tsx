@@ -39,7 +39,7 @@ import {
 } from '@/lib/camera-zoom'
 import { finalizeCapture, resolveCaptureGeo } from '@/lib/capture'
 import { errorMessage } from '@/lib/errors'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { warn } from '@/lib/soft'
 import { CAMERA, cameraBottomChrome, cameraLetterboxLayout } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
@@ -67,7 +67,7 @@ function CameraExperience() {
   const cameraRef = useRef<CameraView>(null)
   const { settings } = useStampSettings()
   const { showError } = useToast()
-  const copy = t()
+  const { copy } = useI18n()
   const enqueue = useRef(createSerialQueue()).current
 
   const [flash, setFlash] = useState<FlashMode>('off')

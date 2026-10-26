@@ -20,6 +20,7 @@ import 'react-native-reanimated'
 import { ToastProvider } from '@/components/Toast'
 import { fonts, setCustomFontsReady } from '@/lib/fonts'
 import { hydrateGeoSource } from '@/lib/geo-source'
+import { LocaleProvider } from '@/lib/i18n/locale-context'
 import { warn } from '@/lib/soft'
 import { SettingsProvider } from '@/lib/settings-context'
 import {
@@ -112,53 +113,58 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView className="flex-1 bg-canvas dark:bg-canvas-inverse">
       <ThemeProvider value={navigationTheme(colorScheme)}>
-        <SettingsProvider>
-          <ToastProvider>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            {Platform.OS === 'android' ? (
-              <NavigationBar
-                style={colorScheme === 'dark' ? 'light' : 'dark'}
-              />
-            ) : null}
-            <Stack
-              screenOptions={{
-                headerShadowVisible: false,
-                contentStyle: { backgroundColor: colors.canvas },
-                headerStyle: { backgroundColor: colors.canvas },
-                headerTintColor: colors.fg,
-                headerTitleStyle: {
-                  fontFamily: fonts.semibold,
-                  fontWeight: '600',
-                },
-              }}
-            >
-              <Stack.Screen
-                name="(tabs)"
-                options={{ headerShown: false, title: '' }}
-              />
-              <Stack.Screen
-                name="photo/[id]"
-                options={{
-                  headerShown: false,
-                  presentation: 'card',
-                  animation: 'fade',
+        <LocaleProvider>
+          <SettingsProvider>
+            <ToastProvider>
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              {Platform.OS === 'android' ? (
+                <NavigationBar
+                  style={colorScheme === 'dark' ? 'light' : 'dark'}
+                />
+              ) : null}
+              <Stack
+                screenOptions={{
+                  headerShadowVisible: false,
+                  contentStyle: { backgroundColor: colors.canvas },
+                  headerStyle: { backgroundColor: colors.canvas },
+                  headerTintColor: colors.fg,
+                  headerTitleStyle: {
+                    fontFamily: fonts.semibold,
+                    fontWeight: '600',
+                  },
                 }}
-              />
-              <Stack.Screen
-                name="audit-log"
-                options={{
-                  headerShown: false,
-                  presentation: 'card',
-                }}
-              />
-              <Stack.Screen
-                name="configuration"
-                options={appSheetScreenOptions}
-              />
-              <Stack.Screen name="aim-target" options={appSheetScreenOptions} />
-            </Stack>
-          </ToastProvider>
-        </SettingsProvider>
+              >
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{ headerShown: false, title: '' }}
+                />
+                <Stack.Screen
+                  name="photo/[id]"
+                  options={{
+                    headerShown: false,
+                    presentation: 'card',
+                    animation: 'fade',
+                  }}
+                />
+                <Stack.Screen
+                  name="audit-log"
+                  options={{
+                    headerShown: false,
+                    presentation: 'card',
+                  }}
+                />
+                <Stack.Screen
+                  name="configuration"
+                  options={appSheetScreenOptions}
+                />
+                <Stack.Screen
+                  name="aim-target"
+                  options={appSheetScreenOptions}
+                />
+              </Stack>
+            </ToastProvider>
+          </SettingsProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   )

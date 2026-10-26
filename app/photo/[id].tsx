@@ -11,7 +11,7 @@ import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
 import { useHapticBack } from '@/lib/hooks'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { SCREEN_PAD_NARROW } from '@/lib/layout'
 import { deleteCaptures, sharePhotos } from '@/lib/media'
 import { getCapture } from '@/lib/storage'
@@ -22,7 +22,7 @@ export default function PhotoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
-  const copy = t()
+  const { copy } = useI18n()
   const { showError, showSuccess } = useToast()
   const onBack = useHapticBack()
   const [photo, setPhoto] = useState<CaptureRecord | null | undefined>(

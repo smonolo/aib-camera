@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 
 import { formatZoomChipLabel, type ZoomOption } from '@/lib/camera-zoom'
 import { fonts } from '@/lib/fonts'
-import { usesCommaDecimal } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
@@ -24,7 +24,8 @@ export function ZoomControls({
   accessibilityPrefix,
 }: Props) {
   const colors = useAppColors()
-  const useComma = usesCommaDecimal()
+  const { locale } = useI18n()
+  const useComma = locale === 'it'
 
   if (options.length < 2) return null
 

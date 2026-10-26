@@ -18,7 +18,7 @@ import { copyText } from '@/lib/clipboard'
 import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
 import { useHapticBack } from '@/lib/hooks'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { SCREEN_PAD } from '@/lib/layout'
 import { formatLatLon, formatStampDateTime } from '@/lib/stamp'
 import { loadAuditLog } from '@/lib/storage'
@@ -28,7 +28,7 @@ import type { AuditLogEntry } from '@/lib/types'
 export default function AuditLogScreen() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
-  const copy = t()
+  const { copy } = useI18n()
   const { showSuccess, showError } = useToast()
   const onBack = useHapticBack()
   const [entries, setEntries] = useState<AuditLogEntry[] | null>(null)

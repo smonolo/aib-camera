@@ -2,12 +2,12 @@ import { Link, Stack } from 'expo-router'
 import { Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { useAppColors } from '@/lib/theme'
 
 export default function NotFoundScreen() {
   const colors = useAppColors()
-  const copy = t()
+  const { copy } = useI18n()
 
   return (
     <>

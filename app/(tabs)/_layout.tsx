@@ -2,11 +2,11 @@ import { NativeTabs } from 'expo-router/native-tabs'
 import { DynamicColorIOS, Platform } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { palette, useAppColorScheme } from '@/lib/theme'
 
 export default function TabLayout() {
-  const copy = t()
+  const { copy, locale } = useI18n()
   const scheme = useAppColorScheme()
   const colors = scheme === 'dark' ? palette.dark : palette.light
   const tint =
@@ -33,6 +33,7 @@ export default function TabLayout() {
 
   return (
     <NativeTabs
+      key={locale}
       disableTransparentOnScrollEdge
       tintColor={tint}
       labelStyle={{ fontFamily: fonts.medium }}

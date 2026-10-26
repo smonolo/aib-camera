@@ -85,6 +85,7 @@ export const it: TranslationKeys = {
   settings: {
     title: 'Impostazioni',
     general: 'Generale',
+    language: 'Lingua',
     dateTime: 'Data e ora',
     coordinates: 'Coordinate',
     address: 'Luogo',

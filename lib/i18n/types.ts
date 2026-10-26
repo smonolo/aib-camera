@@ -78,6 +78,7 @@ export type TranslationKeys = {
   settings: {
     title: string
     general: string
+    language: string
     dateTime: string
     coordinates: string
     address: string

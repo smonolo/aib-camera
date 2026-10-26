@@ -19,7 +19,8 @@ import { IconButton } from '@/components/IconButton'
 import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
-import { getLocale, t } from '@/lib/i18n'
+import type { AppLocale, TranslationKeys } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { SCREEN_PAD_NARROW, tabScrollBottomPad } from '@/lib/layout'
 import { deleteCaptures, sharePhotos } from '@/lib/media'
 import { formatGalleryDayLabel, galleryDayKey } from '@/lib/stamp'
@@ -45,7 +46,7 @@ export default function PhotosScreen() {
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
   const colors = useAppColors()
-  const copy = t()
+  const { copy, locale } = useI18n()
   const { showError, showSuccess } = useToast()
   const [captures, setCaptures] = useState<CaptureRecord[]>([])
   const [selecting, setSelecting] = useState(false)
@@ -69,7 +70,10 @@ export default function PhotosScreen() {
     }, [refresh])
   )
 
-  const sections = useMemo(() => buildPhotoSections(captures), [captures])
+  const sections = useMemo(
+    () => buildPhotoSections(captures, copy, locale),
+    [captures, copy, locale]
+  )
 
   const selectedCount = selectedIds.size
   const selectedCaptures = useMemo(
@@ -439,7 +443,7 @@ const GalleryTile = memo(function GalleryTile({
 
 function GalleryEmpty() {
   const colors = useAppColors()
-  const copy = t()
+  const { copy } = useI18n()
 
   return (
     <View
@@ -477,9 +481,11 @@ function GalleryEmpty() {
   )
 }
 
-function buildPhotoSections(captures: CaptureRecord[]): PhotoSection[] {
-  const copy = t()
-  const locale = getLocale()
+function buildPhotoSections(
+  captures: CaptureRecord[],
+  copy: TranslationKeys,
+  locale: AppLocale
+): PhotoSection[] {
   const groups = new Map<string, CaptureRecord[]>()
 
   for (const capture of captures) {

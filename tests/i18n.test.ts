@@ -1,6 +1,25 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 import { en } from '@/lib/i18n/en'
 import { it as itCatalog } from '@/lib/i18n/it'
-import { getLocale, t } from '@/lib/i18n'
+import {
+  getLocale,
+  normalizeLocale,
+  resetLocaleForTests,
+  setLocale,
+  t,
+  usesCommaDecimal,
+} from '@/lib/i18n'
+import {
+  hydrateLocale,
+  LOCALE_STORAGE_KEY,
+  resetLocalePersistForTests,
+  setAppLocale,
+} from '@/lib/i18n/persist'
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+)
 
 function leafPaths(value: unknown, prefix = ''): string[] {
   if (value == null || typeof value !== 'object') {
@@ -15,6 +34,12 @@ function leafPaths(value: unknown, prefix = ''): string[] {
   )
 }
 
+beforeEach(async () => {
+  resetLocaleForTests()
+  resetLocalePersistForTests()
+  await AsyncStorage.clear()
+})
+
 describe('i18n catalogs', () => {
   it('keeps IT and EN leaf keys in sync', () => {
     expect(leafPaths(itCatalog).sort()).toEqual(leafPaths(en).sort())
@@ -24,6 +49,33 @@ describe('i18n catalogs', () => {
     expect(getLocale()).toBe('it')
     expect(t().tabs.camera).toBe(itCatalog.tabs.camera)
     expect(t().tabs.camera).not.toBe(en.tabs.camera)
+    expect(usesCommaDecimal()).toBe(true)
+  })
+
+  it('switches to English copy', () => {
+    setLocale('en')
+    expect(getLocale()).toBe('en')
+    expect(t().tabs.camera).toBe(en.tabs.camera)
+    expect(usesCommaDecimal()).toBe(false)
+  })
+
+  it('normalizes unknown locales to Italian', () => {
+    expect(normalizeLocale('fr')).toBe('it')
+    expect(normalizeLocale(null)).toBe('it')
+    expect(normalizeLocale('en')).toBe('en')
+  })
+
+  it('persists and hydrates the selected locale', async () => {
+    await setAppLocale('en')
+    expect(await AsyncStorage.getItem(LOCALE_STORAGE_KEY)).toBe('en')
+
+    resetLocaleForTests()
+    resetLocalePersistForTests()
+    expect(getLocale()).toBe('it')
+
+    await hydrateLocale()
+    expect(getLocale()).toBe('en')
+    expect(t().settings.language).toBe(en.settings.language)
   })
 
   it('uses non-empty strings for every leaf', () => {

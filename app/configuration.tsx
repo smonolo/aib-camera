@@ -7,7 +7,7 @@ import { SegmentedControl } from '@/components/SegmentedControl'
 import { CardGroup, FieldLabel, ToggleRow } from '@/components/SettingsUI'
 import { fonts } from '@/lib/fonts'
 import { useDismissSheet } from '@/lib/hooks'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { SCREEN_PAD } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
 import { parseCustomLines } from '@/lib/stamp'
@@ -21,7 +21,7 @@ import { debounce } from '@/lib/util'
 
 export default function ConfigurationSheet() {
   const colors = useAppColors()
-  const copy = t()
+  const { copy } = useI18n()
   const { settings, updateSettings, ready } = useStampSettings()
   const dismissSheet = useDismissSheet()
   const [customDraft, setCustomDraft] = useState(

@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { SegmentedControl } from '@/components/SegmentedControl'
 import {
   CardGroup,
   FieldLabel,
@@ -29,7 +30,8 @@ import {
 } from '@/lib/config'
 import { fonts } from '@/lib/fonts'
 import { useOnAppActive } from '@/lib/hooks'
-import { t } from '@/lib/i18n'
+import { LOCALE_OPTIONS, type AppLocale } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { getInstallId } from '@/lib/install-id'
 import { SCREEN_PAD, tabScrollBottomPad } from '@/lib/layout'
 import { ensureForegroundLocationPermission } from '@/lib/location'
@@ -60,7 +62,7 @@ function permissionFromResponse(result: {
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
-  const copy = t()
+  const { copy, locale, setLocale } = useI18n()
   const { showError, showSuccess } = useToast()
   const versionLabel = appVersionLabel()
   const [installId, setInstallId] = useState<string | null>(null)
@@ -164,6 +166,17 @@ export default function SettingsScreen() {
           paddingHorizontal: SCREEN_PAD,
         }}
       >
+        <FieldLabel color={colors.muted}>{copy.settings.language}</FieldLabel>
+        <View style={{ marginBottom: 20 }}>
+          <SegmentedControl<AppLocale>
+            value={locale}
+            onChange={value => {
+              void setLocale(value)
+            }}
+            options={LOCALE_OPTIONS}
+          />
+        </View>
+
         <FieldLabel color={colors.muted}>
           {copy.settings.permissions}
         </FieldLabel>

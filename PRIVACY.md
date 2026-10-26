@@ -27,7 +27,7 @@ This policy describes how the app handles data on your device.
 | Capture ID (UUID)                            | On device (capture log); EXIF `ImageUniqueID` / `UserComment` JSON  | Identify which photos were taken with this app |
 | Install ID (UUID)                            | On device (local storage); Settings (tap to copy); CSV              | Correlate capture-log exports from one install |
 | Custom stamp text you type                   | On device (settings); may appear in EXIF description / comment      | Optional notes on the photo                    |
-| App settings                                 | On device (local storage)                                           | Remember stamp preferences                     |
+| App settings                                 | On device (local storage)                                           | Remember stamp preferences and UI language     |
 
 ### Capture log
 

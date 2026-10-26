@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import { CameraChromeButton } from '@/components/CameraChromeButton'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { setGeoSourceMode, useGeoSource } from '@/lib/geo-source'
-import { t } from '@/lib/i18n'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { CAMERA } from '@/lib/layout'
 import { useAppColors } from '@/lib/theme'
 import type { GeoSourceMode } from '@/lib/types'
@@ -15,7 +15,7 @@ type Props = {
 }
 
 export function AimTargetControls({ topInset }: Props) {
-  const copy = t()
+  const { copy } = useI18n()
   const colors = useAppColors()
   const { mode, sticky } = useGeoSource()
   const targetActive = mode === 'target' && sticky != null

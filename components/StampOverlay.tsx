@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 
 import { fonts } from '@/lib/fonts'
 import { useEffectiveGeoSnapshot } from '@/lib/geo-source'
+import { useI18n } from '@/lib/i18n/locale-context'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildStampContent, stampLayoutMetrics } from '@/lib/stamp'
 
@@ -70,6 +71,7 @@ type Props = {
 
 export function StampOverlay({ frameWidth }: Props) {
   const { settings } = useStampSettings()
+  const { locale } = useI18n()
   const geo = useEffectiveGeoSnapshot()
   const [now, setNow] = useState(() => new Date())
 
@@ -91,6 +93,7 @@ export function StampOverlay({ frameWidth }: Props) {
 
   return (
     <View
+      key={locale}
       pointerEvents="none"
       style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
     >
