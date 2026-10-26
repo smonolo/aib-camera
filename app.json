@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "aibcamera",
     "userInterfaceStyle": "automatic",
-    "description": "Fotocamera indipendente per volontari AIB: scatta foto con data, ora, GPS e luogo stampati sul JPEG. Funziona offline; la posizione è opzionale.",
+    "description": "Fotocamera indipendente per chiunque: scatta foto geolocalizzate di incendi boschivi (AIB) con data, ora, GPS e luogo stampati sul JPEG. Funziona offline; la posizione è opzionale. Non riservata a enti o professionisti.",
     "primaryColor": "#F5F5F5",
     "ios": {
       "supportsTablet": false,

@@ -1,14 +1,15 @@
 # AGENTS.md — AIB Camera
 
-This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** field photography, made by an independent volunteer. Prioritize mobile-first patterns, performance, cross-platform compatibility, and **emergency usability**: anyone must be able to capture and share a stamped photo with or without GPS, network, or Photos library access.
+This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** and wildfire-related field photography, made by an independent volunteer. Prioritize mobile-first patterns, performance, cross-platform compatibility, and **emergency usability**: anyone must be able to capture and share a stamped photo with or without GPS, network, or Photos library access.
 
 ## Product constraints
 
-- **Unofficial.** Never present the app as built by, endorsed by, or affiliated with Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any public institution. No official logos, seals, institutional names in defaults, bundle IDs, copy, or docs. Neutral volunteer wording only (e.g. custom-text placeholders like “Squadra Nord”).
+- **Public audience.** The app is for the **general public**, not only operators or a specific organization. Docs, privacy, terms, store copy, and the site must say so clearly (citizens reporting a fire, sharing via WhatsApp/Telegram, reading coords to 112, as well as volunteers who choose to use it). Never imply membership, affiliation, or restricted access.
+- **Unofficial.** Never present the app as built by, endorsed by, or affiliated with Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any public institution. No official logos, seals, institutional names in defaults, bundle IDs, copy, or docs. Neutral placeholder wording only (e.g. custom-text like “Squadra Nord”).
 - **Local-first.** Capture, stamp (Skia), in-app gallery, capture log, and share must work offline. Network is only for reverse geocode (optional, cached).
 - **Camera is required; location is optional.** Never block the camera behind GPS permission. Stamp unavailable fields with clear fallback copy.
 - **Shutter must stay fast.** Prefer effective HUD geo (`getEffectiveGeoSnapshot` / live or locked aimed point) over waiting on a high-accuracy fix. Bound GPS/geocode/heading with short timeouts.
-- **Aimed target (optional).** Operators can lock estimated coords from observer GPS + compass heading + entered distance (`lib/geo-math` destination + `lib/geo-source`). Sticky Me ↔ Target toggle; stamp must label aimed coords as estimated. Never block the shutter if aim lock fails.
+- **Aimed target (optional).** Users can lock estimated coords from observer GPS + compass heading + entered distance (`lib/geo-math` destination + `lib/geo-source`). Sticky Me ↔ Target toggle; stamp must label aimed coords as estimated. Never block the shutter if aim lock fails.
 - **In-app gallery is the source of truth for photos.** System album «AIB Camera» is best-effort; save must succeed even if media-library permission is denied.
 - **Gallery deletes also remove the system Photos copy** when an album asset id was stored; local JPEG cleanup is best-effort. Capture log entries always remain.
 - **Capture log is append-only.** Each shot gets a UUID written to EXIF when possible and stored in the local audit log; gallery deletes must not remove audit entries. CSV export (`lib/audit-csv.ts`) shares a local file via the system sheet — no upload. Each app install has a stable local UUID (`lib/install-id.ts`), shown in Settings (tap version or install ID to copy) and included as `install_id` on every CSV row.
@@ -82,7 +83,7 @@ Whenever you change app behavior, UX, permissions, privacy, capture/stamp/galler
 1. **In-repo markdown** (this repo): `README.md`, `PRIVACY.md`, `AGENTS.md`, and any other `*.md` that describes the changed behavior.
 2. **Marketing / public site** (sibling monorepo, if present locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guida.vue`, `privacy.vue`, `terms.vue`), `content/aib-camera/` (e.g. `guida-operativa.md`), `layouts/aib-camera.vue`, and related CSS/assets under that app. Skip the site only if that path is missing; say so briefly when skipping.
 
-Keep copy consistent across IT/EN where both exist, and preserve the **unofficial volunteer** framing (no institutional affiliation). Do not leave docs or the site describing old behavior.
+Keep copy consistent across IT/EN where both exist, preserve the **unofficial** framing (no institutional affiliation), and keep the **public audience** clear (not operators-only). Do not leave docs or the site describing old behavior.
 
 ## Rules
 

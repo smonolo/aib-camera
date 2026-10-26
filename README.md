@@ -1,8 +1,10 @@
 # AIB Camera
 
-Independent, unofficial field camera for **Antincendio Boschivo (AIB)** volunteers: capture photos with date, time, GPS, altitude, heading, and place burned into the JPEG, then save or share — offline-first, usable in an emergency without GPS or network.
+Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wildfire-related photography: capture photos with date, time, GPS, altitude, heading, and place burned into the JPEG, then save or share — offline-first, usable in an emergency without GPS or network.
 
-**Not affiliated with** Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution. Built by a volunteer for personal / volunteer use.
+**Open to anyone** — not limited to a specific organization, squad, or professional role. Citizens can use it to document a wildfire, share a stamped photo (WhatsApp, Telegram, Mail, …), or read coordinates and stamp details to emergency services (e.g. 112). Volunteers and operators may use it too; that does not make the app exclusive to them.
+
+**Not affiliated with** Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution. Built by a volunteer; available to the general public.
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · Default UI language: Italian · Timezone on stamps: `Europe/Rome`
 
@@ -92,7 +94,7 @@ Before uploading binaries (local or EAS):
 
 1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and [TERMS.md](./TERMS.md) at `extra.termsOfUseUrl`; paste the privacy URL into App Store Connect / Play Console as required.
 2. Prepare store screenshots (iPhone 6.9″ required; iPad not required — `supportsTablet: false`). Play also needs a 512×512 icon and 1024×500 feature graphic.
-3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Mention on-device EXIF and capture-log IDs if asked about identifiers.
+3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Mention on-device EXIF and capture-log IDs if asked about identifiers. If Apple asks whether the app is for a specific organization or set of people: **no** — it is for the general public (see Privacy / Terms / site).
 4. Increment `version` for user-visible releases; increment `ios.buildNumber` for every App Store binary (and `android.versionCode` when shipping Play).
 5. Run `npm run typecheck`, `npm test`, `npx expo-doctor`, and `npm run smoke-checklist` on a physical device.
 

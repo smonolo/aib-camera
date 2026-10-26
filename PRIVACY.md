@@ -1,8 +1,8 @@
 # Privacy Policy — AIB Camera
 
-**Last updated:** 23 October 2026
+**Last updated:** 26 October 2026
 
-AIB Camera is an independent, unofficial mobile app for Antincendio Boschivo (AIB) field photography. It is **not** affiliated with, endorsed by, or built by Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution.
+AIB Camera is an independent, unofficial mobile app for Antincendio Boschivo (AIB) and wildfire-related field photography. It is **open to anyone** — not limited to a specific organization, squad, or set of professionals. Anyone can download it to take stamped, geolocalized photos (for example to share with local civil protection via WhatsApp or Telegram, or to read coordinates and other stamp details to emergency services such as 112). It is **not** affiliated with, endorsed by, or built by Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution.
 
 This policy describes how the app handles data on your device.
 
@@ -26,7 +26,7 @@ This policy describes how the app handles data on your device.
 | Place label (reverse geocode)                | On device; optional network lookup; local cache; may appear in EXIF | Human-readable place on the stamp              |
 | Capture ID (UUID)                            | On device (capture log); EXIF `ImageUniqueID` / `UserComment` JSON  | Identify which photos were taken with this app |
 | Install ID (UUID)                            | On device (local storage); Settings (tap to copy); CSV              | Correlate capture-log exports from one install |
-| Custom stamp text you type                   | On device (settings); may appear in EXIF description / comment      | Squad / shift notes on the photo               |
+| Custom stamp text you type                   | On device (settings); may appear in EXIF description / comment      | Optional notes on the photo                    |
 | App settings                                 | On device (local storage)                                           | Remember stamp preferences                     |
 
 ### Capture log

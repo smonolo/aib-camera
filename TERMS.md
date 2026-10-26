@@ -1,20 +1,24 @@
 # Terms of Use — AIB Camera
 
-**Last updated:** 23 October 2026
+**Last updated:** 26 October 2026
 
 These terms govern use of the **AIB Camera** mobile app. By downloading, installing, or using the app, you agree to these terms. If you do not agree, do not use the app.
 
 AIB Camera is an **independent, unofficial** project by a volunteer. It is **not** affiliated with, endorsed by, or built by Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution. Do not use institutional logos, seals, or names in a way that suggests official endorsement.
 
+## Who can use it
+
+**Anyone.** The app is not restricted to a specific organization, squad, or professional role (civil protection, firefighters, or others). It is available to the general public. Typical uses include documenting a wildfire or similar situation, sharing a stamped photo via the system share sheet (WhatsApp, Telegram, Mail, …), or reading coordinates and other stamp details to emergency services (e.g. 112). Volunteers and organizations may also use it if they choose — that does not make the app exclusive to them.
+
 ## What the app is for
 
-AIB Camera helps you take field photos with date/time, location (when available), and optional custom text burned into the JPEG, plus a local capture log. It is a **support tool** for personal or squad documentation — **not** a replacement for official procedures, forms, command systems, or institutional archives.
+AIB Camera helps you take field photos with date/time, location (when available), and optional custom text burned into the JPEG, plus a local capture log. It is a **support tool** for personal documentation and sharing — **not** a replacement for official procedures, forms, command systems, or institutional archives.
 
 ## Acceptable use
 
-- Use the app for field photography and operational notes in an AIB or similar context, in line with applicable law and your organization’s rules.
+- Use the app for field photography related to wildfires (AIB) or similar situations, in line with applicable law.
 - Do not present the app, photos, or metadata as official or institutionally certified documentation.
-- Do not use the app for illegal activity, harassment, or to deceptively alter coordinates, times, or operational context.
+- Do not use the app for illegal activity, harassment, or to deceptively alter coordinates, times, or context on the photo.
 - You are responsible for what you capture, share, or export (photos, EXIF, capture-log CSV), including destination and recipients.
 
 ## Location and aimed point
