@@ -44,7 +44,7 @@
     },
     "android": {
       "package": "dev.smnl.aibcamera",
-      "versionCode": 2,
+      "versionCode": 1,
       "userInterfaceStyle": "automatic",
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
