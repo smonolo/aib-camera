@@ -51,6 +51,15 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_MEDIA_AUDIO"
+      ],
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "plugins": [
@@ -118,7 +127,19 @@
     "extra": {
       "privacyPolicyUrl": "https://smnl.dev/aib-camera/privacy",
       "termsOfUseUrl": "https://smnl.dev/aib-camera/terms",
-      "userGuideUrl": "https://smnl.dev/aib-camera/guida"
-    }
+      "userGuideUrl": "https://smnl.dev/aib-camera/guida",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "expo-navigation-bar": {
+        "enforceContrast": false
+      },
+      "eas": {
+        "projectId": "1f4f7de2-f8af-4cb7-b705-5af738d4c11a"
+      }
+    },
+    "owner": "smnl"
   }
 }

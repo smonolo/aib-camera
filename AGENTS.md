@@ -70,11 +70,19 @@ Run typecheck and unit tests (and lint when configured) before declaring any tas
 | Permissions gate                          | `components/PermissionGate.tsx` (camera hard; location soft)                                                                                              |
 | App icon / splash                         | `assets/images/` (`icon.png`, adaptive layers, `splash-icon-light.png` / `splash-icon-dark.png`); brand red `#AF2525`, splash bg `#111111`                |
 
-## Building with EAS
+## Building with EAS (local-first, Free plan)
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `npx eas-cli@latest <command>` (or `bunx eas-cli` if using Bun); substitute that for bare `eas` in docs examples.
+Prefer **EAS CLI** for credentials + submit, but **do not use cloud builds** (those consume Free-plan quotas: 15 Android / 15 iOS per month). Run EAS CLI as `npx eas-cli@latest <command>` (or `bunx eas-cli` if using Bun).
 
-Docs: https://docs.expo.dev/eas/index.md
+| Use                                         | Command                                                  | Counts against Free build quota? |
+| ------------------------------------------- | -------------------------------------------------------- | -------------------------------- |
+| Local store binary                          | `eas build -p android\|ios --profile production --local` | No                               |
+| Upload to Play / App Store Connect          | `eas submit -p android\|ios --profile production`        | No                               |
+| Manage keystores / certs                    | `eas credentials`                                        | No                               |
+| Cloud build (`eas build` without `--local`) | avoid                                                    | **Yes**                          |
+| EAS Update                                  | optional; Free includes 1K MAUs                          | MAU limit, not build credit      |
+
+Config: `eas.json`. Versions stay local (`cli.appVersionSource: "local"` → bump `app.json` yourself). Android closed testing submit track is `alpha` with `releaseStatus: draft`. Docs: https://docs.expo.dev/eas/index.md · local builds: https://docs.expo.dev/build-reference/local-builds/
 
 ## Docs & site sync (required on every product change)
 

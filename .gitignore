@@ -47,3 +47,7 @@ coverage/
 /android
 
 *-env.d.ts
+
+*.aab
+*.ipa
+projects-506923-99913f21d0f4.json

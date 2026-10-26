@@ -90,7 +90,27 @@ Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 58). Non-criti
 
 ## Store release notes
 
-Before uploading binaries (local or EAS):
+### Local EAS workflow (no cloud builds)
+
+Use EAS CLI for credentials and store upload; build on your machine so Free-plan build quotas are unused.
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest init                    # once: link Expo project / projectId
+npx eas-cli@latest credentials             # once: Android keystore + iOS certs (stored on Expo, free)
+npx eas-cli@latest build -p android --profile production --local
+npx eas-cli@latest submit -p android --profile production
+# iOS (needs Mac + Xcode + Apple Developer):
+npx eas-cli@latest build -p ios --profile production --local
+npx eas-cli@latest submit -p ios --profile production
+```
+
+- **Always pass `--local`** on `eas build`. Omitting it starts a **cloud** build and uses Free quota (15 Android / 15 iOS per month).
+- `eas submit` and `eas credentials` do not consume build credit. Play closed testing: submit profile uses track `alpha`, `releaseStatus: draft` (finish rollout in Play Console).
+- You still need Android SDK (and Xcode for iOS) installed locally.
+- Optional fallback without EAS Build: `android/keystore.properties` + `./gradlew bundleRelease` (see `android/app/build.gradle`).
+
+Before uploading binaries:
 
 1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and [TERMS.md](./TERMS.md) at `extra.termsOfUseUrl`; paste the privacy URL into App Store Connect / Play Console as required.
 2. Prepare store screenshots (iPhone 6.9″ required; iPad not required — `supportsTablet: false`). Play also needs a 512×512 icon and 1024×500 feature graphic.
