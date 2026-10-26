@@ -23,7 +23,7 @@ export function termsOfUseUrl(): string {
 }
 
 export function userGuideUrl(): string {
-  return extra().userGuideUrl ?? 'https://smnl.dev/aib-camera/guida'
+  return extra().userGuideUrl ?? 'https://smnl.dev/aib-camera/guide'
 }
 
 export function appVersionLabel(): string {
