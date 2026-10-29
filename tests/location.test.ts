@@ -9,6 +9,9 @@ import {
   headingFromLocationHeading,
   normalizeHeadingDegrees,
   resetGeocodeMemory,
+  reverseGeocodeCoords,
+  smoothHeadingDegrees,
+  updateSmoothedHeading,
   withTimeout,
 } from '@/lib/location'
 
@@ -32,7 +35,7 @@ const mockedLocation = Location as jest.Mocked<typeof Location>
 
 beforeEach(() => {
   resetGeocodeMemory()
-  jest.clearAllMocks()
+  jest.resetAllMocks()
 })
 
 describe('emptyGeoSnapshot', () => {
@@ -88,11 +91,99 @@ describe('headingFromLocationHeading', () => {
       })
     ).toBeNull()
   })
+
+  it('rejects unreliable compass calibration', () => {
+    expect(
+      headingFromLocationHeading({
+        trueHeading: 40,
+        magHeading: 40,
+        accuracy: 0,
+      })
+    ).toBeNull()
+  })
+})
+
+describe('smoothHeadingDegrees', () => {
+  it('returns the first sample normalized', () => {
+    expect(smoothHeadingDegrees(10.4, null)).toBe(10)
+  })
+
+  it('blends across the 0/360 wrap', () => {
+    expect(smoothHeadingDegrees(10, 350, 0.5)).toBe(0)
+  })
+})
+
+describe('updateSmoothedHeading', () => {
+  it('keeps the last good heading when a sample is unreliable', () => {
+    expect(
+      updateSmoothedHeading({
+        trueHeading: 90,
+        magHeading: 90,
+        accuracy: 2,
+      })
+    ).toBe(90)
+    expect(
+      updateSmoothedHeading({
+        trueHeading: 200,
+        magHeading: 200,
+        accuracy: 0,
+      })
+    ).toBe(90)
+  })
 })
 
 describe('geocodeCellKey', () => {
   it('buckets coordinates to 3 decimals', () => {
     expect(geocodeCellKey(45.464211, 9.190011)).toBe('45.464,9.190')
+  })
+})
+
+describe('reverseGeocodeCoords sticky place', () => {
+  function geocodeResult(city: string) {
+    return [
+      {
+        name: null,
+        street: null,
+        streetNumber: null,
+        city,
+        district: null,
+        subregion: null,
+        region: 'Lombardia',
+        country: 'Italy',
+        postalCode: null,
+        isoCountryCode: 'IT',
+        timezone: 'Europe/Rome',
+        formattedAddress: null,
+      },
+    ] as never
+  }
+
+  it('keeps the first place until the phone moves hundreds of meters', async () => {
+    mockedLocation.reverseGeocodeAsync
+      .mockResolvedValueOnce(geocodeResult('Pieve Fissiraga'))
+      .mockResolvedValueOnce(geocodeResult('Melegnano'))
+
+    await expect(reverseGeocodeCoords(45.35, 9.28)).resolves.toBe(
+      'Pieve Fissiraga · Lombardia'
+    )
+    await expect(reverseGeocodeCoords(45.35, 9.2828)).resolves.toBe(
+      'Pieve Fissiraga · Lombardia'
+    )
+    expect(mockedLocation.reverseGeocodeAsync).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes the place after a long move', async () => {
+    mockedLocation.reverseGeocodeAsync
+      .mockResolvedValueOnce(geocodeResult('Pieve Fissiraga'))
+      .mockResolvedValueOnce(geocodeResult('Lodi'))
+
+    await expect(reverseGeocodeCoords(45.35, 9.28)).resolves.toBe(
+      'Pieve Fissiraga · Lombardia'
+    )
+    await expect(reverseGeocodeCoords(45.35, 9.294)).resolves.toBe(
+      'Lodi · Lombardia'
+    )
+    expect(mockedLocation.reverseGeocodeAsync).toHaveBeenCalledTimes(2)
   })
 })
 

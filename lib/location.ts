@@ -1,21 +1,66 @@
 import * as Location from 'expo-location'
 
+import { haversineMeters } from './geo-math'
 import { softTry } from './soft'
 import { findNearestGeocodeCache, upsertGeocodeCacheEntry } from './storage'
 import type { GeoSnapshot } from './types'
 
 const GEOCODE_CELL_DECIMALS = 3
 const GEOCODE_CACHE_RADIUS_M = 2500
+const GEOCODE_REFRESH_MIN_M = 600
 const GEOCODE_TIMEOUT_MS = 2000
 const CAPTURE_POSITION_TIMEOUT_MS = 2000
 const HEADING_TIMEOUT_MS = 800
+const MIN_HEADING_ACCURACY = 1
+const HEADING_SMOOTH_ALPHA = 0.28
 
 let lastGeocodeKey = ''
 let lastGeocodeAddress: string | null = null
+let lastGeocodeLat: number | null = null
+let lastGeocodeLon: number | null = null
+let smoothedHeading: number | null = null
 
 export function resetGeocodeMemory(): void {
   lastGeocodeKey = ''
   lastGeocodeAddress = null
+  lastGeocodeLat = null
+  lastGeocodeLon = null
+  smoothedHeading = null
+}
+
+function rememberGeocode(
+  key: string,
+  address: string | null,
+  latitude: number,
+  longitude: number
+): void {
+  lastGeocodeKey = key
+  lastGeocodeAddress = address
+  lastGeocodeLat = latitude
+  lastGeocodeLon = longitude
+}
+
+function stickyGeocodeAddress(
+  latitude: number,
+  longitude: number
+): string | null | undefined {
+  if (
+    lastGeocodeLat == null ||
+    lastGeocodeLon == null ||
+    lastGeocodeAddress == null
+  ) {
+    return undefined
+  }
+  const moved = haversineMeters(
+    latitude,
+    longitude,
+    lastGeocodeLat,
+    lastGeocodeLon
+  )
+  if (moved < GEOCODE_REFRESH_MIN_M) {
+    return lastGeocodeAddress
+  }
+  return undefined
 }
 
 export function emptyGeoSnapshot(
@@ -108,6 +153,12 @@ export function formatGeocodeAddress(
 export function headingFromLocationHeading(
   heading: Location.LocationHeadingObject
 ): number | null {
+  if (
+    typeof heading.accuracy === 'number' &&
+    heading.accuracy < MIN_HEADING_ACCURACY
+  ) {
+    return null
+  }
   if (heading.trueHeading >= 0) {
     return normalizeHeadingDegrees(heading.trueHeading)
   }
@@ -121,6 +172,31 @@ export function normalizeHeadingDegrees(value: number): number {
   const wrapped = ((value % 360) + 360) % 360
   return Math.round(wrapped)
 }
+
+export function smoothHeadingDegrees(
+  next: number,
+  previous: number | null,
+  alpha = HEADING_SMOOTH_ALPHA
+): number {
+  const target = ((next % 360) + 360) % 360
+  if (previous == null || !Number.isFinite(previous)) {
+    return normalizeHeadingDegrees(target)
+  }
+  const delta = ((target - previous + 540) % 360) - 180
+  return normalizeHeadingDegrees(previous + alpha * delta)
+}
+
+export function updateSmoothedHeading(
+  heading: Location.LocationHeadingObject
+): number | null {
+  const sample = headingFromLocationHeading(heading)
+  if (sample == null) {
+    return smoothedHeading
+  }
+  smoothedHeading = smoothHeadingDegrees(sample, smoothedHeading)
+  return smoothedHeading
+}
+
 export async function reverseGeocodeCoords(
   latitude: number,
   longitude: number
@@ -137,6 +213,12 @@ async function reverseGeocodeSafe(
     return lastGeocodeAddress
   }
 
+  const sticky = stickyGeocodeAddress(latitude, longitude)
+  if (sticky !== undefined) {
+    lastGeocodeKey = key
+    return sticky
+  }
+
   try {
     const results = await withTimeout(
       Location.reverseGeocodeAsync({ latitude, longitude }),
@@ -146,8 +228,7 @@ async function reverseGeocodeSafe(
     const first = results[0]
     const formatted = first ? formatGeocodeAddress(first) : null
     if (formatted) {
-      lastGeocodeKey = key
-      lastGeocodeAddress = formatted
+      rememberGeocode(key, formatted, latitude, longitude)
       void upsertGeocodeCacheEntry({
         key,
         address: formatted,
@@ -165,14 +246,12 @@ async function reverseGeocodeSafe(
       GEOCODE_CACHE_RADIUS_M
     )
     if (cached) {
-      lastGeocodeKey = key
-      lastGeocodeAddress = cached.address
+      rememberGeocode(key, cached.address, latitude, longitude)
       return cached.address
     }
   } catch {}
 
-  lastGeocodeKey = key
-  lastGeocodeAddress = null
+  rememberGeocode(key, null, latitude, longitude)
   return null
 }
 
@@ -291,7 +370,7 @@ export async function watchHeading(
 
   try {
     return await Location.watchHeadingAsync(heading => {
-      onUpdate(headingFromLocationHeading(heading))
+      onUpdate(updateSmoothedHeading(heading))
     })
   } catch {
     return null

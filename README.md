@@ -66,7 +66,8 @@ npm run smoke-checklist   # prints the device QA checklist
 - **Camera** is the only hard permission. Location improves the stamp but is never required to shoot.
 - Shutter uses live HUD geo (or a locked aimed point) when available so capture does not wait on a slow GPS fix.
 - Aimed-point mode needs GPS + compass; without them Lock soft-fails and the shutter still uses Me / unavailable copy. Aimed coords are a flat-ground estimate along heading — not a GNSS fix on the fire.
-- Reverse geocode is time-bounded; on failure the app uses the nearest cached place (~2.5 km).
+- Reverse geocode is time-bounded; the place label stays sticky until you move ~600 m (avoids flipping between neighboring towns on a highway); on failure the app uses the nearest cached place (~2.5 km). Same behavior on iOS and Android.
+- Live compass heading is accuracy-gated and lightly smoothed (iOS and Android) so portrait magnetometer jitter does not thrash the HUD/stamp degrees.
 - Save always persists to the in-app gallery; the system Photos album is best-effort.
 - Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.
 - EXIF write is best-effort (skipped if the native module is missing); stamp, gallery, and capture log still succeed.
