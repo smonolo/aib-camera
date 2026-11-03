@@ -19,6 +19,7 @@ let lastGeocodeAddress: string | null = null
 let lastGeocodeLat: number | null = null
 let lastGeocodeLon: number | null = null
 let smoothedHeading: number | null = null
+let headingOrientationOffset = 0
 
 export function resetGeocodeMemory(): void {
   lastGeocodeKey = ''
@@ -26,6 +27,7 @@ export function resetGeocodeMemory(): void {
   lastGeocodeLat = null
   lastGeocodeLon = null
   smoothedHeading = null
+  headingOrientationOffset = 0
 }
 
 function rememberGeocode(
@@ -173,6 +175,66 @@ export function normalizeHeadingDegrees(value: number): number {
   return Math.round(wrapped)
 }
 
+export type HeadingScreenOrientation =
+  | 'portrait'
+  | 'portrait-down'
+  | 'landscape-left'
+  | 'landscape-right'
+  | 'unknown'
+
+export const HEADING_SCREEN_ORIENTATION = {
+  UNKNOWN: 0,
+  PORTRAIT_UP: 1,
+  PORTRAIT_DOWN: 2,
+  LANDSCAPE_LEFT: 3,
+  LANDSCAPE_RIGHT: 4,
+} as const
+
+export function headingOrientationOffsetDegrees(
+  orientation: HeadingScreenOrientation
+): number {
+  switch (orientation) {
+    case 'landscape-left':
+      return -90
+    case 'landscape-right':
+      return 90
+    case 'portrait-down':
+      return 180
+    case 'portrait':
+    case 'unknown':
+    default:
+      return 0
+  }
+}
+
+export function headingOffsetForScreenOrientation(orientation: number): number {
+  switch (orientation) {
+    case HEADING_SCREEN_ORIENTATION.LANDSCAPE_LEFT:
+      return headingOrientationOffsetDegrees('landscape-left')
+    case HEADING_SCREEN_ORIENTATION.LANDSCAPE_RIGHT:
+      return headingOrientationOffsetDegrees('landscape-right')
+    case HEADING_SCREEN_ORIENTATION.PORTRAIT_DOWN:
+      return headingOrientationOffsetDegrees('portrait-down')
+    case HEADING_SCREEN_ORIENTATION.PORTRAIT_UP:
+      return headingOrientationOffsetDegrees('portrait')
+    default:
+      return headingOrientationOffsetDegrees('unknown')
+  }
+}
+
+export function setHeadingOrientationOffset(offset: number): void {
+  if (headingOrientationOffset === offset) return
+  headingOrientationOffset = offset
+  smoothedHeading = null
+}
+
+export function orientHeadingDegrees(
+  heading: number,
+  offset = headingOrientationOffset
+): number {
+  return normalizeHeadingDegrees(heading + offset)
+}
+
 export function smoothHeadingDegrees(
   next: number,
   previous: number | null,
@@ -193,7 +255,8 @@ export function updateSmoothedHeading(
   if (sample == null) {
     return smoothedHeading
   }
-  smoothedHeading = smoothHeadingDegrees(sample, smoothedHeading)
+  const oriented = orientHeadingDegrees(sample)
+  smoothedHeading = smoothHeadingDegrees(oriented, smoothedHeading)
   return smoothedHeading
 }
 
@@ -302,7 +365,8 @@ export async function captureGeoSnapshot(
           HEADING_TIMEOUT_MS,
           'heading-timeout'
         )
-        heading = headingFromLocationHeading(headingSample)
+        const sample = headingFromLocationHeading(headingSample)
+        heading = sample == null ? null : orientHeadingDegrees(sample)
       } catch {
         heading = null
       }

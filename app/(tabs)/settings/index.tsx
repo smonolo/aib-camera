@@ -8,7 +8,7 @@ import {
 } from 'expo-media-library'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -33,7 +33,12 @@ import { useOnAppActive } from '@/lib/hooks'
 import { LOCALE_OPTIONS, type AppLocale } from '@/lib/i18n'
 import { useI18n } from '@/lib/i18n/locale-context'
 import { getInstallId } from '@/lib/install-id'
-import { SCREEN_PAD, tabScrollBottomPad } from '@/lib/layout'
+import {
+  SCREEN_HEADER_TOP_GAP,
+  SCREEN_PAD,
+  screenEdgePad,
+  tabScrollBottomPad,
+} from '@/lib/layout'
 import { ensureForegroundLocationPermission } from '@/lib/location'
 import { PHOTO_GRANULAR } from '@/lib/media'
 import { softVoid } from '@/lib/soft'
@@ -61,9 +66,13 @@ function permissionFromResponse(result: {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
+  const { width, height } = useWindowDimensions()
+  const landscape = width > height
   const colors = useAppColors()
   const { copy, locale, setLocale } = useI18n()
   const { showError, showSuccess } = useToast()
+  const padLeft = screenEdgePad(insets.left, SCREEN_PAD)
+  const padRight = screenEdgePad(insets.right, SCREEN_PAD)
   const versionLabel = appVersionLabel()
   const [installId, setInstallId] = useState<string | null>(null)
   const [cameraPermission, setCameraPermission] =
@@ -144,9 +153,15 @@ export default function SettingsScreen() {
   return (
     <View
       className="flex-1 bg-canvas dark:bg-canvas-inverse"
-      style={{ paddingTop: insets.top + 8 }}
+      style={{ paddingTop: insets.top + SCREEN_HEADER_TOP_GAP }}
     >
-      <View style={{ paddingHorizontal: SCREEN_PAD, paddingBottom: 16 }}>
+      <View
+        style={{
+          paddingLeft: padLeft,
+          paddingRight: padRight,
+          paddingBottom: 16,
+        }}
+      >
         <Text
           style={{
             fontFamily: fonts.bold,
@@ -162,8 +177,9 @@ export default function SettingsScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: tabScrollBottomPad(insets.bottom),
-          paddingHorizontal: SCREEN_PAD,
+          paddingBottom: tabScrollBottomPad(insets.bottom, { landscape }),
+          paddingLeft: padLeft,
+          paddingRight: padRight,
         }}
       >
         <FieldLabel color={colors.muted}>{copy.settings.language}</FieldLabel>

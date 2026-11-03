@@ -316,6 +316,10 @@ export function stampFontPx(settings: StampSettings): number {
   return FONT_SIZE_PX[settings.fontSize]
 }
 
+export function stampReferenceSize(width: number, height: number): number {
+  return Math.max(1, Math.min(width, height))
+}
+
 export function stampLayoutMetrics(
   referenceWidth: number,
   settings: StampSettings,

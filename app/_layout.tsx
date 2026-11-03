@@ -22,6 +22,7 @@ import { fonts, setCustomFontsReady } from '@/lib/fonts'
 import { hydrateGeoSource } from '@/lib/geo-source'
 import { LocaleProvider } from '@/lib/i18n/locale-context'
 import { warn } from '@/lib/soft'
+import { useHeadingOrientationSync } from '@/lib/use-heading-orientation'
 import { SettingsProvider } from '@/lib/settings-context'
 import {
   navigationTheme,
@@ -69,6 +70,7 @@ export default function RootLayout() {
     Geist_600SemiBold,
     Geist_700Bold,
   })
+  useHeadingOrientationSync()
 
   const uiReady = fontsReady || fontError != null
 

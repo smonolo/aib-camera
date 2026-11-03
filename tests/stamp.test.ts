@@ -9,6 +9,7 @@ import {
   stampChromePad,
   stampFontPx,
   stampLayoutMetrics,
+  stampReferenceSize,
   wrapTextToWidth,
 } from '@/lib/stamp'
 import { DEFAULT_STAMP_SETTINGS, type GeoSnapshot } from '@/lib/types'
@@ -224,6 +225,36 @@ describe('stampLayoutMetrics', () => {
       minScale: 1,
     })
     expect(metrics.scale).toBe(1)
+  })
+
+  it('uses the short side so landscape matches the live overlay', () => {
+    expect(stampReferenceSize(4032, 3024)).toBe(3024)
+    expect(stampReferenceSize(3024, 4032)).toBe(3024)
+    expect(stampReferenceSize(1080, 1080)).toBe(1080)
+    expect(stampReferenceSize(0, 800)).toBe(1)
+    expect(stampReferenceSize(-10, 50)).toBe(1)
+
+    const landscape = stampLayoutMetrics(
+      stampReferenceSize(4032, 3024),
+      DEFAULT_STAMP_SETTINGS,
+      { minScale: 1 }
+    )
+    const fromWidth = stampLayoutMetrics(4032, DEFAULT_STAMP_SETTINGS, {
+      minScale: 1,
+    })
+    expect(landscape.fontSize).toBeLessThan(fromWidth.fontSize)
+    expect(landscape.edgePad).toBeLessThan(fromWidth.edgePad)
+
+    const preview = stampLayoutMetrics(
+      stampReferenceSize(640, 480),
+      DEFAULT_STAMP_SETTINGS
+    )
+    const burnIn = stampLayoutMetrics(
+      stampReferenceSize(4032, 3024),
+      DEFAULT_STAMP_SETTINGS,
+      { minScale: 1 }
+    )
+    expect(burnIn.scale / preview.scale).toBeCloseTo(3024 / 480, 5)
   })
 })
 

@@ -12,7 +12,12 @@ import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
 import { useHapticBack } from '@/lib/hooks'
 import { useI18n } from '@/lib/i18n/locale-context'
-import { SCREEN_PAD_NARROW } from '@/lib/layout'
+import {
+  PHOTO_SHARE_MAX_WIDTH,
+  SCREEN_HEADER_TOP_GAP,
+  SCREEN_PAD,
+  screenEdgePad,
+} from '@/lib/layout'
 import { deleteCaptures, sharePhotos } from '@/lib/media'
 import { getCapture } from '@/lib/storage'
 import { useAppColors } from '@/lib/theme'
@@ -28,6 +33,8 @@ export default function PhotoDetailScreen() {
   const [photo, setPhoto] = useState<CaptureRecord | null | undefined>(
     undefined
   )
+  const padLeft = screenEdgePad(insets.left, SCREEN_PAD)
+  const padRight = screenEdgePad(insets.right, SCREEN_PAD)
 
   useFocusEffect(
     useCallback(() => {
@@ -106,11 +113,12 @@ export default function PhotoDetailScreen() {
   return (
     <View
       className="flex-1 bg-canvas dark:bg-canvas-inverse"
-      style={{ paddingTop: insets.top + 8 }}
+      style={{ paddingTop: insets.top + SCREEN_HEADER_TOP_GAP }}
     >
       <View
         style={{
-          paddingHorizontal: SCREEN_PAD_NARROW,
+          paddingLeft: padLeft,
+          paddingRight: padRight,
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -132,7 +140,8 @@ export default function PhotoDetailScreen() {
       <View
         style={{
           flex: 1,
-          paddingHorizontal: SCREEN_PAD_NARROW,
+          paddingLeft: padLeft,
+          paddingRight: padRight,
           marginBottom: 12,
         }}
       >
@@ -145,14 +154,17 @@ export default function PhotoDetailScreen() {
 
       <View
         style={{
-          paddingHorizontal: SCREEN_PAD_NARROW,
+          paddingLeft: padLeft,
+          paddingRight: padRight,
           paddingBottom: insets.bottom + 16,
+          alignItems: 'center',
         }}
       >
         <Button
           label={copy.photos.share}
           name="share"
           onPress={() => void onShare()}
+          style={{ width: '100%', maxWidth: PHOTO_SHARE_MAX_WIDTH }}
         />
       </View>
     </View>

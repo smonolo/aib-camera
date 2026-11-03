@@ -6,7 +6,7 @@ import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import { IconButton } from '@/components/IconButton'
 import { Toggle } from '@/components/Toggle'
 import { fonts } from '@/lib/fonts'
-import { SCREEN_PAD_NARROW } from '@/lib/layout'
+import { SCREEN_HEADER_TOP_GAP, SCREEN_PAD_NARROW } from '@/lib/layout'
 import { radii, useAppColors } from '@/lib/theme'
 
 export function SettingsSubscreenShell({
@@ -28,7 +28,7 @@ export function SettingsSubscreenShell({
   return (
     <View
       className="flex-1 bg-canvas dark:bg-canvas-inverse"
-      style={{ paddingTop: insets.top + 8 }}
+      style={{ paddingTop: insets.top + SCREEN_HEADER_TOP_GAP }}
     >
       <View
         style={{

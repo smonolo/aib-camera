@@ -13,7 +13,11 @@ import { Image } from 'react-native'
 import { STAMP_FONT_ASSET } from './fonts'
 import { t } from './i18n'
 import { capturesDirectory } from './persist-photo'
-import { stampLayoutMetrics, wrapTextToWidth } from './stamp'
+import {
+  stampLayoutMetrics,
+  stampReferenceSize,
+  wrapTextToWidth,
+} from './stamp'
 import type { StampSettings } from './types'
 
 type StampBurnInContent = {
@@ -135,10 +139,11 @@ export async function compositeStampOntoPhoto(
 
   const width = image.width()
   const height = image.height()
+  const reference = stampReferenceSize(width, height)
   const { scale, fontSize, lineGap, edgePad, boxPadX, boxPadY, bgAlpha } =
-    stampLayoutMetrics(width, settings, { minScale: 1 })
+    stampLayoutMetrics(reference, settings, { minScale: 1 })
   const font = await resolveFont(fontSize)
-  const blockWidth = width - edgePad * 2
+  const blockWidth = Math.max(1, reference - edgePad * 2)
 
   const surface = Skia.Surface.MakeOffscreen(width, height)
   if (!surface) {

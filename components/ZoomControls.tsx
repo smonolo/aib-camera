@@ -12,9 +12,10 @@ type Props = {
   liveFactor: number
   onSelect: (option: ZoomOption) => void
   accessibilityPrefix: string
+  direction?: 'row' | 'column'
 }
 
-const CHIP = 30
+const CHIP = 36
 
 export function ZoomControls({
   options,
@@ -22,6 +23,7 @@ export function ZoomControls({
   liveFactor,
   onSelect,
   accessibilityPrefix,
+  direction = 'row',
 }: Props) {
   const colors = useAppColors()
   const { locale } = useI18n()
@@ -32,7 +34,7 @@ export function ZoomControls({
   return (
     <View
       style={{
-        flexDirection: 'row',
+        flexDirection: direction,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 1,
@@ -61,9 +63,8 @@ export function ZoomControls({
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             style={{
-              minWidth: CHIP,
+              width: CHIP,
               height: CHIP,
-              paddingHorizontal: label.length > 2 ? 7 : 0,
               borderRadius: radii.full,
               alignItems: 'center',
               justifyContent: 'center',
@@ -77,6 +78,7 @@ export function ZoomControls({
                 letterSpacing: -0.2,
                 color: active ? '#171717' : colors.fg,
               }}
+              numberOfLines={1}
             >
               {label}
             </Text>

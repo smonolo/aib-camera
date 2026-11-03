@@ -2,8 +2,8 @@
   "expo": {
     "name": "AIB Camera",
     "slug": "aib-camera",
-    "version": "1.0.2",
-    "orientation": "portrait",
+    "version": "1.1.0",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "aibcamera",
     "userInterfaceStyle": "automatic",
@@ -105,6 +105,7 @@
           "locationWhenInUsePermission": "AIB Camera usa la tua posizione GPS per stampare coordinate, altitudine, direzione e luogo sulla foto."
         }
       ],
+      "expo-screen-orientation",
       [
         "expo-media-library",
         {

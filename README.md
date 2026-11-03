@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.0.2` · iOS `buildNumber`: `13` · Android `versionCode`: `4` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.1.0` · iOS `buildNumber`: `14` · Android `versionCode`: `5` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -16,7 +16,7 @@ Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`
 
 ## Features
 
-- Letterboxed camera preview with black chrome; flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center; live stamp overlay (same fields, font size, and opacity as the burned-in stamp)
+- Letterboxed camera preview with black chrome (portrait and landscape). Portrait: flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center. Landscape: secondary chrome on the left rail, shutter/thumb/zoom on the right. Live stamp overlay matches the burned-in stamp.
 - **Aimed target:** open via the **Aim** chrome button or by pressing and holding the viewfinder (~0.5 s); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets or meters), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) without losing the sticky point; stamp labels aimed coords as estimated
 - **Stamp configuration:** camera tune control opens a full-height full-width bottom sheet (same chrome as Aim; dismiss with ✕ or tap outside)
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
@@ -25,7 +25,7 @@ Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`
 - Settings toggles for datetime, coordinates, place, accuracy, altitude, heading
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
-- In-app gallery (source of truth) + optional Photos album «AIB Camera»
+- In-app gallery (source of truth, 5-column day grid) + optional Photos album «AIB Camera»
 - Recent-shot thumbnail beside the shutter (opens photo detail)
 - Deleting from the app also removes the copy in Photos when available; capture log stays
 - System share sheet (WhatsApp, Mail, …)
@@ -67,14 +67,14 @@ npm run smoke-checklist   # prints the device QA checklist
 - Shutter uses live HUD geo (or a locked aimed point) when available so capture does not wait on a slow GPS fix.
 - Aimed-point mode needs GPS + compass; without them Lock soft-fails and the shutter still uses Me / unavailable copy. Aimed coords are a flat-ground estimate along heading — not a GNSS fix on the fire.
 - Reverse geocode is time-bounded; the place label stays sticky until you move ~600 m (avoids flipping between neighboring towns on a highway); on failure the app uses the nearest cached place (~2.5 km). Same behavior on iOS and Android.
-- Live compass heading is accuracy-gated and lightly smoothed (iOS and Android) so portrait magnetometer jitter does not thrash the HUD/stamp degrees.
+- Live compass heading is accuracy-gated and lightly smoothed (iOS and Android) so portrait magnetometer jitter does not thrash the HUD/stamp degrees. Screen-orientation compensation keeps the stamped direction aligned with the camera when rotating into landscape.
 - Save always persists to the in-app gallery; the system Photos album is best-effort.
 - Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.
 - EXIF write is best-effort (skipped if the native module is missing); stamp, gallery, and capture log still succeed.
 - The capture log is append-only locally and is not cleared when photos are deleted from the gallery; CSV export is offline via the system share sheet and includes the install ID.
 - Settings: choose **Language** (Italiano / English; default Italian); tap **Version** or **Install ID** to copy the value; stamp configuration is only from the camera tune control (full-height `AppSheet`, not the Settings tab).
 - Screen stays awake on the camera tab.
-- Camera preview sits in black chrome between top chrome and shutter (grows to fill leftover height); zoom chips show live magnification above 2× like the system Camera.
+- Camera preview sits in black chrome (portrait: between top chrome and shutter, grows to fill leftover height; landscape: between side rails, fills leftover height). Live and burned-in stamps scale from the short frame side so they match. Zoom chips show live magnification above 2× like the system Camera. Rotation uses `orientation: default` (rebuild native binary after changing it). Floating tab bar respects the full Android system nav inset; iOS may sit slightly into the home-indicator area.
 
 ## Device compatibility & fallbacks
 

@@ -21,7 +21,16 @@ import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
 import type { AppLocale, TranslationKeys } from '@/lib/i18n'
 import { useI18n } from '@/lib/i18n/locale-context'
-import { SCREEN_PAD_NARROW, tabScrollBottomPad } from '@/lib/layout'
+import {
+  GALLERY_COLUMNS,
+  GALLERY_HEADER_HEIGHT,
+  GALLERY_HEADER_SIDE,
+  SCREEN_HEADER_TOP_GAP,
+  SCREEN_PAD,
+  SCREEN_PAD_NARROW,
+  screenEdgePad,
+  tabScrollBottomPad,
+} from '@/lib/layout'
 import { deleteCaptures, sharePhotos } from '@/lib/media'
 import { formatGalleryDayLabel, galleryDayKey } from '@/lib/stamp'
 import { loadCaptures } from '@/lib/storage'
@@ -29,7 +38,6 @@ import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
 const GAP = 2
-const COLUMNS = 3
 
 type PhotoRow = {
   key: string
@@ -44,7 +52,8 @@ type PhotoSection = {
 
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets()
-  const { width: windowWidth } = useWindowDimensions()
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  const landscape = windowWidth > windowHeight
   const colors = useAppColors()
   const { copy, locale } = useI18n()
   const { showError, showSuccess } = useToast()
@@ -53,8 +62,12 @@ export default function PhotosScreen() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [busy, setBusy] = useState<'share' | 'delete' | null>(null)
 
+  const edgeBase = landscape ? SCREEN_PAD : SCREEN_PAD_NARROW
+  const padLeft = screenEdgePad(insets.left, edgeBase)
+  const padRight = screenEdgePad(insets.right, edgeBase)
   const tileSize =
-    (windowWidth - SCREEN_PAD_NARROW * 2 - GAP * (COLUMNS - 1)) / COLUMNS
+    (windowWidth - padLeft - padRight - GAP * (GALLERY_COLUMNS - 1)) /
+    GALLERY_COLUMNS
 
   const refresh = useCallback(async () => {
     setCaptures(await loadCaptures())
@@ -205,7 +218,8 @@ export default function PhotosScreen() {
         style={{
           flexDirection: 'row',
           gap: GAP,
-          paddingHorizontal: SCREEN_PAD_NARROW,
+          paddingLeft: padLeft,
+          paddingRight: padRight,
           marginBottom: GAP,
         }}
       >
@@ -234,14 +248,24 @@ export default function PhotosScreen() {
             }}
           />
         ))}
-        {item.items.length < COLUMNS
-          ? Array.from({ length: COLUMNS - item.items.length }).map((_, i) => (
+        {item.items.length < GALLERY_COLUMNS
+          ? Array.from({
+              length: GALLERY_COLUMNS - item.items.length,
+            }).map((_, i) => (
               <View key={`pad-${item.key}-${i}`} style={{ width: tileSize }} />
             ))
           : null}
       </View>
     ),
-    [tileSize, selecting, selectedIds, toggleSelected, enterSelecting]
+    [
+      padLeft,
+      padRight,
+      tileSize,
+      selecting,
+      selectedIds,
+      toggleSelected,
+      enterSelecting,
+    ]
   )
 
   const renderSectionHeader = useCallback(
@@ -251,7 +275,8 @@ export default function PhotosScreen() {
           fontFamily: fonts.semibold,
           fontSize: 15,
           color: colors.fg,
-          paddingHorizontal: SCREEN_PAD_NARROW,
+          paddingLeft: padLeft,
+          paddingRight: padRight,
           paddingTop: 14,
           paddingBottom: 8,
         }}
@@ -259,62 +284,85 @@ export default function PhotosScreen() {
         {section.title}
       </Text>
     ),
-    [colors.fg]
+    [colors.fg, padLeft, padRight]
   )
 
   return (
     <View
       className="flex-1 bg-canvas dark:bg-canvas-inverse"
-      style={{ paddingTop: insets.top + 8 }}
+      style={{ paddingTop: insets.top + SCREEN_HEADER_TOP_GAP }}
     >
       <View
         style={{
-          paddingHorizontal: 16,
+          paddingLeft: padLeft,
+          paddingRight: padRight,
           paddingBottom: 10,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          minHeight: 40,
+          height: GALLERY_HEADER_HEIGHT,
         }}
       >
         {selecting ? (
           <>
-            <Pressable
-              onPress={() => {
-                void Haptics.selectionAsync()
-                exitSelecting()
+            <View
+              style={{
+                width: GALLERY_HEADER_SIDE,
+                height: GALLERY_HEADER_HEIGHT,
+                justifyContent: 'center',
+                alignItems: 'flex-start',
               }}
-              hitSlop={8}
-              accessibilityLabel={copy.photos.cancel}
             >
-              <Text
-                style={{
-                  fontFamily: fonts.semibold,
-                  fontSize: 16,
-                  color: colors.fg,
+              <Pressable
+                onPress={() => {
+                  void Haptics.selectionAsync()
+                  exitSelecting()
                 }}
+                hitSlop={8}
+                accessibilityLabel={copy.photos.cancel}
               >
-                {copy.photos.cancel}
-              </Text>
-            </Pressable>
+                <Text
+                  style={{
+                    fontFamily: fonts.semibold,
+                    fontSize: 16,
+                    lineHeight: 20,
+                    color: colors.fg,
+                  }}
+                  numberOfLines={1}
+                >
+                  {copy.photos.cancel}
+                </Text>
+              </Pressable>
+            </View>
             <Text
               style={{
                 flex: 1,
                 textAlign: 'center',
                 fontFamily: fonts.semibold,
                 fontSize: 16,
+                lineHeight: 20,
                 color: colors.fg,
               }}
+              numberOfLines={1}
             >
               {copy.photos.selectedCount.replace('{n}', String(selectedCount))}
             </Text>
-            <IconButton
-              name="ellipsis"
-              onPress={openSelectionActions}
-              accessibilityLabel={copy.photos.actions}
-              disabled={selectedCount === 0 || busy != null}
-            />
+            <View
+              style={{
+                width: GALLERY_HEADER_SIDE,
+                height: GALLERY_HEADER_HEIGHT,
+                justifyContent: 'center',
+                alignItems: 'flex-end',
+              }}
+            >
+              <IconButton
+                name="ellipsis"
+                onPress={openSelectionActions}
+                accessibilityLabel={copy.photos.actions}
+                disabled={selectedCount === 0 || busy != null}
+              />
+            </View>
           </>
         ) : (
           <>
@@ -323,32 +371,46 @@ export default function PhotosScreen() {
                 flex: 1,
                 fontFamily: fonts.bold,
                 fontSize: 28,
+                lineHeight: 34,
                 color: colors.fg,
                 letterSpacing: -0.4,
               }}
+              numberOfLines={1}
             >
               {copy.photos.title}
             </Text>
-            {captures.length > 0 ? (
-              <Pressable
-                onPress={() => {
-                  void Haptics.selectionAsync()
-                  enterSelecting()
-                }}
-                hitSlop={8}
-                accessibilityLabel={copy.photos.select}
-              >
-                <Text
-                  style={{
-                    fontFamily: fonts.semibold,
-                    fontSize: 16,
-                    color: colors.fg,
+            <View
+              style={{
+                minWidth: GALLERY_HEADER_SIDE,
+                height: GALLERY_HEADER_HEIGHT,
+                justifyContent: 'center',
+                alignItems: 'flex-end',
+                flexShrink: 0,
+              }}
+            >
+              {captures.length > 0 ? (
+                <Pressable
+                  onPress={() => {
+                    void Haptics.selectionAsync()
+                    enterSelecting()
                   }}
+                  hitSlop={8}
+                  accessibilityLabel={copy.photos.select}
                 >
-                  {copy.photos.select}
-                </Text>
-              </Pressable>
-            ) : null}
+                  <Text
+                    style={{
+                      fontFamily: fonts.semibold,
+                      fontSize: 16,
+                      lineHeight: 20,
+                      color: colors.fg,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {copy.photos.select}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
           </>
         )}
       </View>
@@ -361,7 +423,7 @@ export default function PhotosScreen() {
         windowSize={9}
         removeClippedSubviews
         contentContainerStyle={{
-          paddingBottom: tabScrollBottomPad(insets.bottom),
+          paddingBottom: tabScrollBottomPad(insets.bottom, { landscape }),
           flexGrow: 1,
         }}
         ListEmptyComponent={<GalleryEmpty />}
@@ -489,8 +551,8 @@ function buildPhotoSections(
 
 function chunkRows(items: CaptureRecord[], dayKey: string): PhotoRow[] {
   const rows: PhotoRow[] = []
-  for (let i = 0; i < items.length; i += COLUMNS) {
-    const slice = items.slice(i, i + COLUMNS)
+  for (let i = 0; i < items.length; i += GALLERY_COLUMNS) {
+    const slice = items.slice(i, i + GALLERY_COLUMNS)
     rows.push({
       key: `${dayKey}-${i}`,
       items: slice,

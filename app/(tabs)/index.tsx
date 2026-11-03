@@ -43,7 +43,11 @@ import { useI18n } from '@/lib/i18n/locale-context'
 import { warn } from '@/lib/soft'
 import { CAMERA, cameraBottomChrome, cameraLetterboxLayout } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
-import { stampChromePad, stampLayoutMetrics } from '@/lib/stamp'
+import {
+  stampChromePad,
+  stampLayoutMetrics,
+  stampReferenceSize,
+} from '@/lib/stamp'
 import { getLatestCapture } from '@/lib/storage'
 import { cameraOverlay, radii } from '@/lib/theme'
 import {
@@ -98,14 +102,30 @@ function CameraExperience() {
       cameraLetterboxLayout(viewport.width, viewport.height, {
         topSafe: insets.top,
         bottomSafe: insets.bottom,
+        leftSafe: insets.left,
+        rightSafe: insets.right,
       }),
-    [viewport.width, viewport.height, insets.top, insets.bottom]
+    [
+      viewport.width,
+      viewport.height,
+      insets.top,
+      insets.bottom,
+      insets.left,
+      insets.right,
+    ]
   )
 
   const chromePad = useMemo(() => {
-    if (letterbox.previewWidth <= 0) return CAMERA.framePad
-    return stampChromePad(stampLayoutMetrics(letterbox.previewWidth, settings))
-  }, [letterbox.previewWidth, settings])
+    if (letterbox.previewWidth <= 0 || letterbox.previewHeight <= 0) {
+      return CAMERA.framePad
+    }
+    return stampChromePad(
+      stampLayoutMetrics(
+        stampReferenceSize(letterbox.previewWidth, letterbox.previewHeight),
+        settings
+      )
+    )
+  }, [letterbox.previewWidth, letterbox.previewHeight, settings])
 
   const onViewportLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
@@ -376,230 +396,351 @@ function CameraExperience() {
   const thumbTop = (CAMERA.shutterRow - CAMERA.thumbSize) / 2
   const showThumb = latestCapture != null || pendingProcessing > 0
   const previewReady = letterbox.previewHeight > 0
+  const aimToggleTop = letterbox.landscape
+    ? Math.max(0, insets.top) + CAMERA.landscapeTopChromePad
+    : insets.top + CAMERA.topChromePad
+
+  const flashButton = (
+    <CameraChromeButton
+      onPress={toggleFlash}
+      accessibilityLabel={flashOn ? copy.camera.flashOn : copy.camera.flashOff}
+      name={flashOn ? 'flash' : 'flashOff'}
+      color={flashOn ? '#171717' : undefined}
+      backgroundColor={flashOn ? '#FACC15' : undefined}
+    />
+  )
+
+  const stampSettingsButton = (
+    <CameraChromeButton
+      onPress={openStampSettings}
+      accessibilityLabel={copy.camera.stampSettings}
+      name="sliders"
+    />
+  )
+
+  const recentThumb = showThumb ? (
+    <Pressable
+      onPress={openLatestPhoto}
+      disabled={!latestCapture}
+      accessibilityLabel={
+        pendingProcessing > 0 && !latestCapture
+          ? copy.camera.processingPhoto
+          : copy.camera.recentPhoto
+      }
+      style={{
+        width: CAMERA.thumbSize,
+        height: CAMERA.thumbSize,
+        borderRadius: CAMERA.thumbRadius,
+        borderWidth: 1.5,
+        borderColor: cameraOverlay.stroke,
+        backgroundColor: 'rgba(0,0,0,0.35)',
+      }}
+    >
+      <View
+        style={{
+          flex: 1,
+          borderRadius: CAMERA.thumbRadius - 1.5,
+          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {latestCapture ? (
+          <Image
+            source={{ uri: latestCapture.uri }}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover"
+          />
+        ) : null}
+        {pendingProcessing > 0 ? (
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.45)',
+            }}
+          >
+            <ActivityIndicator color="#FAFAFA" />
+          </View>
+        ) : null}
+      </View>
+    </Pressable>
+  ) : null
+
+  const shutterButton = (
+    <Pressable
+      onPress={takePhoto}
+      disabled={!cameraReady || shutterBusy}
+      accessibilityLabel={copy.camera.shutter}
+      style={{
+        width: CAMERA.shutterOuter,
+        height: CAMERA.shutterOuter,
+        borderRadius: radii.full,
+        borderWidth: 4,
+        borderColor: 'rgba(255,255,255,0.85)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: shutterBusy ? 0.7 : 1,
+      }}
+    >
+      <View
+        style={{
+          width: CAMERA.shutterInner,
+          height: CAMERA.shutterInner,
+          borderRadius: radii.full,
+          backgroundColor: '#FFFFFF',
+        }}
+      />
+    </Pressable>
+  )
+
+  const preview = (
+    <GestureDetector gesture={previewGestures}>
+      <View
+        accessibilityHint={copy.camera.aimLongPressHint}
+        style={{
+          width: letterbox.previewWidth,
+          height: letterbox.previewHeight,
+          overflow: 'hidden',
+          backgroundColor: '#000000',
+        }}
+      >
+        <CameraView
+          ref={cameraRef}
+          style={{ flex: 1 }}
+          facing="back"
+          flash={flash}
+          zoom={zoom}
+          mode="picture"
+          selectedLens={Platform.OS === 'ios' ? selectedLens : undefined}
+          onCameraReady={() => {
+            setCameraReady(true)
+            void refreshLenses()
+          }}
+          onAvailableLensesChanged={({ lenses }) => {
+            setAvailableLenses(lenses)
+          }}
+        />
+
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              backgroundColor: '#FFFFFF',
+            },
+            shutterFlashStyle,
+          ]}
+        />
+
+        <StampOverlay
+          frameWidth={stampReferenceSize(
+            letterbox.previewWidth,
+            letterbox.previewHeight
+          )}
+        />
+      </View>
+    </GestureDetector>
+  )
 
   return (
     <View className="flex-1 bg-black" onLayout={onViewportLayout}>
       {previewReady ? (
-        <>
-          <View
-            pointerEvents="box-none"
-            style={{ height: letterbox.topBand, width: '100%' }}
-          >
+        letterbox.landscape ? (
+          <>
             <View
               pointerEvents="box-none"
-              style={{
-                marginTop: insets.top + CAMERA.topChromePad,
-                width: letterbox.previewWidth,
-                height: CAMERA.sideButton,
-                alignSelf: 'center',
-              }}
+              style={{ height: letterbox.topBand, width: '100%' }}
             >
-              <View
-                style={{
-                  position: 'absolute',
-                  left: chromePad,
-                  top: 0,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                }}
-              >
-                <CameraChromeButton
-                  onPress={toggleFlash}
-                  accessibilityLabel={
-                    flashOn ? copy.camera.flashOn : copy.camera.flashOff
-                  }
-                  name={flashOn ? 'flash' : 'flashOff'}
-                  color={flashOn ? '#171717' : undefined}
-                  backgroundColor={flashOn ? '#FACC15' : undefined}
-                />
-                <AimChromeButton />
-              </View>
-              <View
-                style={{
-                  position: 'absolute',
-                  right: chromePad,
-                  top: 0,
-                }}
-              >
-                <CameraChromeButton
-                  onPress={openStampSettings}
-                  accessibilityLabel={copy.camera.stampSettings}
-                  name="sliders"
-                />
-              </View>
+              <AimModeToggle
+                top={aimToggleTop}
+                left={letterbox.leftBand}
+                width={letterbox.previewWidth}
+              />
             </View>
-            <AimModeToggle top={insets.top + CAMERA.topChromePad} />
-          </View>
 
-          <GestureDetector gesture={previewGestures}>
             <View
-              accessibilityHint={copy.camera.aimLongPressHint}
               style={{
-                width: letterbox.previewWidth,
+                flexDirection: 'row',
                 height: letterbox.previewHeight,
-                alignSelf: 'center',
-                overflow: 'hidden',
-                backgroundColor: '#000000',
-              }}
-            >
-              <CameraView
-                ref={cameraRef}
-                style={{ flex: 1 }}
-                facing="back"
-                flash={flash}
-                zoom={zoom}
-                mode="picture"
-                selectedLens={Platform.OS === 'ios' ? selectedLens : undefined}
-                onCameraReady={() => {
-                  setCameraReady(true)
-                  void refreshLenses()
-                }}
-                onAvailableLensesChanged={({ lenses }) => {
-                  setAvailableLenses(lenses)
-                }}
-              />
-
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  {
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                    backgroundColor: '#FFFFFF',
-                  },
-                  shutterFlashStyle,
-                ]}
-              />
-
-              <StampOverlay frameWidth={letterbox.previewWidth} />
-            </View>
-          </GestureDetector>
-
-          <View
-            pointerEvents="box-none"
-            style={{
-              flex: 1,
-              minHeight: letterbox.bottomBand,
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              paddingBottom: bottomPad,
-            }}
-          >
-            <View
-              style={{
                 width: '100%',
-                height: CAMERA.shutterRow,
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
             >
-              {showThumb ? (
-                <Pressable
-                  onPress={openLatestPhoto}
-                  disabled={!latestCapture}
-                  accessibilityLabel={
-                    pendingProcessing > 0 && !latestCapture
-                      ? copy.camera.processingPhoto
-                      : copy.camera.recentPhoto
-                  }
-                  style={{
-                    position: 'absolute',
-                    left: CAMERA.thumbInset,
-                    top: thumbTop,
-                    width: CAMERA.thumbSize,
-                    height: CAMERA.thumbSize,
-                    borderRadius: CAMERA.thumbRadius,
-                    borderWidth: 1.5,
-                    borderColor: cameraOverlay.stroke,
-                    backgroundColor: 'rgba(0,0,0,0.35)',
-                  }}
-                >
-                  <View
-                    style={{
-                      flex: 1,
-                      borderRadius: CAMERA.thumbRadius - 1.5,
-                      overflow: 'hidden',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {latestCapture ? (
-                      <Image
-                        source={{ uri: latestCapture.uri }}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="cover"
-                      />
-                    ) : null}
-                    {pendingProcessing > 0 ? (
-                      <View
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          bottom: 0,
-                          left: 0,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: 'rgba(0,0,0,0.45)',
-                        }}
-                      >
-                        <ActivityIndicator color="#FAFAFA" />
-                      </View>
-                    ) : null}
-                  </View>
-                </Pressable>
-              ) : null}
-
-              <Pressable
-                onPress={takePhoto}
-                disabled={!cameraReady || shutterBusy}
-                accessibilityLabel={copy.camera.shutter}
+              <View
+                pointerEvents="box-none"
                 style={{
-                  width: CAMERA.shutterOuter,
-                  height: CAMERA.shutterOuter,
-                  borderRadius: radii.full,
-                  borderWidth: 4,
-                  borderColor: 'rgba(255,255,255,0.85)',
-                  alignItems: 'center',
+                  width: letterbox.leftBand,
+                  height: '100%',
                   justifyContent: 'center',
-                  opacity: shutterBusy ? 0.7 : 1,
+                  alignItems: 'flex-end',
+                  paddingLeft: insets.left + CAMERA.landscapeRailPad,
+                  paddingRight: CAMERA.landscapeRailPad,
+                  paddingVertical: CAMERA.landscapeChromeGap,
                 }}
               >
                 <View
                   style={{
-                    width: CAMERA.shutterInner,
-                    height: CAMERA.shutterInner,
-                    borderRadius: radii.full,
-                    backgroundColor: '#FFFFFF',
+                    alignItems: 'center',
+                    gap: CAMERA.landscapeChromeGap,
                   }}
-                />
-              </Pressable>
+                >
+                  {flashButton}
+                  <AimChromeButton />
+                  {stampSettingsButton}
+                </View>
+              </View>
+
+              {preview}
 
               <View
                 pointerEvents="box-none"
                 style={{
-                  position: 'absolute',
-                  right: CAMERA.thumbInset,
-                  top: 0,
-                  bottom: 0,
+                  width: letterbox.rightBand,
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'flex-start',
+                  paddingLeft: CAMERA.landscapeRailPad,
+                  paddingRight: insets.right + CAMERA.landscapeRailPad,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: CAMERA.landscapeChromeGap,
+                    paddingVertical: CAMERA.landscapeChromeGap,
+                  }}
+                >
+                  {recentThumb}
+                  {shutterButton}
+                  <ZoomControls
+                    options={zoomOptions}
+                    selectedKey={selectedZoomKey}
+                    liveFactor={pinchFactor}
+                    onSelect={applyZoomOption}
+                    accessibilityPrefix={copy.camera.zoom}
+                    direction="column"
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View
+              pointerEvents="none"
+              style={{
+                flex: 1,
+                minHeight: letterbox.bottomBand,
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <View
+              pointerEvents="box-none"
+              style={{ height: letterbox.topBand, width: '100%' }}
+            >
+              <View
+                pointerEvents="box-none"
+                style={{
+                  marginTop: insets.top + CAMERA.topChromePad,
+                  width: letterbox.previewWidth,
+                  height: CAMERA.sideButton,
+                  alignSelf: 'center',
+                }}
+              >
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: chromePad,
+                    top: 0,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  {flashButton}
+                  <AimChromeButton />
+                </View>
+                <View
+                  style={{
+                    position: 'absolute',
+                    right: chromePad,
+                    top: 0,
+                  }}
+                >
+                  {stampSettingsButton}
+                </View>
+              </View>
+              <AimModeToggle top={aimToggleTop} />
+            </View>
+
+            <View style={{ alignSelf: 'center' }}>{preview}</View>
+
+            <View
+              pointerEvents="box-none"
+              style={{
+                flex: 1,
+                minHeight: letterbox.bottomBand,
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                paddingBottom: bottomPad,
+              }}
+            >
+              <View
+                style={{
+                  width: '100%',
+                  height: CAMERA.shutterRow,
+                  alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <ZoomControls
-                  options={zoomOptions}
-                  selectedKey={selectedZoomKey}
-                  liveFactor={pinchFactor}
-                  onSelect={applyZoomOption}
-                  accessibilityPrefix={copy.camera.zoom}
-                />
+                {recentThumb ? (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: CAMERA.thumbInset,
+                      top: thumbTop,
+                    }}
+                  >
+                    {recentThumb}
+                  </View>
+                ) : null}
+
+                {shutterButton}
+
+                <View
+                  pointerEvents="box-none"
+                  style={{
+                    position: 'absolute',
+                    right: CAMERA.thumbInset,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ZoomControls
+                    options={zoomOptions}
+                    selectedKey={selectedZoomKey}
+                    liveFactor={pinchFactor}
+                    onSelect={applyZoomOption}
+                    accessibilityPrefix={copy.camera.zoom}
+                  />
+                </View>
               </View>
             </View>
-          </View>
-        </>
+          </>
+        )
       ) : null}
     </View>
   )

@@ -2,7 +2,13 @@ import { BlurView } from 'expo-blur'
 import { router, usePathname } from 'expo-router'
 import { TabTrigger, type TabTriggerSlotProps } from 'expo-router/ui'
 import { useCallback, useEffect, useMemo } from 'react'
-import { Platform, Pressable, StyleSheet, View } from 'react-native'
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   cancelAnimation,
@@ -16,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import * as Haptics from '@/lib/haptics'
 import { useI18n } from '@/lib/i18n/locale-context'
-import { TAB_BAR, tabBarBottomOffset } from '@/lib/layout'
+import { TAB_BAR, tabBarBottomOffset, tabBarHorizontalPad } from '@/lib/layout'
 import { useTabBlurTarget } from '@/lib/tab-blur'
 import { radii, useAppColorScheme, useAppColors } from '@/lib/theme'
 
@@ -80,6 +86,8 @@ export function AppTabBar() {
   const colors = useAppColors()
   const scheme = useAppColorScheme()
   const insets = useSafeAreaInsets()
+  const { width, height } = useWindowDimensions()
+  const landscape = width > height
   const pathname = usePathname()
   const blurTargetRef = useTabBlurTarget()
   const { copy } = useI18n()
@@ -110,7 +118,10 @@ export function AppTabBar() {
 
   const selectedIndex = tabIndexFromPath(pathname)
   const maxIndex = tabs.length - 1
-  const bottomOffset = tabBarBottomOffset(insets.bottom)
+  const bottomOffset = tabBarBottomOffset(insets.bottom, { landscape })
+  const horizontalPad = tabBarHorizontalPad(insets.left, insets.right, {
+    landscape,
+  })
 
   const position = useSharedValue(selectedIndex)
   const dragOrigin = useSharedValue(selectedIndex)
@@ -194,6 +205,7 @@ export function AppTabBar() {
         bottom: 0,
         alignItems: 'center',
         paddingBottom: bottomOffset,
+        paddingHorizontal: horizontalPad,
       }}
     >
       <GestureDetector gesture={pan}>

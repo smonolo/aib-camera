@@ -30,7 +30,15 @@ export function AimChromeButton() {
   )
 }
 
-export function AimModeToggle({ top }: { top: number }) {
+export function AimModeToggle({
+  top,
+  left = 0,
+  width,
+}: {
+  top: number
+  left?: number
+  width?: number
+}) {
   const { copy } = useI18n()
   const { mode, sticky } = useGeoSource()
 
@@ -43,8 +51,8 @@ export function AimModeToggle({ top }: { top: number }) {
         position: 'absolute',
         top,
         height: CAMERA.sideButton,
-        left: 0,
-        right: 0,
+        left,
+        width: width ?? '100%',
         alignItems: 'center',
         justifyContent: 'center',
       }}

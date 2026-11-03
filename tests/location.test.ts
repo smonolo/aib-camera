@@ -6,10 +6,15 @@ import {
   ensureForegroundLocationPermission,
   formatGeocodeAddress,
   geocodeCellKey,
+  HEADING_SCREEN_ORIENTATION,
   headingFromLocationHeading,
+  headingOffsetForScreenOrientation,
+  headingOrientationOffsetDegrees,
   normalizeHeadingDegrees,
+  orientHeadingDegrees,
   resetGeocodeMemory,
   reverseGeocodeCoords,
+  setHeadingOrientationOffset,
   smoothHeadingDegrees,
   updateSmoothedHeading,
   withTimeout,
@@ -110,6 +115,78 @@ describe('smoothHeadingDegrees', () => {
 
   it('blends across the 0/360 wrap', () => {
     expect(smoothHeadingDegrees(10, 350, 0.5)).toBe(0)
+  })
+})
+
+describe('heading orientation compensation', () => {
+  it('maps interface orientation to compass offsets', () => {
+    expect(headingOrientationOffsetDegrees('portrait')).toBe(0)
+    expect(headingOrientationOffsetDegrees('landscape-left')).toBe(-90)
+    expect(headingOrientationOffsetDegrees('landscape-right')).toBe(90)
+    expect(headingOrientationOffsetDegrees('portrait-down')).toBe(180)
+    expect(headingOrientationOffsetDegrees('unknown')).toBe(0)
+  })
+
+  it('maps expo screen-orientation enum values to the same offsets', () => {
+    expect(
+      headingOffsetForScreenOrientation(HEADING_SCREEN_ORIENTATION.PORTRAIT_UP)
+    ).toBe(0)
+    expect(
+      headingOffsetForScreenOrientation(
+        HEADING_SCREEN_ORIENTATION.LANDSCAPE_LEFT
+      )
+    ).toBe(-90)
+    expect(
+      headingOffsetForScreenOrientation(
+        HEADING_SCREEN_ORIENTATION.LANDSCAPE_RIGHT
+      )
+    ).toBe(90)
+    expect(
+      headingOffsetForScreenOrientation(
+        HEADING_SCREEN_ORIENTATION.PORTRAIT_DOWN
+      )
+    ).toBe(180)
+    expect(
+      headingOffsetForScreenOrientation(HEADING_SCREEN_ORIENTATION.UNKNOWN)
+    ).toBe(0)
+    expect(headingOffsetForScreenOrientation(99)).toBe(0)
+  })
+
+  it('keeps camera-facing heading stable across landscape rotation', () => {
+    expect(orientHeadingDegrees(160, 90)).toBe(250)
+    expect(orientHeadingDegrees(340, -90)).toBe(250)
+    expect(orientHeadingDegrees(10, 180)).toBe(190)
+  })
+
+  it('applies the active orientation offset while smoothing', () => {
+    setHeadingOrientationOffset(90)
+    expect(
+      updateSmoothedHeading({
+        trueHeading: 160,
+        magHeading: 160,
+        accuracy: 2,
+      })
+    ).toBe(250)
+  })
+
+  it('resets the smoother when the orientation offset changes', () => {
+    setHeadingOrientationOffset(0)
+    expect(
+      updateSmoothedHeading({
+        trueHeading: 250,
+        magHeading: 250,
+        accuracy: 2,
+      })
+    ).toBe(250)
+
+    setHeadingOrientationOffset(90)
+    expect(
+      updateSmoothedHeading({
+        trueHeading: 160,
+        magHeading: 160,
+        accuracy: 2,
+      })
+    ).toBe(250)
   })
 })
 
@@ -377,6 +454,58 @@ describe('captureGeoSnapshot', () => {
 
     const snap = await captureGeoSnapshot({ headingHint: 180 })
     expect(snap.heading).toBe(180)
+    expect(mockedLocation.getHeadingAsync).not.toHaveBeenCalled()
+  })
+
+  it('orients sampled compass headings for the active screen orientation', async () => {
+    setHeadingOrientationOffset(90)
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockResolvedValue({
+      coords: {
+        latitude: 45.46,
+        longitude: 9.19,
+        accuracy: 6,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    } as never)
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([] as never)
+    mockedLocation.getHeadingAsync.mockResolvedValue({
+      trueHeading: 160,
+      magHeading: 160,
+      accuracy: 2,
+    } as never)
+
+    const snap = await captureGeoSnapshot()
+    expect(snap.heading).toBe(250)
+  })
+
+  it('leaves heading hints untouched by orientation offset', async () => {
+    setHeadingOrientationOffset(90)
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockResolvedValue({
+      coords: {
+        latitude: 45.46,
+        longitude: 9.19,
+        accuracy: 6,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    } as never)
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([] as never)
+
+    const snap = await captureGeoSnapshot({ headingHint: 250 })
+    expect(snap.heading).toBe(250)
     expect(mockedLocation.getHeadingAsync).not.toHaveBeenCalled()
   })
 })
