@@ -1,4 +1,5 @@
 import { t } from './i18n'
+import { CAMERA } from './layout'
 import { ROME_TZ } from './time'
 import {
   FONT_SIZE_PX,
@@ -323,7 +324,7 @@ export function stampLayoutMetrics(
   const scale = Math.max(referenceWidth / 1080, options?.minScale ?? 0)
   const fontSize = Math.round(stampFontPx(settings) * scale * 1.85)
   const lineGap = Math.round(fontSize * 0.32)
-  const edgePad = Math.round(28 * scale)
+  const edgePad = Math.round(CAMERA.framePad * scale)
   const boxPadX = Math.round(22 * scale)
   const boxPadY = Math.round(18 * scale)
   const radius = Math.round(14 * scale)
@@ -338,4 +339,10 @@ export function stampLayoutMetrics(
     radius,
     bgAlpha,
   }
+}
+
+export function stampChromePad(
+  metrics: ReturnType<typeof stampLayoutMetrics>
+): number {
+  return metrics.edgePad + metrics.boxPadX
 }

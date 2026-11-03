@@ -156,14 +156,12 @@ export function PermissionGate({ children }: Props) {
       <View style={{ marginTop: 28, gap: 8 }}>
         <StatusRow
           label={copy.permissions.camera}
-          iconSf="camera"
-          iconMaterial="photo-camera"
+          icon="camera"
           value={statusLabel}
         />
         <StatusRow
           label={copy.permissions.location}
-          iconSf="location"
-          iconMaterial="my-location"
+          icon="mapPin"
           value={copy.permissions.optionalLater}
         />
       </View>
@@ -197,13 +195,11 @@ export function PermissionGate({ children }: Props) {
 
 function StatusRow({
   label,
-  iconSf,
-  iconMaterial,
+  icon,
   value,
 }: {
   label: string
-  iconSf: 'camera' | 'location'
-  iconMaterial: 'photo-camera' | 'my-location'
+  icon: 'camera' | 'mapPin'
   value: string
 }) {
   const colors = useAppColors()
@@ -228,12 +224,7 @@ function StatusRow({
           flex: 1,
         }}
       >
-        <AppIcon
-          sf={iconSf}
-          material={iconMaterial}
-          size={20}
-          color={colors.muted}
-        />
+        <AppIcon name={icon} size={20} color={colors.muted} />
         <Text
           style={{
             fontFamily: fonts.medium,

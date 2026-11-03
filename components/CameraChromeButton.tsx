@@ -1,7 +1,6 @@
-import type { ComponentProps } from 'react'
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native'
 
-import { AppIcon } from '@/components/AppIcon'
+import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import { Surface } from '@/components/Surface'
 import { CAMERA } from '@/lib/layout'
 import { radii, useAppColors } from '@/lib/theme'
@@ -9,8 +8,7 @@ import { radii, useAppColors } from '@/lib/theme'
 type Props = {
   onPress: () => void
   accessibilityLabel: string
-  sf: ComponentProps<typeof AppIcon>['sf']
-  material: ComponentProps<typeof AppIcon>['material']
+  name: AppIconName
   color?: string
   backgroundColor?: string
   style?: StyleProp<ViewStyle>
@@ -19,8 +17,7 @@ type Props = {
 export function CameraChromeButton({
   onPress,
   accessibilityLabel,
-  sf,
-  material,
+  name,
   color,
   backgroundColor,
   style,
@@ -32,7 +29,6 @@ export function CameraChromeButton({
     <View
       style={[
         {
-          position: 'absolute',
           width: CAMERA.sideButton,
           height: CAMERA.sideButton,
           borderRadius: radii.full,
@@ -58,12 +54,7 @@ export function CameraChromeButton({
             justifyContent: 'center',
           }}
         >
-          <AppIcon
-            sf={sf}
-            material={material}
-            size={CAMERA.sideIcon}
-            color={iconColor}
-          />
+          <AppIcon name={name} size={CAMERA.sideIcon} color={iconColor} />
         </Pressable>
       </Surface>
     </View>

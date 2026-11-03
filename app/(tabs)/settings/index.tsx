@@ -246,8 +246,7 @@ export default function SettingsScreen() {
           <NavRow
             label={copy.settings.guideLink}
             accessibilityRole="link"
-            sf="arrow.up.right"
-            material="open-in-new"
+            name="externalLink"
             showDivider
             onPress={() =>
               void openLink(
@@ -260,8 +259,7 @@ export default function SettingsScreen() {
           <NavRow
             label={copy.settings.privacyLink}
             accessibilityRole="link"
-            sf="arrow.up.right"
-            material="open-in-new"
+            name="externalLink"
             showDivider
             onPress={() =>
               void openLink(
@@ -274,8 +272,7 @@ export default function SettingsScreen() {
           <NavRow
             label={copy.settings.termsLink}
             accessibilityRole="link"
-            sf="arrow.up.right"
-            material="open-in-new"
+            name="externalLink"
             onPress={() =>
               void openLink(
                 termsOfUseUrl(),

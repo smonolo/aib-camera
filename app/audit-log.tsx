@@ -77,8 +77,7 @@ export default function AuditLogScreen() {
       onBack={onBack}
       headerRight={
         <IconButton
-          sf="square.and.arrow.up"
-          material="ios-share"
+          name="share"
           onPress={() => void onExport()}
           accessibilityLabel={copy.auditLog.export}
           disabled={!canExport}

@@ -39,8 +39,7 @@ export function SheetHeader({ title, closeLabel, onClose }: Props) {
         {title}
       </Text>
       <IconButton
-        sf="xmark"
-        material="close"
+        name="close"
         onPress={() => {
           void Haptics.selectionAsync()
           onClose()

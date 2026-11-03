@@ -1,8 +1,9 @@
 import * as Haptics from '@/lib/haptics'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import { Text, TextInput, View } from 'react-native'
 
 import { AppSheet } from '@/components/AppSheet'
+import { Button } from '@/components/Button'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { useToast } from '@/components/Toast'
 import {
@@ -141,42 +142,19 @@ export default function AimTargetSheet() {
           }}
         />
 
-        <Pressable
+        <Button
+          label={copy.camera.aimLock}
           onPress={() => void onLock()}
           disabled={!canLock}
-          style={{
-            backgroundColor: canLock ? colors.fg : colors.surfaceMuted,
-            borderRadius: radii.sm,
-            paddingVertical: 14,
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: fonts.semibold,
-              fontSize: 16,
-              color: canLock ? colors.fgInverse : colors.muted,
-            }}
-          >
-            {copy.camera.aimLock}
-          </Text>
-        </Pressable>
+          loading={locking}
+        />
 
         {sticky != null ? (
-          <Pressable
+          <Button
+            label={copy.camera.aimClear}
             onPress={onClear}
-            style={{ paddingVertical: 10, alignItems: 'center' }}
-          >
-            <Text
-              style={{
-                fontFamily: fonts.semibold,
-                fontSize: 15,
-                color: colors.muted,
-              }}
-            >
-              {copy.camera.aimClear}
-            </Text>
-          </Pressable>
+            variant="secondary"
+          />
         ) : null}
       </View>
     </AppSheet>

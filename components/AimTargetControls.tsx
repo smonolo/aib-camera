@@ -10,64 +10,59 @@ import { CAMERA } from '@/lib/layout'
 import { useAppColors } from '@/lib/theme'
 import type { GeoSourceMode } from '@/lib/types'
 
-type Props = {
-  topInset: number
-}
-
-export function AimTargetControls({ topInset }: Props) {
+export function AimChromeButton() {
   const { copy } = useI18n()
   const colors = useAppColors()
   const { mode, sticky } = useGeoSource()
   const targetActive = mode === 'target' && sticky != null
-  const chromeTop = topInset + CAMERA.topChromePad
 
   return (
-    <>
-      <CameraChromeButton
-        onPress={() => {
-          void Haptics.selectionAsync()
-          router.push('/aim-target')
-        }}
-        accessibilityLabel={copy.camera.aim}
-        sf="scope"
-        material="gps-fixed"
-        backgroundColor={targetActive ? colors.fg : undefined}
-        color={targetActive ? colors.fgInverse : undefined}
-        style={{
-          top: chromeTop,
-          left: CAMERA.thumbInset + CAMERA.sideButton + 12,
-        }}
-      />
+    <CameraChromeButton
+      onPress={() => {
+        void Haptics.selectionAsync()
+        router.push('/aim-target')
+      }}
+      accessibilityLabel={copy.camera.aim}
+      name="crosshair"
+      backgroundColor={targetActive ? colors.fg : undefined}
+      color={targetActive ? colors.fgInverse : undefined}
+    />
+  )
+}
 
-      {sticky != null ? (
-        <View
-          pointerEvents="box-none"
-          style={{
-            position: 'absolute',
-            top: chromeTop,
-            height: CAMERA.sideButton,
-            left: 0,
-            right: 0,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <View accessibilityLabel={copy.camera.aimToggle}>
-            <SegmentedControl
-              expand={false}
-              value={mode}
-              options={[
-                { value: 'me' as GeoSourceMode, label: copy.camera.aimModeMe },
-                {
-                  value: 'target' as GeoSourceMode,
-                  label: copy.camera.aimModeTarget,
-                },
-              ]}
-              onChange={setGeoSourceMode}
-            />
-          </View>
-        </View>
-      ) : null}
-    </>
+export function AimModeToggle({ top }: { top: number }) {
+  const { copy } = useI18n()
+  const { mode, sticky } = useGeoSource()
+
+  if (sticky == null) return null
+
+  return (
+    <View
+      pointerEvents="box-none"
+      style={{
+        position: 'absolute',
+        top,
+        height: CAMERA.sideButton,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <View accessibilityLabel={copy.camera.aimToggle}>
+        <SegmentedControl
+          expand={false}
+          value={mode}
+          options={[
+            { value: 'me' as GeoSourceMode, label: copy.camera.aimModeMe },
+            {
+              value: 'target' as GeoSourceMode,
+              label: copy.camera.aimModeTarget,
+            },
+          ]}
+          onChange={setGeoSourceMode}
+        />
+      </View>
+    </View>
   )
 }

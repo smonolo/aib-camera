@@ -1,8 +1,8 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AppIcon } from '@/components/AppIcon'
+import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import { IconButton } from '@/components/IconButton'
 import { Toggle } from '@/components/Toggle'
 import { fonts } from '@/lib/fonts'
@@ -42,8 +42,7 @@ export function SettingsSubscreenShell({
       >
         <View style={{ zIndex: 1 }}>
           <IconButton
-            sf="chevron.backward"
-            material="arrow-back"
+            name="chevronLeft"
             onPress={onBack}
             accessibilityLabel={backLabel}
           />
@@ -116,15 +115,13 @@ export function NavRow({
   label,
   onPress,
   accessibilityRole = 'button',
-  sf = 'chevron.right',
-  material = 'chevron-right',
+  name = 'chevronRight',
   showDivider = false,
 }: {
   label: string
   onPress: () => void
   accessibilityRole?: 'button' | 'link'
-  sf?: ComponentProps<typeof AppIcon>['sf']
-  material?: ComponentProps<typeof AppIcon>['material']
+  name?: AppIconName
   showDivider?: boolean
 }) {
   const colors = useAppColors()
@@ -155,7 +152,7 @@ export function NavRow({
       >
         {label}
       </Text>
-      <AppIcon sf={sf} material={material} size={18} color={colors.muted} />
+      <AppIcon name={name} size={18} color={colors.muted} />
     </Pressable>
   )
 }

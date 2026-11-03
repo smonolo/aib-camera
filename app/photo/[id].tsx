@@ -118,14 +118,12 @@ export default function PhotoDetailScreen() {
         }}
       >
         <IconButton
-          sf="chevron.backward"
-          material="arrow-back"
+          name="chevronLeft"
           onPress={onBack}
           accessibilityLabel={copy.photos.back}
         />
         <IconButton
-          sf="trash"
-          material="delete-outline"
+          name="trash"
           onPress={onDelete}
           accessibilityLabel={copy.photos.delete}
         />
@@ -153,8 +151,7 @@ export default function PhotoDetailScreen() {
       >
         <Button
           label={copy.photos.share}
-          sf="square.and.arrow.up"
-          material="ios-share"
+          name="share"
           onPress={() => void onShare()}
         />
       </View>

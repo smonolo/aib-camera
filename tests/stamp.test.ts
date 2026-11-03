@@ -6,6 +6,7 @@ import {
   formatStampDateTime,
   galleryDayKey,
   parseCustomLines,
+  stampChromePad,
   stampFontPx,
   stampLayoutMetrics,
   wrapTextToWidth,
@@ -209,7 +210,13 @@ describe('stampLayoutMetrics', () => {
     expect(metrics.scale).toBe(1)
     expect(metrics.fontSize).toBe(Math.round(24 * 1.85))
     expect(metrics.edgePad).toBe(28)
+    expect(metrics.boxPadX).toBe(22)
     expect(metrics.bgAlpha).toBe(0.5)
+  })
+
+  it('exposes chrome pad as stamp content inset', () => {
+    const metrics = stampLayoutMetrics(1080, DEFAULT_STAMP_SETTINGS)
+    expect(stampChromePad(metrics)).toBe(metrics.edgePad + metrics.boxPadX)
   })
 
   it('honors minScale for burn-in on small images', () => {

@@ -21,7 +21,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AimTargetControls } from '@/components/AimTargetControls'
+import { AimChromeButton, AimModeToggle } from '@/components/AimTargetControls'
 import { CameraChromeButton } from '@/components/CameraChromeButton'
 import { PermissionGate } from '@/components/PermissionGate'
 import { StampOverlay } from '@/components/StampOverlay'
@@ -43,6 +43,7 @@ import { useI18n } from '@/lib/i18n/locale-context'
 import { warn } from '@/lib/soft'
 import { CAMERA, cameraBottomChrome, cameraLetterboxLayout } from '@/lib/layout'
 import { useStampSettings } from '@/lib/settings-context'
+import { stampChromePad, stampLayoutMetrics } from '@/lib/stamp'
 import { getLatestCapture } from '@/lib/storage'
 import { cameraOverlay, radii } from '@/lib/theme'
 import {
@@ -100,6 +101,11 @@ function CameraExperience() {
       }),
     [viewport.width, viewport.height, insets.top, insets.bottom]
   )
+
+  const chromePad = useMemo(() => {
+    if (letterbox.previewWidth <= 0) return CAMERA.framePad
+    return stampChromePad(stampLayoutMetrics(letterbox.previewWidth, settings))
+  }, [letterbox.previewWidth, settings])
 
   const onViewportLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
@@ -379,31 +385,51 @@ function CameraExperience() {
             pointerEvents="box-none"
             style={{ height: letterbox.topBand, width: '100%' }}
           >
-            <CameraChromeButton
-              onPress={toggleFlash}
-              accessibilityLabel={
-                flashOn ? copy.camera.flashOn : copy.camera.flashOff
-              }
-              sf={flashOn ? 'bolt.fill' : 'bolt.slash.fill'}
-              material={flashOn ? 'flash-on' : 'flash-off'}
-              color={flashOn ? '#171717' : undefined}
-              backgroundColor={flashOn ? '#FACC15' : undefined}
+            <View
+              pointerEvents="box-none"
               style={{
-                top: insets.top + CAMERA.topChromePad,
-                left: CAMERA.thumbInset,
+                marginTop: insets.top + CAMERA.topChromePad,
+                width: letterbox.previewWidth,
+                height: CAMERA.sideButton,
+                alignSelf: 'center',
               }}
-            />
-            <CameraChromeButton
-              onPress={openStampSettings}
-              accessibilityLabel={copy.camera.stampSettings}
-              sf="slider.horizontal.3"
-              material="tune"
-              style={{
-                top: insets.top + CAMERA.topChromePad,
-                right: CAMERA.thumbInset,
-              }}
-            />
-            <AimTargetControls topInset={insets.top} />
+            >
+              <View
+                style={{
+                  position: 'absolute',
+                  left: chromePad,
+                  top: 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+              >
+                <CameraChromeButton
+                  onPress={toggleFlash}
+                  accessibilityLabel={
+                    flashOn ? copy.camera.flashOn : copy.camera.flashOff
+                  }
+                  name={flashOn ? 'flash' : 'flashOff'}
+                  color={flashOn ? '#171717' : undefined}
+                  backgroundColor={flashOn ? '#FACC15' : undefined}
+                />
+                <AimChromeButton />
+              </View>
+              <View
+                style={{
+                  position: 'absolute',
+                  right: chromePad,
+                  top: 0,
+                }}
+              >
+                <CameraChromeButton
+                  onPress={openStampSettings}
+                  accessibilityLabel={copy.camera.stampSettings}
+                  name="sliders"
+                />
+              </View>
+            </View>
+            <AimModeToggle top={insets.top + CAMERA.topChromePad} />
           </View>
 
           <GestureDetector gesture={previewGestures}>

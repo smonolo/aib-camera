@@ -202,19 +202,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       }}
                     >
                       <AppIcon
-                        sf={
+                        name={
                           toast.tone === 'error'
-                            ? 'exclamationmark.triangle.fill'
+                            ? 'warning'
                             : toast.tone === 'success'
-                              ? 'checkmark.circle.fill'
-                              : 'info.circle.fill'
-                        }
-                        material={
-                          toast.tone === 'error'
-                            ? 'error-outline'
-                            : toast.tone === 'success'
-                              ? 'check-circle-outline'
-                              : 'info-outline'
+                              ? 'success'
+                              : 'info'
                         }
                         color={iconColor}
                         size={22}

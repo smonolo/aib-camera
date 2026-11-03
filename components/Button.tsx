@@ -1,4 +1,3 @@
-import type { ComponentProps } from 'react'
 import {
   ActivityIndicator,
   Pressable,
@@ -8,8 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 
-import { AppIcon } from '@/components/AppIcon'
-import { Surface } from '@/components/Surface'
+import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import { fonts } from '@/lib/fonts'
 import { radii, useAppColors } from '@/lib/theme'
 
@@ -17,8 +15,8 @@ type Props = {
   label: string
   onPress: () => void
   accessibilityLabel?: string
-  sf?: ComponentProps<typeof AppIcon>['sf']
-  material?: ComponentProps<typeof AppIcon>['material']
+  name?: AppIconName
+  variant?: 'primary' | 'secondary'
   loading?: boolean
   disabled?: boolean
   flex?: boolean
@@ -29,62 +27,67 @@ export function Button({
   label,
   onPress,
   accessibilityLabel,
-  sf,
-  material,
+  name,
+  variant = 'primary',
   loading = false,
   disabled = false,
   flex = false,
   style,
 }: Props) {
   const colors = useAppColors()
+  const inactive = disabled || loading
+  const filled = variant === 'primary' && !inactive
+  const backgroundColor = filled ? colors.fg : colors.surfaceMuted
+  const contentColor = inactive
+    ? colors.muted
+    : filled
+      ? colors.fgInverse
+      : colors.fg
 
   return (
     <View
       style={[
-        { borderRadius: radii.md, overflow: 'hidden' },
+        {
+          borderRadius: radii.md,
+          overflow: 'hidden',
+          backgroundColor,
+        },
         flex && { flex: 1 },
         style,
       ]}
     >
-      <Surface style={{ borderRadius: radii.md }}>
-        <Pressable
-          onPress={onPress}
-          disabled={disabled || loading}
-          accessibilityLabel={accessibilityLabel ?? label}
-          style={{
-            minHeight: 52,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            paddingHorizontal: 12,
-          }}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.fg} />
-          ) : (
-            <>
-              {sf && material ? (
-                <AppIcon
-                  sf={sf}
-                  material={material}
-                  size={18}
-                  color={colors.fg}
-                />
-              ) : null}
-              <Text
-                style={{
-                  fontFamily: fonts.semibold,
-                  fontSize: 14,
-                  color: colors.fg,
-                }}
-              >
-                {label}
-              </Text>
-            </>
-          )}
-        </Pressable>
-      </Surface>
+      <Pressable
+        onPress={onPress}
+        disabled={inactive}
+        accessibilityLabel={accessibilityLabel ?? label}
+        style={{
+          minHeight: 52,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          paddingHorizontal: 12,
+        }}
+      >
+        {loading ? (
+          <ActivityIndicator color={contentColor} />
+        ) : (
+          <>
+            {name ? (
+              <AppIcon name={name} size={18} color={contentColor} />
+            ) : null}
+            <Text
+              style={{
+                fontFamily: fonts.semibold,
+                fontSize: 14,
+                color: contentColor,
+              }}
+            >
+              {label}
+            </Text>
+          </>
+        )}
+      </Pressable>
     </View>
   )
 }

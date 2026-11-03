@@ -310,8 +310,7 @@ export default function PhotosScreen() {
               {copy.photos.selectedCount.replace('{n}', String(selectedCount))}
             </Text>
             <IconButton
-              sf="ellipsis.circle"
-              material="more-horiz"
+              name="ellipsis"
               onPress={openSelectionActions}
               accessibilityLabel={copy.photos.actions}
               disabled={selectedCount === 0 || busy != null}
@@ -428,12 +427,7 @@ const GalleryTile = memo(function GalleryTile({
           }}
         >
           {selected ? (
-            <AppIcon
-              sf="checkmark"
-              material="check"
-              size={12}
-              color="#FFFFFF"
-            />
+            <AppIcon name="check" size={12} color="#FFFFFF" strokeWidth={2.5} />
           ) : null}
         </View>
       ) : null}
@@ -453,19 +447,6 @@ function GalleryEmpty() {
         paddingHorizontal: 32,
       }}
     >
-      <View
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: radii.md,
-          marginBottom: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.surfaceMuted,
-        }}
-      >
-        <AppIcon sf="photo" material="photo" size={26} color={colors.fg} />
-      </View>
       <Text
         style={{
           fontFamily: fonts.regular,

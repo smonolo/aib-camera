@@ -1,5 +1,3 @@
-import { Platform } from 'react-native'
-
 import {
   CAMERA,
   CAMERA_PREVIEW_ASPECT,
@@ -8,33 +6,25 @@ import {
   cameraControlsBlockHeight,
   cameraLetterboxLayout,
   cameraTopBandMin,
+  TAB_BAR,
   TAB_BAR_CLEARANCE,
+  tabBarBottomOffset,
   tabScrollBottomPad,
 } from '@/lib/layout'
 
 describe('layout helpers', () => {
-  const original = Platform.OS
-
-  afterEach(() => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: original,
-    })
-  })
-
-  it('uses fixed Android bottom padding', () => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: 'android',
-    })
-    expect(tabScrollBottomPad(34)).toBe(24)
-    expect(cameraBottomChrome(34)).toBe(16)
-  })
-
-  it('adds tab clearance on iOS', () => {
-    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' })
-    expect(tabScrollBottomPad(34)).toBe(34 + TAB_BAR_CLEARANCE)
-    expect(cameraBottomChrome(34)).toBe(62)
+  it('shares floating tab clearance on both platforms', () => {
+    expect(tabBarBottomOffset(34)).toBe(34 - TAB_BAR.safeInsetTrim)
+    expect(tabBarBottomOffset(0)).toBe(TAB_BAR.minBottomGap)
+    expect(tabScrollBottomPad(34)).toBe(
+      34 - TAB_BAR.safeInsetTrim + TAB_BAR_CLEARANCE
+    )
+    expect(cameraBottomChrome(34)).toBe(
+      34 - TAB_BAR.safeInsetTrim + TAB_BAR.height + TAB_BAR.controlsGap
+    )
+    expect(cameraBottomChrome(0)).toBe(
+      TAB_BAR.minBottomGap + TAB_BAR.height + TAB_BAR.controlsGap
+    )
   })
 
   it('stacks controls block height from shutter chrome only', () => {
@@ -44,11 +34,6 @@ describe('layout helpers', () => {
   })
 
   it('grows the preview to fill space above the shutter on a tall viewport', () => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: 'android',
-    })
-
     const topMin = cameraTopBandMin(47)
     const bottomMin = cameraBottomBandMin(34)
     const layout = cameraLetterboxLayout(390, 900, {
@@ -65,11 +50,6 @@ describe('layout helpers', () => {
   })
 
   it('shrinks the preview when the viewport is too short for full-width 4:3', () => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: 'android',
-    })
-
     const layout = cameraLetterboxLayout(390, 420, {
       topSafe: 47,
       bottomSafe: 0,
@@ -85,11 +65,6 @@ describe('layout helpers', () => {
   })
 
   it('keeps a reserved gap under the preview instead of growing into controls', () => {
-    Object.defineProperty(Platform, 'OS', {
-      configurable: true,
-      value: 'android',
-    })
-
     const tight = cameraLetterboxLayout(390, 640, {
       topSafe: 47,
       bottomSafe: 0,

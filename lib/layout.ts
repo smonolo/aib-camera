@@ -1,6 +1,15 @@
-import { Platform } from 'react-native'
+export const TAB_BAR = {
+  height: 58,
+  itemWidth: 84,
+  padding: 4,
+  minBottomGap: 4,
+  safeInsetTrim: 14,
+  contentGap: 10,
+  controlsGap: 24,
+  iconSize: 28,
+} as const
 
-export const TAB_BAR_CLEARANCE = 56
+export const TAB_BAR_CLEARANCE = TAB_BAR.height + TAB_BAR.contentGap
 export const SCREEN_PAD = 20
 export const SCREEN_PAD_NARROW = 16
 
@@ -15,20 +24,23 @@ export const CAMERA = {
   sideGap: 8,
   thumbSize: 52,
   thumbRadius: 10,
-  thumbInset: 36,
+  framePad: 28,
+  thumbInset: 28,
   chromePad: 4,
   topChromePad: 8,
   previewChromeGap: 14,
 } as const
 
+export function tabBarBottomOffset(safeBottom: number): number {
+  return Math.max(safeBottom - TAB_BAR.safeInsetTrim, TAB_BAR.minBottomGap)
+}
+
 export function tabScrollBottomPad(safeBottom: number): number {
-  if (Platform.OS === 'android') return 24
-  return safeBottom + TAB_BAR_CLEARANCE
+  return tabBarBottomOffset(safeBottom) + TAB_BAR_CLEARANCE
 }
 
 export function cameraBottomChrome(safeBottom: number): number {
-  if (Platform.OS === 'android') return 16
-  return safeBottom + 28
+  return tabBarBottomOffset(safeBottom) + TAB_BAR.height + TAB_BAR.controlsGap
 }
 
 export function cameraControlsBlockHeight(): number {

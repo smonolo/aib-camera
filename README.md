@@ -33,7 +33,7 @@ Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`
 
 ## Stack
 
-Expo SDK 58 · Expo Router · React Native · NativeWind · Skia · TypeScript · jest-expo
+Expo SDK 58 · Expo Router · React Native · NativeWind · Skia · Solar Icons · TypeScript · jest-expo
 
 ## Setup
 
@@ -56,7 +56,7 @@ npm run smoke-checklist   # prints the device QA checklist
 | Path             | Role                                                                                                    |
 | ---------------- | ------------------------------------------------------------------------------------------------------- |
 | `app/`           | Expo Router screens (tabs: camera, gallery, settings; root: `configuration`, `photo/[id]`, `audit-log`) |
-| `components/`    | UI (stamp overlay, permissions, buttons, surfaces, `AppSheet`)                                          |
+| `components/`    | UI (stamp overlay, permissions, buttons, surfaces, `AppSheet`, shared glass `AppTabBar`)                |
 | `lib/`           | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config               |
 | `tests/`         | jest-expo unit tests                                                                                    |
 | `assets/images/` | App icon, adaptive icon layers, splash, favicon                                                         |
