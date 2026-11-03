@@ -1,0 +1,13 @@
+---
+description: Never add comments to code in this repository
+alwaysApply: true
+---
+
+# No code comments
+
+Do **not** add comments to this codebase — no `//`, `/* */`, `/** */`, `#`, HTML/JSX comments, or “explained for the reader” blocks in source files.
+
+- Prefer clear names and structure over commentary.
+- Do not leave TODOs, NOTE/FIXME banners, or narrating comments when editing.
+- Do not add comments when generating configs or tests unless the file format requires a mandatory header (then keep it minimal and machine-required only).
+- Existing comments: leave them unless the user asks to remove them or you are rewriting that code anyway; never introduce new ones.

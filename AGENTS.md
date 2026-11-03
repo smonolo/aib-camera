@@ -17,6 +17,7 @@ This is an Expo/React Native mobile app for **AIB (Antincendio Boschivo)** and w
 - **Graceful degradation on older / constrained devices.** Never crash the UI or block the shutter for fonts, haptics, clipboard, share helpers, Photos album, or storage write failures. Stamp composite failure keeps the unstamped JPEG (`lib/persist-photo.ts`). Soft-fail helpers: `lib/soft.ts`, `lib/haptics.ts`, `lib/share.ts`, `lib/clipboard.ts`, gated Exify. Android `minSdkVersion` 24 via `expo-build-properties`.
 - **Stamp timezone** is always `Europe/Rome`. UI language defaults to Italian (`lib/i18n`); English is selectable in Settings and persisted locally. Keep IT and EN catalogs in sync — EN should be natural product copy for the features, not a word-for-word rendering of Italian. Remount `NativeTabs` on locale change (`key={locale}`) so iOS Liquid Glass re-measures tab labels.
 - **Do not** add cloud sync, auth, or regional dispatch integrations unless explicitly requested.
+- **Always format** edited/generated code with Prettier before finishing (`npm run format` or `npx prettier --write` on touched paths; `npm run format:check` must pass). Enforced in `.cursor/rules/prettier-format.mdc`.
 - **License.** Project source is [PolyForm Noncommercial 1.0.0](./LICENSE) (`PolyForm-Noncommercial-1.0.0`). Name, icons, and brand assets are not licensed for reuse in other products. Do not relicense as MIT/Apache or drop the Required Notice without an explicit owner request.
 
 ## Expo has changed — do not trust your training data
@@ -39,13 +40,14 @@ npx tsc --noEmit            # typecheck
 npm run typecheck           # same
 npm test                    # unit tests (jest-expo, tests/)
 npm run test:watch          # watch mode
-npm run format              # Prettier
+npm run format              # Prettier write
+npm run format:check        # Prettier check (must pass for touched files)
 npm run smoke-checklist     # print device QA checklist
 npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
 ```
 
-Run typecheck and unit tests (and lint when configured) before declaring any task done. Verify camera/GPS/compass/EXIF changes on a **physical device** with a **development build** when native modules are involved.
+Run format (`npm run format` / `format:check`), typecheck, and unit tests (and lint when configured) before declaring any task done. Verify camera/GPS/compass/EXIF changes on a **physical device** with a **development build** when native modules are involved.
 
 ## Navigation & Routing
 
@@ -93,7 +95,7 @@ Whenever you change app behavior, UX, permissions, privacy, capture/stamp/galler
 1. **In-repo markdown** (this repo): `README.md`, `PRIVACY.md`, `AGENTS.md`, and any other `*.md` that describes the changed behavior.
 2. **Marketing / public site** (sibling monorepo, if present locally): `../mono-lo-repo/apps/site` — especially `pages/aib-camera/` (`index.vue`, `guide.vue`, `privacy.vue`, `terms.vue`; `/aib-camera/guida` → 301 `/aib-camera/guide`), `content/aib-camera/` (`guida-operativa.md` IT + `guida-operativa.en.md` EN), `layouts/aib-camera.vue`, `components/aib/Navbar.vue`, locale copy in `utils/aib-camera-copy.ts` (IT default; EN via navbar / `?lang=en`, see `composables/useAibLocale.ts`), and related CSS/assets. Regenerate guide PDF + bundled body HTML with `npm run docs:aib-camera-guida` in `apps/site` (bodies live in `assets/aib-camera/` and are imported at build time — do not runtime-fetch them). Skip the site only if that path is missing; say so briefly when skipping.
 
-Keep copy consistent across IT/EN where both exist, preserve the **unofficial** framing (no institutional affiliation), and keep the **public audience** clear (not operators-only). Do not leave docs or the site describing old behavior.
+Keep copy consistent across IT/EN where both exist, preserve the **unofficial** framing (no institutional affiliation), and keep the **public audience** clear (not operators-only). Do not leave docs or the site describing old behavior. (Also enforced in `.cursor/rules/docs-and-site-sync.mdc`.)
 
 ## Rules
 
@@ -101,3 +103,5 @@ Keep copy consistent across IT/EN where both exist, preserve the **unofficial** 
 - Expo Go only includes its bundled native modules. After adding a library with native code (including Exify), the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
 - Do not commit secrets. Do not create git commits unless the user asks.
+- Do not **add code comments** (`//`, `/* */`, JSDoc, `#`, JSX comments, narrating TODOs). Prefer clear names; do not introduce new comments when editing. (Also enforced in `.cursor/rules/no-code-comments.mdc`.)
+- Do not leave **dead code, duplicates, or careless perf/privacy debt** in a diff. Clean as you go (`.cursor/rules/clean-codebase.mdc`).

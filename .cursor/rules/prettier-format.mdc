@@ -1,0 +1,13 @@
+---
+description: Always format code with the repo Prettier config before finishing
+alwaysApply: true
+---
+
+# Prettier formatting
+
+All edited or generated source must match this repo’s Prettier config (root `.prettierrc`: no semicolons, single quotes, etc.).
+
+- After substantive edits, run `npm run format` (or `npx prettier --write` on the touched paths) before considering the task done.
+- Do not hand-format in a conflicting style; do not disable Prettier or add per-file overrides unless the user asks.
+- `npm run format:check` should pass for files you changed.
+- Prefer formatting only what you touched when a full-repo write is unnecessary; use root `npm run format` when many files changed.

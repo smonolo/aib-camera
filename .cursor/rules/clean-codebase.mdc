@@ -1,0 +1,38 @@
+---
+description: Keep the codebase clean — no dead code, duplicates, or careless perf/security debt
+alwaysApply: true
+---
+
+# Clean codebase
+
+Before finishing any change, leave the touched area **cleaner or no worse** than you found it. Prefer fixing issues you introduce or that sit directly in your path; do not drive-by refactor unrelated modules.
+
+## Remove and avoid
+
+- **Dead code**: unused imports, exports, variables, branches, feature flags, leftover files after moves/deletes, unreachable routes.
+- **Duplicates**: copy-paste helpers, parallel types, repeated class strings, twin formatters — extract once under `lib/` or shared components.
+- **Comments / TODOs**: follow `no-code-comments.mdc`; do not paper over mess with banners.
+- **Speculative abstraction**: no unused generics, config knobs, or “for later” wrappers.
+
+## Performance & emergency UX
+
+- Prefer effective HUD geo over waiting on high-accuracy GPS; keep shutter fast (short timeouts on GPS/geocode/heading).
+- Avoid unnecessary re-renders (unstable inline props/effects only when they already matter in this codebase).
+- Do not add heavy deps when a small local helper or an Expo module suffices.
+- Soft-fail fonts, haptics, clipboard, share, Photos album, EXIF — never block capture or crash the UI.
+
+## Security & privacy
+
+- No cloud sync, auth, or upload of captures/audit CSV unless the user explicitly requests it.
+- No committed secrets / `.env` values. Do not log install IDs or capture UUIDs to remote services.
+- Keep reverse geocode optional and cached; local-first paths must work offline.
+
+## Structure
+
+- Routes in `app/`; shared logic in `lib/`; UI in `components/`; tests in `tests/`.
+- Match Prettier (`prettier-format.mdc`). Run format/typecheck (and tests when relevant) on touched paths before done.
+- If behavior/UX/privacy changed, sync docs/site (`docs-and-site-sync.mdc`).
+
+## Done check
+
+Ask: would a reviewer see leftover dead paths, duplicated logic, a perf footgun, or a privacy shortcut in this diff? If yes, fix it before declaring done.

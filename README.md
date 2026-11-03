@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.0.0` · iOS `buildNumber`: `6` · Android `versionCode`: `1` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.0.2` · iOS `buildNumber`: `13` · Android `versionCode`: `4` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
