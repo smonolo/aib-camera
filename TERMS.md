@@ -37,7 +37,7 @@ To the fullest extent permitted by applicable law, the developer is not liable f
 
 ## Privacy
 
-How the app handles data is described in the [privacy policy](./PRIVACY.md) (hosted at [smnl.dev/aib-camera/privacy](https://smnl.dev/aib-camera/privacy)). In short: processing is primarily on-device, with no developer-operated account or cloud sync.
+How the app handles data is described in the [privacy policy](./PRIVACY.md) (hosted at [aib.smnl.dev/camera/privacy](https://aib.smnl.dev/camera/privacy)). In short: processing is primarily on-device, with no developer-operated account or cloud sync.
 
 ## Intellectual property
 
@@ -51,6 +51,6 @@ The app and these terms may change. The “Last updated” date above will be re
 
 ## Contact
 
-Developer site: [smnl.dev](https://smnl.dev) · Terms URL: [smnl.dev/aib-camera/terms](https://smnl.dev/aib-camera/terms) · Privacy: [smnl.dev/aib-camera/privacy](https://smnl.dev/aib-camera/privacy)
+Developer site: [smnl.dev](https://smnl.dev) · Terms URL: [aib.smnl.dev/camera/terms](https://aib.smnl.dev/camera/terms) · Privacy: [aib.smnl.dev/camera/privacy](https://aib.smnl.dev/camera/privacy)
 
 For questions about these terms or the app, email [stefano@smnl.dev](mailto:stefano@smnl.dev).

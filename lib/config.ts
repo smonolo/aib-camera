@@ -15,15 +15,15 @@ function extra(): Extra {
 }
 
 export function privacyPolicyUrl(): string {
-  return extra().privacyPolicyUrl ?? 'https://smnl.dev/aib-camera/privacy'
+  return extra().privacyPolicyUrl ?? 'https://aib.smnl.dev/camera/privacy'
 }
 
 export function termsOfUseUrl(): string {
-  return extra().termsOfUseUrl ?? 'https://smnl.dev/aib-camera/terms'
+  return extra().termsOfUseUrl ?? 'https://aib.smnl.dev/camera/terms'
 }
 
 export function userGuideUrl(): string {
-  return extra().userGuideUrl ?? 'https://smnl.dev/aib-camera/guide'
+  return extra().userGuideUrl ?? 'https://aib.smnl.dev/camera/guide'
 }
 
 export function appVersionLabel(): string {

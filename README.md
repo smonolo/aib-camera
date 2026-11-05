@@ -12,7 +12,9 @@ User-facing version: `1.2.0` · iOS `buildNumber`: `15` · Android `versionCode`
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
-Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`https://smnl.dev/aib-camera/terms`).
+Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`https://aib.smnl.dev/camera/terms`).
+
+Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/changelog](https://aib.smnl.dev/camera/changelog) — edit `../aib-site/content/camera/changelog.md` (+ `.en.md`) and run `npm run docs:camera-changelog` from `aib-site`.
 
 ## Features
 

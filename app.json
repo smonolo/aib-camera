@@ -132,9 +132,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "privacyPolicyUrl": "https://smnl.dev/aib-camera/privacy",
-      "termsOfUseUrl": "https://smnl.dev/aib-camera/terms",
-      "userGuideUrl": "https://smnl.dev/aib-camera/guide",
+      "privacyPolicyUrl": "https://aib.smnl.dev/camera/privacy",
+      "termsOfUseUrl": "https://aib.smnl.dev/camera/terms",
+      "userGuideUrl": "https://aib.smnl.dev/camera/guide",
       "router": {
         "asyncRoutes": {
           "web": true

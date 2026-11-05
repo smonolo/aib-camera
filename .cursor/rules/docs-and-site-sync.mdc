@@ -1,5 +1,5 @@
 ---
-description: Keep README/PRIVACY/AGENTS and the aib-camera site in sync whenever app behavior changes
+description: Keep README/PRIVACY/AGENTS and the aib-site marketing pages in sync whenever app behavior changes
 alwaysApply: true
 ---
 
@@ -8,6 +8,6 @@ alwaysApply: true
 After any change to product behavior, UX, permissions, privacy, capture/stamp/gallery/settings, or release notes — **before finishing** — update every affected surface:
 
 1. **Repo markdown**: `README.md`, `PRIVACY.md`, `AGENTS.md`, and any other `*.md` that describes the changed behavior.
-2. **Public site** (if available locally): `../mono-lo-repo/apps/site/aib-camera` — especially `pages/aib-camera/` (`index.vue`, `guide.vue`, `privacy.vue`, `terms.vue`; `/guida` redirects to `/guide`), `content/`, `layouts/aib-camera.vue`, `utils/aib-camera-copy.ts`, and related CSS/assets. Regenerate guide PDF + body HTML with `npm run docs:aib-camera-guida` from `apps/site`. If that path is missing, skip and say so briefly.
+2. **Public site** (if available locally): `../aib-site` — especially `app/camera/` (`page.tsx`, `guide`, `changelog`, `privacy`, `terms`), `content/camera/` (guide + changelog IT/EN markdown), `lib/camera/copy.ts`, `components/camera/`, and related CSS/assets. Regenerate guide PDF + body HTML with `npm run docs:camera-guide` from `aib-site`; regenerate changelog HTML with `npm run docs:camera-changelog`. If that path is missing, skip and say so briefly.
 
 Keep IT/EN copy aligned where both exist. Preserve unofficial volunteer framing (no institutional affiliation). Do not leave docs or the site describing old behavior.

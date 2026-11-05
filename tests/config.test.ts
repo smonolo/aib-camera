@@ -92,10 +92,10 @@ describe('config', () => {
 
     const config = require('@/lib/config') as typeof import('@/lib/config')
     expect(config.privacyPolicyUrl()).toBe(
-      'https://smnl.dev/aib-camera/privacy'
+      'https://aib.smnl.dev/camera/privacy'
     )
-    expect(config.termsOfUseUrl()).toBe('https://smnl.dev/aib-camera/terms')
-    expect(config.userGuideUrl()).toBe('https://smnl.dev/aib-camera/guide')
+    expect(config.termsOfUseUrl()).toBe('https://aib.smnl.dev/camera/terms')
+    expect(config.userGuideUrl()).toBe('https://aib.smnl.dev/camera/guide')
     expect(config.appVersionLabel()).toBe('3.0.0')
   })
 })
