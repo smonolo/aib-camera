@@ -21,7 +21,11 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AimChromeButton, AimModeToggle } from '@/components/AimTargetControls'
+import {
+  AimChromeButton,
+  AimModeToggle,
+  openAimTargetSheet,
+} from '@/components/AimTargetControls'
 import { CameraChromeButton } from '@/components/CameraChromeButton'
 import { PermissionGate } from '@/components/PermissionGate'
 import { StampOverlay } from '@/components/StampOverlay'
@@ -255,7 +259,7 @@ function CameraExperience() {
 
   const openAimTarget = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    router.push('/aim-target')
+    openAimTargetSheet()
   }, [])
 
   const reportCaptureError = useCallback(
@@ -502,7 +506,7 @@ function CameraExperience() {
   const preview = (
     <GestureDetector gesture={previewGestures}>
       <View
-        accessibilityHint={copy.camera.aimLongPressHint}
+        accessibilityHint={copy.aim.longPressHint}
         style={{
           width: letterbox.previewWidth,
           height: letterbox.previewHeight,

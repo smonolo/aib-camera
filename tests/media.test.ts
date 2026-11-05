@@ -146,6 +146,15 @@ describe('deleteMediaLibraryAssets', () => {
     expect(getPermissionsAsync).toHaveBeenCalledWith(false, ['photo'])
     expect(Asset.delete).toHaveBeenCalledWith([{ id: 'asset-1' }])
   })
+
+  it('soft-fails when media library delete throws', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    ;(getPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true })
+    ;(Asset.delete as jest.Mock).mockRejectedValue(new Error('album boom'))
+
+    await expect(deleteMediaLibraryAssets(['asset-1'])).resolves.toBeUndefined()
+    expect(console.warn).toHaveBeenCalled()
+  })
 })
 
 describe('deleteLocalPhotoFiles', () => {
@@ -166,6 +175,27 @@ describe('deleteLocalPhotoFiles', () => {
     expect(File).toHaveBeenCalledWith('file:///a.jpg')
     expect(deleteFn).toHaveBeenCalledTimes(1)
   })
+
+  it('skips files that do not exist and soft-fails delete errors', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    ;(File as unknown as jest.Mock).mockImplementation((uri: string) => {
+      if (uri.endsWith('missing.jpg')) {
+        return { uri, exists: false, delete: jest.fn() }
+      }
+      return {
+        uri,
+        exists: true,
+        delete: () => {
+          throw new Error('fs boom')
+        },
+      }
+    })
+
+    await expect(
+      deleteLocalPhotoFiles(['file:///missing.jpg', 'file:///broken.jpg'])
+    ).resolves.toBeUndefined()
+    expect(console.warn).toHaveBeenCalled()
+  })
 })
 
 describe('deleteCaptures', () => {
@@ -177,6 +207,19 @@ describe('deleteCaptures', () => {
     await AsyncStorage.clear()
     ;(getPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true })
     ;(Asset.delete as jest.Mock).mockResolvedValue(undefined)
+  })
+
+  it('returns the current gallery when the id list is empty', async () => {
+    await addCapture(capture({ id: 'keep' }))
+    expect((await deleteCaptures([])).map(item => item.id)).toEqual(['keep'])
+  })
+
+  it('returns the current gallery when none of the ids match', async () => {
+    await addCapture(capture({ id: 'keep' }))
+    expect((await deleteCaptures(['missing'])).map(item => item.id)).toEqual([
+      'keep',
+    ])
+    expect(Asset.delete).not.toHaveBeenCalled()
   })
 
   it('removes gallery entries, media assets, and local files but keeps the audit log', async () => {
@@ -253,5 +296,16 @@ describe('sharePhotos', () => {
       'file:///b.jpg',
       expect.objectContaining({ mimeType: 'image/jpeg' })
     )
+  })
+
+  it('falls back to Share when expo-sharing fails, then rethrows if that fails too', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    ;(Sharing.isAvailableAsync as jest.Mock).mockResolvedValue(true)
+    ;(Sharing.shareAsync as jest.Mock).mockRejectedValue(
+      new Error('expo share boom')
+    )
+    ;(Share.share as jest.Mock).mockRejectedValue(new Error('share boom'))
+    await expect(sharePhotos(['file:///a.jpg'])).rejects.toThrow('share boom')
+    expect(console.warn).toHaveBeenCalled()
   })
 })

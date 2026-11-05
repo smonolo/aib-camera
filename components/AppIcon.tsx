@@ -5,6 +5,7 @@ import {
   CheckCircleIcon,
   CheckIcon,
   CloseIcon,
+  CopyIcon,
   DangerTriangleIcon,
   FlashlightIcon,
   FlashlightOnIcon,
@@ -23,6 +24,7 @@ import {
 const ICONS = {
   camera: CameraIcon,
   images: GalleryIcon,
+  map: MapPointIcon,
   settings: SettingsIcon,
   ellipsis: MenuDotsIcon,
   check: CheckIcon,
@@ -30,6 +32,7 @@ const ICONS = {
   chevronRight: AltArrowRightIcon,
   trash: TrashBinTrashIcon,
   share: ShareIcon,
+  copy: CopyIcon,
   externalLink: SquareArrowRightUpIcon,
   flash: FlashlightOnIcon,
   flashOff: FlashlightIcon,

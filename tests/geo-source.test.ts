@@ -30,6 +30,7 @@ import {
   getGeoSourceState,
   hydrateGeoSource,
   lockAimedTarget,
+  moveAimedTarget,
   resetGeoSourceForTests,
   setGeoSourceMode,
 } from '@/lib/geo-source'
@@ -199,6 +200,82 @@ describe('lockAimedTarget', () => {
   })
 })
 
+describe('moveAimedTarget', () => {
+  it('updates sticky lat/lon, distance, and bearing from observer GPS', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live({ heading: 10 }))
+    mockReverseGeocodeCoords.mockResolvedValue('Trascinato')
+    const dest = destinationPoint(45.4642, 9.19, 45, 250)
+
+    const result = await moveAimedTarget(dest.lat, dest.lon)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.sticky.lat).toBeCloseTo(dest.lat, 6)
+    expect(result.sticky.lon).toBeCloseTo(dest.lon, 6)
+    expect(result.sticky.distanceM).toBe(250)
+    expect(result.sticky.lockedHeading).toBeCloseTo(45, 0)
+    expect(result.sticky.address).toBe('Trascinato')
+    expect(getGeoSourceState().mode).toBe('target')
+  })
+
+  it('soft-fails without GPS', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live({ lat: null, lon: null }))
+    await expect(moveAimedTarget(45.5, 9.2)).resolves.toEqual({
+      ok: false,
+      reason: 'no_gps',
+    })
+  })
+
+  it('soft-fails when dropped on the observer', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live())
+    await expect(moveAimedTarget(45.4642, 9.19)).resolves.toEqual({
+      ok: false,
+      reason: 'bad_distance',
+    })
+  })
+
+  it('soft-fails on non-finite drop coords', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live())
+    await expect(moveAimedTarget(Number.NaN, 9.2)).resolves.toEqual({
+      ok: false,
+      reason: 'bad_distance',
+    })
+    await expect(
+      moveAimedTarget(45.5, Number.POSITIVE_INFINITY)
+    ).resolves.toEqual({
+      ok: false,
+      reason: 'bad_distance',
+    })
+  })
+
+  it('soft-fails when the drop is farther than the max aim distance', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live())
+    const far = destinationPoint(45.4642, 9.19, 0, 60_000)
+    await expect(moveAimedTarget(far.lat, far.lon)).resolves.toEqual({
+      ok: false,
+      reason: 'bad_distance',
+    })
+    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
+  })
+
+  it('locks target mode even when starting from me', async () => {
+    resetGeoSourceForTests({ mode: 'me', sticky: null })
+    mockGetSharedGeoSnapshot.mockReturnValue(live())
+    const dest = destinationPoint(45.4642, 9.19, 180, 100)
+    const result = await moveAimedTarget(dest.lat, dest.lon)
+    expect(result.ok).toBe(true)
+    expect(getGeoSourceState().mode).toBe('target')
+  })
+
+  it('soft-fails when only longitude is missing', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live({ lon: null }))
+    await expect(moveAimedTarget(45.5, 9.2)).resolves.toEqual({
+      ok: false,
+      reason: 'no_gps',
+    })
+  })
+})
+
 describe('geo source mode helpers', () => {
   beforeEach(() => {
     resetGeoSourceForTests({ mode: 'target', sticky })
@@ -212,7 +289,7 @@ describe('geo source mode helpers', () => {
   it('refuses target mode without sticky', () => {
     resetGeoSourceForTests({ mode: 'me', sticky: null })
     setGeoSourceMode('target')
-    expect(getGeoSourceState().mode).toBe('me')
+    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
   })
 
   it('switches me ↔ target when sticky exists', () => {
@@ -221,6 +298,13 @@ describe('geo source mode helpers', () => {
     expect(getGeoSourceState().mode).toBe('me')
     setGeoSourceMode('target')
     expect(getGeoSourceState().mode).toBe('target')
+  })
+
+  it('is a no-op when the mode is unchanged', async () => {
+    await AsyncStorage.clear()
+    setGeoSourceMode('target')
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(await AsyncStorage.getItem(GEO_SOURCE_KEY)).toBeNull()
   })
 })
 
@@ -253,5 +337,103 @@ describe('hydrateGeoSource', () => {
     resetGeoSourceForTests()
     await hydrateGeoSource()
     expect(getGeoSourceState()).toEqual({ mode: 'me', sticky })
+  })
+
+  it('ignores invalid JSON and empty storage', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    await AsyncStorage.setItem(GEO_SOURCE_KEY, '{not-json')
+    resetGeoSourceForTests()
+    await hydrateGeoSource()
+    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
+    expect(warn).toHaveBeenCalledWith(
+      'Geo source load failed',
+      expect.any(SyntaxError)
+    )
+
+    await AsyncStorage.clear()
+    resetGeoSourceForTests()
+    warn.mockClear()
+    await hydrateGeoSource()
+    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('rejects sticky with non-positive or oversize distance', async () => {
+    await AsyncStorage.setItem(
+      GEO_SOURCE_KEY,
+      JSON.stringify({
+        mode: 'target',
+        sticky: { ...sticky, distanceM: 0 },
+      })
+    )
+    resetGeoSourceForTests()
+    await hydrateGeoSource()
+    expect(getGeoSourceState().sticky).toBeNull()
+  })
+
+  it('coerces non-string sticky address to null', async () => {
+    await AsyncStorage.setItem(
+      GEO_SOURCE_KEY,
+      JSON.stringify({
+        mode: 'target',
+        sticky: { ...sticky, address: 42 },
+      })
+    )
+    resetGeoSourceForTests()
+    await hydrateGeoSource()
+    expect(getGeoSourceState().sticky?.address).toBeNull()
+    expect(getGeoSourceState().mode).toBe('target')
+  })
+
+  it('does not re-read storage after the first hydrate', async () => {
+    await AsyncStorage.setItem(
+      GEO_SOURCE_KEY,
+      JSON.stringify({ mode: 'target', sticky })
+    )
+    resetGeoSourceForTests()
+    await hydrateGeoSource()
+    await AsyncStorage.setItem(
+      GEO_SOURCE_KEY,
+      JSON.stringify({ mode: 'me', sticky: null })
+    )
+    await hydrateGeoSource()
+    expect(getGeoSourceState()).toEqual({ mode: 'target', sticky })
+  })
+
+  it('dedupes concurrent hydrate calls', async () => {
+    await AsyncStorage.setItem(
+      GEO_SOURCE_KEY,
+      JSON.stringify({ mode: 'target', sticky })
+    )
+    resetGeoSourceForTests()
+    await Promise.all([hydrateGeoSource(), hydrateGeoSource()])
+    expect(getGeoSourceState()).toEqual({ mode: 'target', sticky })
+  })
+})
+
+describe('lockAimedTarget presets', () => {
+  it('locks each Aim distance preset', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live({ heading: 45 }))
+    for (const distance of [100, 250, 500, 1000] as const) {
+      resetGeoSourceForTests()
+      const result = await lockAimedTarget(distance)
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.sticky.distanceM).toBe(distance)
+      expect(
+        haversineMeters(45.4642, 9.19, result.sticky.lat, result.sticky.lon)
+      ).toBeCloseTo(distance, 0)
+    }
+  })
+
+  it('soft-fails when only latitude is missing', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(
+      live({ lat: null, lon: 9.19, heading: 90 })
+    )
+    await expect(lockAimedTarget(100)).resolves.toEqual({
+      ok: false,
+      reason: 'no_gps',
+    })
   })
 })

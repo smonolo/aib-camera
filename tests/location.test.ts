@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Location from 'expo-location'
 
 import {
@@ -17,8 +18,11 @@ import {
   setHeadingOrientationOffset,
   smoothHeadingDegrees,
   updateSmoothedHeading,
+  watchHeading,
+  watchPosition,
   withTimeout,
 } from '@/lib/location'
+import { resetStorageCaches, upsertGeocodeCacheEntry } from '@/lib/storage'
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -38,8 +42,10 @@ jest.mock('expo-location', () => ({
 
 const mockedLocation = Location as jest.Mocked<typeof Location>
 
-beforeEach(() => {
+beforeEach(async () => {
   resetGeocodeMemory()
+  resetStorageCaches()
+  await AsyncStorage.clear()
   jest.resetAllMocks()
 })
 
@@ -507,5 +513,247 @@ describe('captureGeoSnapshot', () => {
     const snap = await captureGeoSnapshot({ headingHint: 250 })
     expect(snap.heading).toBe(250)
     expect(mockedLocation.getHeadingAsync).not.toHaveBeenCalled()
+  })
+
+  it('accepts a bare heading hint number for backward compatibility', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockResolvedValue({
+      coords: {
+        latitude: 45.46,
+        longitude: 9.19,
+        accuracy: null,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    } as never)
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([] as never)
+
+    const snap = await captureGeoSnapshot(123)
+    expect(snap.heading).toBe(123)
+    expect(snap.accuracy).toBeNull()
+    expect(mockedLocation.getHeadingAsync).not.toHaveBeenCalled()
+  })
+
+  it('falls back to last-known position when the fresh fix times out', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockImplementation(
+      () => new Promise(() => {})
+    )
+    mockedLocation.getLastKnownPositionAsync.mockResolvedValue({
+      coords: {
+        latitude: 45.1,
+        longitude: 9.1,
+        accuracy: 40,
+        altitude: 50,
+        altitudeAccuracy: null,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    } as never)
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([] as never)
+
+    const snap = await captureGeoSnapshot({
+      headingHint: 10,
+      positionTimeoutMs: 20,
+    })
+    expect(snap).toMatchObject({
+      lat: 45.1,
+      lon: 9.1,
+      accuracy: 40,
+      altitude: 50,
+      heading: 10,
+    })
+  })
+
+  it('returns an empty snapshot when position and last-known both fail', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockRejectedValue(
+      new Error('no fix')
+    )
+    mockedLocation.getLastKnownPositionAsync.mockResolvedValue(null)
+
+    const snap = await captureGeoSnapshot({ headingHint: 77 })
+    expect(snap).toMatchObject({
+      lat: null,
+      lon: null,
+      heading: 77,
+      address: null,
+    })
+  })
+
+  it('leaves heading null when compass sampling fails', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockResolvedValue({
+      coords: {
+        latitude: 45.46,
+        longitude: 9.19,
+        accuracy: 6,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    } as never)
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([] as never)
+    mockedLocation.getHeadingAsync.mockRejectedValue(new Error('no compass'))
+
+    const snap = await captureGeoSnapshot()
+    expect(snap.heading).toBeNull()
+    expect(snap.lat).toBe(45.46)
+  })
+})
+
+describe('watchPosition / watchHeading', () => {
+  it('returns null without location permission', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(false)
+    )
+    await expect(watchPosition(jest.fn())).resolves.toBeNull()
+    await expect(watchHeading(jest.fn())).resolves.toBeNull()
+    expect(mockedLocation.watchPositionAsync).not.toHaveBeenCalled()
+    expect(mockedLocation.watchHeadingAsync).not.toHaveBeenCalled()
+  })
+
+  it('returns null when watch APIs throw', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.watchPositionAsync.mockRejectedValue(new Error('watch boom'))
+    mockedLocation.watchHeadingAsync.mockRejectedValue(
+      new Error('heading boom')
+    )
+    await expect(watchPosition(jest.fn())).resolves.toBeNull()
+    await expect(watchHeading(jest.fn())).resolves.toBeNull()
+  })
+
+  it('forwards position updates and refreshes address after geocode', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    const remove = jest.fn()
+    mockedLocation.watchPositionAsync.mockImplementation(async (_opts, cb) => {
+      cb({
+        coords: {
+          latitude: 45.46,
+          longitude: 9.19,
+          accuracy: 5,
+          altitude: 100,
+          altitudeAccuracy: null,
+          heading: 0,
+          speed: 0,
+        },
+        timestamp: Date.now(),
+      } as never)
+      return { remove } as never
+    })
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([
+      {
+        name: null,
+        street: null,
+        streetNumber: null,
+        city: 'Milano',
+        district: null,
+        subregion: null,
+        region: 'Lombardia',
+        country: 'Italy',
+        postalCode: null,
+        isoCountryCode: 'IT',
+        timezone: null,
+        formattedAddress: null,
+      },
+    ] as never)
+
+    const onUpdate = jest.fn()
+    const sub = await watchPosition(onUpdate)
+    expect(sub).toEqual({ remove })
+    expect(onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lat: 45.46,
+        lon: 9.19,
+        accuracy: 5,
+        altitude: 100,
+      })
+    )
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: 'Milano · Lombardia',
+      })
+    )
+  })
+
+  it('forwards smoothed heading updates', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.watchHeadingAsync.mockImplementation(async cb => {
+      cb({ trueHeading: 40, magHeading: 40, accuracy: 2 } as never)
+      return { remove: jest.fn() } as never
+    })
+
+    const onUpdate = jest.fn()
+    await watchHeading(onUpdate)
+    expect(onUpdate).toHaveBeenCalledWith(40)
+  })
+})
+
+describe('reverseGeocodeCoords failures', () => {
+  it('returns null when network geocode fails and cache is empty', async () => {
+    mockedLocation.reverseGeocodeAsync.mockRejectedValue(new Error('offline'))
+    await expect(reverseGeocodeCoords(45.46, 9.19)).resolves.toBeNull()
+  })
+
+  it('falls back to the on-device geocode cache when the network fails', async () => {
+    await upsertGeocodeCacheEntry({
+      key: 'cached',
+      address: 'Cached Place · Lombardia',
+      lat: 45.46,
+      lon: 9.19,
+    })
+    mockedLocation.reverseGeocodeAsync.mockRejectedValue(new Error('offline'))
+    await expect(reverseGeocodeCoords(45.4601, 9.1901)).resolves.toBe(
+      'Cached Place · Lombardia'
+    )
+  })
+
+  it('reuses the same-cell result without a second network call', async () => {
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([
+      {
+        name: null,
+        street: null,
+        streetNumber: null,
+        city: 'Milano',
+        district: null,
+        subregion: null,
+        region: 'Lombardia',
+        country: 'Italy',
+        postalCode: null,
+        isoCountryCode: 'IT',
+        timezone: null,
+        formattedAddress: null,
+      },
+    ] as never)
+
+    await expect(reverseGeocodeCoords(45.4642, 9.1901)).resolves.toBe(
+      'Milano · Lombardia'
+    )
+    await expect(reverseGeocodeCoords(45.4644, 9.1902)).resolves.toBe(
+      'Milano · Lombardia'
+    )
+    expect(mockedLocation.reverseGeocodeAsync).toHaveBeenCalledTimes(1)
   })
 })

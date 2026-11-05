@@ -1,8 +1,13 @@
+import { setLocale, resetLocaleForTests } from '@/lib/i18n'
 import {
   buildCustomStampLines,
   buildInfoStampLines,
+  buildLocationInfoLines,
+  buildLocationInfoText,
+  buildStampContent,
   formatGalleryDayLabel,
   formatLatLon,
+  formatStampCoordinates,
   formatStampDateTime,
   galleryDayKey,
   parseCustomLines,
@@ -47,6 +52,27 @@ describe('formatStampDateTime', () => {
   it('formats short Italian datetime', () => {
     expect(formatStampDateTime(takenAt, 'it-short')).toMatch(
       /15\/07\/2024.*16:30:45/
+    )
+  })
+
+  it('formats full Italian datetime with weekday and month name', () => {
+    const full = formatStampDateTime(takenAt, 'it-full')
+    expect(full.toLowerCase()).toMatch(/luglio|july/)
+    expect(full).toContain('2024')
+    expect(full).toMatch(/16:30:45/)
+  })
+})
+
+describe('formatStampCoordinates', () => {
+  it('labels northern / eastern hemispheres', () => {
+    expect(formatStampCoordinates(45.4642, 9.19)).toBe(
+      '45.464200° N, 9.190000° E'
+    )
+  })
+
+  it('labels southern / western hemispheres with absolute degrees', () => {
+    expect(formatStampCoordinates(-33.8688, -151.2093)).toBe(
+      '33.868800° S, 151.209300° W'
     )
   })
 })
@@ -151,6 +177,157 @@ describe('buildInfoStampLines', () => {
     expect(lines[0]).toBe('Punto mirato (stimato)')
     expect(lines[1]).toContain('45.464200')
   })
+
+  it('still labels aimed targets without a distance', () => {
+    const lines = buildInfoStampLines(
+      geo({
+        isAimedTarget: true,
+        targetDistanceM: null,
+        accuracy: null,
+        altitude: null,
+        heading: null,
+      }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showAddress: false,
+      }
+    )
+    expect(lines[0]).toBe('Punto mirato (stimato)')
+    expect(lines.every(line => !line.includes('~'))).toBe(true)
+  })
+
+  it('rounds coarse accuracy and maps heading cardinals', () => {
+    const lines = buildInfoStampLines(
+      geo({ accuracy: 12.4, heading: 359, altitude: 10.4 }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showCoordinates: false,
+        showAddress: false,
+      }
+    )
+    const meta = lines[0] ?? ''
+    expect(meta).toContain('±12 m')
+    expect(meta).toContain('10 m s.l.m.')
+    expect(meta).toMatch(/0° N|359°/)
+  })
+
+  it('uses English aimed copy when the UI locale is English', () => {
+    setLocale('en')
+    try {
+      const lines = buildInfoStampLines(
+        geo({
+          isAimedTarget: true,
+          targetDistanceM: null,
+          accuracy: null,
+          altitude: null,
+          heading: null,
+        }),
+        {
+          ...DEFAULT_STAMP_SETTINGS,
+          showDateTime: false,
+          showCoordinates: false,
+          showAccuracy: false,
+          showAltitude: false,
+          showHeading: false,
+          showAddress: false,
+        }
+      )
+      expect(lines).toEqual(['Aimed target (estimated)'])
+    } finally {
+      resetLocaleForTests()
+    }
+  })
+
+  it('wraps long unbroken address tokens', () => {
+    const lines = buildInfoStampLines(
+      geo({
+        address: 'SupercalifragilisticexpialidociousPlaceNameWithoutSpaces',
+      }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showCoordinates: false,
+        showAccuracy: false,
+        showAltitude: false,
+        showHeading: false,
+      }
+    )
+    expect(lines.length).toBeGreaterThan(1)
+    expect(lines.join('')).toContain('Supercalifragilistic')
+  })
+})
+
+describe('buildLocationInfoText', () => {
+  it('keeps address on one line and adds decimal lat/lon', () => {
+    const text = buildLocationInfoText(geo(), DEFAULT_STAMP_SETTINGS)
+    expect(text).toContain('45.464200° N, 9.190000° E')
+    expect(text).toContain('45.464200, 9.190000')
+    expect(text).toContain('Milano, Lombardia')
+    expect(text.split('\n').some(line => line === 'Milano, Lombardia')).toBe(
+      true
+    )
+  })
+
+  it('labels aimed targets for map copy/share', () => {
+    const text = buildLocationInfoText(
+      geo({ isAimedTarget: true, targetDistanceM: 250, accuracy: null }),
+      DEFAULT_STAMP_SETTINGS
+    )
+    expect(text).toContain('Punto mirato (stimato)')
+    expect(text).toContain('~250 m')
+  })
+})
+
+describe('buildLocationInfoLines', () => {
+  it('wraps long addresses by default', () => {
+    const long =
+      'Via Roma 1 · Quartiere Centro Storico · Comune Di Esempio · Regione Lombardia · Italia'
+    const lines = buildLocationInfoLines(geo({ address: long }), {
+      ...DEFAULT_STAMP_SETTINGS,
+      showDateTime: false,
+      showCoordinates: false,
+      showAccuracy: false,
+      showAltitude: false,
+      showHeading: false,
+    })
+    expect(lines.length).toBeGreaterThan(1)
+    expect(lines.join(' ')).toContain('Via Roma 1')
+  })
+
+  it('can keep the address unwrapped for share text', () => {
+    const long =
+      'Via Roma 1 · Quartiere Centro Storico · Comune Di Esempio · Regione Lombardia · Italia'
+    const lines = buildLocationInfoLines(
+      geo({ address: long }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showCoordinates: false,
+        showAccuracy: false,
+        showAltitude: false,
+        showHeading: false,
+      },
+      { wrapAddress: false }
+    )
+    expect(lines).toEqual([long])
+  })
+
+  it('shows coordinate fallbacks when GPS is missing', () => {
+    const lines = buildLocationInfoLines(
+      geo({ lat: null, lon: null, address: null }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showAccuracy: false,
+        showAltitude: false,
+        showHeading: false,
+      }
+    )
+    expect(lines).toContain('Coordinate non disponibili')
+    expect(lines).toContain('Luogo non disponibile')
+  })
 })
 
 describe('buildCustomStampLines', () => {
@@ -161,6 +338,42 @@ describe('buildCustomStampLines', () => {
         customLines: ['  Squadra Nord  ', '', '  '],
       })
     ).toEqual(['Squadra Nord'])
+  })
+
+  it('wraps oversized custom lines', () => {
+    const long = 'A'.repeat(50)
+    const lines = buildCustomStampLines({
+      ...DEFAULT_STAMP_SETTINGS,
+      customLines: [long],
+    })
+    expect(lines.length).toBeGreaterThan(1)
+    expect(lines.join('')).toBe(long)
+  })
+
+  it('wraps multi-word custom lines that overflow the stamp width', () => {
+    const lines = buildCustomStampLines({
+      ...DEFAULT_STAMP_SETTINGS,
+      customLines: ['Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa'],
+    })
+    expect(lines.length).toBeGreaterThan(1)
+    expect(lines.join(' ')).toContain('Alpha')
+    expect(lines.join(' ')).toContain('Kappa')
+  })
+})
+
+describe('buildStampContent', () => {
+  it('returns info and custom lines together', () => {
+    const content = buildStampContent(geo({ isAimedTarget: true }), {
+      ...DEFAULT_STAMP_SETTINGS,
+      customLines: ['Squadra Nord'],
+      showDateTime: false,
+      showAccuracy: false,
+      showAltitude: false,
+      showHeading: false,
+      showAddress: false,
+    })
+    expect(content.infoLines[0]).toBe('Punto mirato (stimato)')
+    expect(content.customLines).toEqual(['Squadra Nord'])
   })
 })
 
@@ -199,6 +412,11 @@ describe('wrapTextToWidth', () => {
       'stic',
     ])
   })
+
+  it('returns the original string when maxWidth is non-positive', () => {
+    expect(wrapTextToWidth('hello', 0, measure)).toEqual(['hello'])
+    expect(wrapTextToWidth('hello', -5, measure)).toEqual(['hello'])
+  })
 })
 
 describe('stampLayoutMetrics', () => {
@@ -213,6 +431,21 @@ describe('stampLayoutMetrics', () => {
     expect(metrics.edgePad).toBe(28)
     expect(metrics.boxPadX).toBe(22)
     expect(metrics.bgAlpha).toBe(0.5)
+  })
+
+  it('clamps opacity into 0…1', () => {
+    expect(
+      stampLayoutMetrics(1080, {
+        ...DEFAULT_STAMP_SETTINGS,
+        opacity: -1 as never,
+      }).bgAlpha
+    ).toBe(0)
+    expect(
+      stampLayoutMetrics(1080, {
+        ...DEFAULT_STAMP_SETTINGS,
+        opacity: 2 as never,
+      }).bgAlpha
+    ).toBe(1)
   })
 
   it('exposes chrome pad as stamp content inset', () => {

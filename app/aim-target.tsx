@@ -23,11 +23,11 @@ import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
 
 function aimLockErrorMessage(
   reason: Extract<LockTargetResult, { ok: false }>['reason'],
-  camera: TranslationKeys['camera']
+  aim: TranslationKeys['aim']
 ): string {
-  if (reason === 'no_gps') return camera.aimNoGps
-  if (reason === 'no_heading') return camera.aimNoHeading
-  return camera.aimBadDistance
+  if (reason === 'no_gps') return aim.noGps
+  if (reason === 'no_heading') return aim.noHeading
+  return aim.badDistance
 }
 
 export default function AimTargetSheet() {
@@ -37,7 +37,7 @@ export default function AimTargetSheet() {
   const { sticky } = useGeoSource()
   const live = useLiveGeoSnapshot()
   const dismiss = useDismissSheet()
-  const [distanceText, setDistanceText] = useState('200')
+  const [distanceText, setDistanceText] = useState('250')
   const [locking, setLocking] = useState(false)
 
   useEffect(() => {
@@ -59,26 +59,23 @@ export default function AimTargetSheet() {
 
   const onLock = useCallback(async () => {
     if (distance == null) {
-      showError(copy.camera.aimTitle, copy.camera.aimBadDistance)
+      showError(copy.aim.title, copy.aim.badDistance)
       return
     }
     setLocking(true)
     try {
       const result = await lockAimedTarget(distance)
       if (!result.ok) {
-        showError(
-          copy.camera.aimTitle,
-          aimLockErrorMessage(result.reason, copy.camera)
-        )
+        showError(copy.aim.title, aimLockErrorMessage(result.reason, copy.aim))
         return
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-      showSuccess(copy.camera.aimLocked, `~${result.sticky.distanceM} m`)
+      showSuccess(copy.aim.locked, `~${result.sticky.distanceM} m`)
       dismiss()
     } finally {
       setLocking(false)
     }
-  }, [copy.camera, dismiss, distance, showError, showSuccess])
+  }, [copy.aim, dismiss, distance, showError, showSuccess])
 
   const onClear = useCallback(() => {
     void Haptics.selectionAsync()
@@ -88,8 +85,8 @@ export default function AimTargetSheet() {
 
   return (
     <AppSheet
-      title={copy.camera.aimTitle}
-      closeLabel={copy.camera.aimClose}
+      title={copy.aim.title}
+      closeLabel={copy.aim.close}
       onClose={dismiss}
       height="content"
     >
@@ -102,7 +99,7 @@ export default function AimTargetSheet() {
             color: colors.muted,
           }}
         >
-          {copy.camera.aimHint}
+          {copy.aim.hint}
         </Text>
 
         <Text
@@ -112,7 +109,7 @@ export default function AimTargetSheet() {
             color: colors.muted,
           }}
         >
-          {copy.camera.aimDistance}
+          {copy.aim.distance}
         </Text>
 
         <SegmentedControl
@@ -128,9 +125,9 @@ export default function AimTargetSheet() {
           value={distanceText}
           onChangeText={setDistanceText}
           keyboardType="number-pad"
-          placeholder={copy.camera.aimDistancePlaceholder}
+          placeholder={copy.aim.distancePlaceholder}
           placeholderTextColor={colors.placeholder}
-          accessibilityLabel={copy.camera.aimDistance}
+          accessibilityLabel={copy.aim.distance}
           style={{
             fontFamily: fonts.regular,
             fontSize: 16,
@@ -143,7 +140,7 @@ export default function AimTargetSheet() {
         />
 
         <Button
-          label={copy.camera.aimLock}
+          label={copy.aim.lock}
           onPress={() => void onLock()}
           disabled={!canLock}
           loading={locking}
@@ -151,7 +148,7 @@ export default function AimTargetSheet() {
 
         {sticky != null ? (
           <Button
-            label={copy.camera.aimClear}
+            label={copy.aim.clear}
             onPress={onClear}
             variant="secondary"
           />

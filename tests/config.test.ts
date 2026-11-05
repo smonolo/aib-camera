@@ -70,4 +70,32 @@ describe('config', () => {
   it('creates capture UUIDs via expo-crypto', () => {
     expect(newCaptureId()).toBe('00000000-1111-4222-8333-444444444444')
   })
+
+  it('omits the build suffix on unsupported platforms', () => {
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' })
+    expect(appVersionLabel()).toBe('2.0.0')
+  })
+
+  it('falls back to smnl.dev URLs when extra is empty', () => {
+    jest.resetModules()
+    jest.doMock('expo-constants', () => ({
+      expoConfig: {
+        version: '3.0.0',
+        extra: {},
+      },
+      nativeAppVersion: '3.0.0',
+      nativeBuildVersion: null,
+    }))
+    jest.doMock('expo-crypto', () => ({
+      randomUUID: jest.fn(() => 'uuid'),
+    }))
+
+    const config = require('@/lib/config') as typeof import('@/lib/config')
+    expect(config.privacyPolicyUrl()).toBe(
+      'https://smnl.dev/aib-camera/privacy'
+    )
+    expect(config.termsOfUseUrl()).toBe('https://smnl.dev/aib-camera/terms')
+    expect(config.userGuideUrl()).toBe('https://smnl.dev/aib-camera/guide')
+    expect(config.appVersionLabel()).toBe('3.0.0')
+  })
 })

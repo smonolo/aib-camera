@@ -268,6 +268,44 @@ describe('finalizeCapture', () => {
     expect(saveToAibAlbum).toHaveBeenCalledWith('file:///captures/raw.jpg')
   })
 
+  it('records aimed-target coordinates into the capture log', async () => {
+    const aimed = snap({
+      lat: sticky.lat,
+      lon: sticky.lon,
+      accuracy: null,
+      altitude: null,
+      heading: sticky.lockedHeading,
+      address: sticky.address,
+      isAimedTarget: true,
+      targetDistanceM: sticky.distanceM,
+    })
+
+    await finalizeCapture(
+      'file:///tmp/camera.jpg',
+      aimed,
+      DEFAULT_STAMP_SETTINGS
+    )
+    await flushMicrotasks()
+
+    expect(recordCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lat: sticky.lat,
+        lon: sticky.lon,
+        accuracy: null,
+        altitude: null,
+        heading: sticky.lockedHeading,
+        address: sticky.address,
+      })
+    )
+    expect(compositeStampOntoPhoto).toHaveBeenCalledWith(
+      'file:///tmp/camera.jpg',
+      expect.objectContaining({
+        infoLines: expect.arrayContaining(['Punto mirato (stimato)']),
+      }),
+      DEFAULT_STAMP_SETTINGS
+    )
+  })
+
   it('still returns a record when EXIF write fails', async () => {
     ;(writeCaptureExif as jest.Mock).mockRejectedValue(new Error('no exify'))
 

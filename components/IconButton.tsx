@@ -9,6 +9,7 @@ type Props = {
   accessibilityLabel: string
   size?: number
   disabled?: boolean
+  emphasized?: boolean
 }
 
 export function IconButton({
@@ -17,15 +18,18 @@ export function IconButton({
   accessibilityLabel,
   size = 20,
   disabled = false,
+  emphasized = false,
 }: Props) {
   const colors = useAppColors()
+  const backgroundColor = emphasized ? colors.fg : colors.surfaceMuted
+  const iconColor = emphasized ? colors.fgInverse : colors.fg
 
   return (
     <View
       style={{
         borderRadius: radii.full,
         overflow: 'hidden',
-        backgroundColor: colors.surfaceMuted,
+        backgroundColor,
         opacity: disabled ? 0.4 : 1,
       }}
     >
@@ -42,7 +46,7 @@ export function IconButton({
           justifyContent: 'center',
         }}
       >
-        <AppIcon name={name} size={size} color={colors.fg} />
+        <AppIcon name={name} size={size} color={iconColor} />
       </Pressable>
     </View>
   )

@@ -1,8 +1,24 @@
 export type TranslationKeys = {
   tabs: {
     camera: string
+    map: string
     photos: string
     settings: string
+  }
+  map: {
+    title: string
+    emptyHint: string
+    noLocation: string
+    openInMaps: string
+    openInMapsFailed: string
+    copy: string
+    copied: string
+    copyFailed: string
+    copyFailedBody: string
+    share: string
+    shareFailed: string
+    shareDialogTitle: string
+    retrySoon: string
   }
   permissions: {
     title: string
@@ -24,28 +40,32 @@ export type TranslationKeys = {
     flashOn: string
     flashOff: string
     stampSettings: string
-    aim: string
-    aimLongPressHint: string
-    aimTitle: string
-    aimHint: string
-    aimDistance: string
-    aimDistancePlaceholder: string
-    aimLock: string
-    aimClear: string
-    aimClose: string
-    aimModeMe: string
-    aimModeTarget: string
-    aimToggle: string
-    aimNoGps: string
-    aimNoHeading: string
-    aimBadDistance: string
-    aimLocked: string
     shutter: string
     recentPhoto: string
     processingPhoto: string
     zoom: string
     captureFailed: string
     captureFailedBody: string
+  }
+  aim: {
+    open: string
+    longPressHint: string
+    title: string
+    hint: string
+    distance: string
+    distancePlaceholder: string
+    lock: string
+    clear: string
+    close: string
+    modeMe: string
+    modeTarget: string
+    toggle: string
+    noGps: string
+    noHeading: string
+    badDistance: string
+    locked: string
+    moved: string
+    moveFailed: string
   }
   stamp: {
     noCoordinates: string
@@ -74,6 +94,8 @@ export type TranslationKeys = {
     back: string
     today: string
     yesterday: string
+    viewerPosition: string
+    viewerThumb: string
   }
   settings: {
     title: string

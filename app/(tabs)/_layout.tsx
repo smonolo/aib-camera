@@ -26,6 +26,11 @@ export default function TabLayout() {
             accessibilityLabel={copy.tabs.camera}
           />
           <TabTrigger
+            name="map"
+            href="/map"
+            accessibilityLabel={copy.tabs.map}
+          />
+          <TabTrigger
             name="gallery"
             href="/gallery"
             accessibilityLabel={copy.tabs.photos}

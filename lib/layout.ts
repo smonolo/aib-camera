@@ -2,7 +2,7 @@ import { Platform } from 'react-native'
 
 export const TAB_BAR = {
   height: 58,
-  itemWidth: 84,
+  itemWidth: 70,
   padding: 4,
   minBottomGap: 4,
   landscapeMinBottomGap: 12,
@@ -20,7 +20,27 @@ export const SCREEN_HEADER_TOP_GAP = 16
 export const GALLERY_HEADER_HEIGHT = 44
 export const GALLERY_COLUMNS = 5
 export const GALLERY_HEADER_SIDE = 96
-export const PHOTO_SHARE_MAX_WIDTH = 360
+export const ACTION_BUTTON_MAX_WIDTH = 360
+
+export function actionButtonLayoutStyle(landscape: boolean): {
+  width: '100%'
+  maxWidth?: number
+  alignSelf?: 'center'
+} {
+  if (!landscape) return { width: '100%' }
+  return {
+    width: '100%',
+    maxWidth: ACTION_BUTTON_MAX_WIDTH,
+    alignSelf: 'center',
+  }
+}
+
+export const PHOTO_STRIP = {
+  thumb: 56,
+  gap: 8,
+  radius: 10,
+  selectedBorder: 2,
+} as const
 
 export const CAMERA_PREVIEW_ASPECT = 3 / 4
 export const CAMERA_PREVIEW_ASPECT_LANDSCAPE = 4 / 3

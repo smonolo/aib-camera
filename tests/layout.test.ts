@@ -1,6 +1,8 @@
 import { Platform } from 'react-native'
 
 import {
+  ACTION_BUTTON_MAX_WIDTH,
+  actionButtonLayoutStyle,
   CAMERA,
   CAMERA_PREVIEW_ASPECT,
   CAMERA_PREVIEW_ASPECT_LANDSCAPE,
@@ -259,5 +261,14 @@ describe('layout helpers', () => {
 
   it('keeps the gallery on a five-column grid', () => {
     expect(GALLERY_COLUMNS).toBe(5)
+  })
+
+  it('keeps action buttons full-width in portrait and capped in landscape', () => {
+    expect(actionButtonLayoutStyle(false)).toEqual({ width: '100%' })
+    expect(actionButtonLayoutStyle(true)).toEqual({
+      width: '100%',
+      maxWidth: ACTION_BUTTON_MAX_WIDTH,
+      alignSelf: 'center',
+    })
   })
 })

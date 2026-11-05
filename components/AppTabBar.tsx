@@ -28,7 +28,7 @@ import { radii, useAppColorScheme, useAppColors } from '@/lib/theme'
 
 type TabDef = {
   name: string
-  href: '/' | '/gallery' | '/settings'
+  href: '/' | '/map' | '/gallery' | '/settings'
   label: string
   icon: AppIconName
 }
@@ -36,8 +36,9 @@ type TabDef = {
 const SPRING = { damping: 22, stiffness: 280, mass: 0.8 } as const
 
 function tabIndexFromPath(pathname: string): number {
-  if (pathname.startsWith('/gallery')) return 1
-  if (pathname.startsWith('/settings')) return 2
+  if (pathname.startsWith('/map')) return 1
+  if (pathname.startsWith('/gallery')) return 2
+  if (pathname.startsWith('/settings')) return 3
   return 0
 }
 
@@ -101,6 +102,12 @@ export function AppTabBar() {
         icon: 'camera',
       },
       {
+        name: 'map',
+        href: '/map',
+        label: copy.tabs.map,
+        icon: 'map',
+      },
+      {
         name: 'gallery',
         href: '/gallery',
         label: copy.tabs.photos,
@@ -113,7 +120,7 @@ export function AppTabBar() {
         icon: 'settings',
       },
     ],
-    [copy.tabs.camera, copy.tabs.photos, copy.tabs.settings]
+    [copy.tabs.camera, copy.tabs.map, copy.tabs.photos, copy.tabs.settings]
   )
 
   const selectedIndex = tabIndexFromPath(pathname)

@@ -1,7 +1,7 @@
 const EARTH_RADIUS_M = 6_371_000
 const MAX_AIM_DISTANCE_M = 50_000
 
-export const AIM_DISTANCE_PRESETS = [50, 100, 200, 500] as const
+export const AIM_DISTANCE_PRESETS = [100, 250, 500, 1000] as const
 
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180
@@ -23,6 +23,21 @@ export function haversineMeters(
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))
+}
+
+export function bearingDegrees(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const φ1 = toRad(lat1)
+  const φ2 = toRad(lat2)
+  const Δλ = toRad(lon2 - lon1)
+  const y = Math.sin(Δλ) * Math.cos(φ2)
+  const x =
+    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ)
+  return ((toDeg(Math.atan2(y, x)) % 360) + 360) % 360
 }
 
 export function destinationPoint(

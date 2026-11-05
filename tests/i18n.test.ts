@@ -91,4 +91,23 @@ describe('i18n catalogs', () => {
       }
     }
   })
+
+  it('keeps map / aim / stamp field copy for both locales', () => {
+    expect(itCatalog.map.title).toBeTruthy()
+    expect(en.map.title).toBeTruthy()
+    expect(itCatalog.aim.lock).toBeTruthy()
+    expect(en.aim.lock).toBeTruthy()
+    expect(itCatalog.aim.moved).toBeTruthy()
+    expect(en.aim.moved).toBeTruthy()
+    expect(itCatalog.stamp.aimedPoint).toContain('mirato')
+    expect(en.stamp.aimedPoint.toLowerCase()).toContain('aimed')
+    expect(itCatalog.tabs.map).toBeTruthy()
+    expect(en.tabs.map).toBe('Map')
+  })
+
+  it('ignores corrupt persisted locale values', async () => {
+    await AsyncStorage.setItem(LOCALE_STORAGE_KEY, 'fr')
+    await hydrateLocale()
+    expect(getLocale()).toBe('it')
+  })
 })

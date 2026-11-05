@@ -1,7 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from 'react'
 
-import { destinationPoint, parseAimDistanceMeters } from './geo-math'
+import {
+  bearingDegrees,
+  destinationPoint,
+  haversineMeters,
+  parseAimDistanceMeters,
+} from './geo-math'
 import { reverseGeocodeCoords } from './location'
 import { softTry, softVoid } from './soft'
 import type { GeoSnapshot, GeoSourceMode, StickyTarget } from './types'
@@ -138,6 +143,10 @@ export type LockTargetResult =
   | { ok: true; sticky: StickyTarget }
   | { ok: false; reason: 'no_gps' | 'no_heading' | 'bad_distance' }
 
+export type MoveTargetResult =
+  | { ok: true; sticky: StickyTarget }
+  | { ok: false; reason: 'no_gps' | 'bad_distance' }
+
 export async function lockAimedTarget(
   distanceM: number
 ): Promise<LockTargetResult> {
@@ -162,6 +171,41 @@ export async function lockAimedTarget(
     address,
     distanceM: distance,
     lockedHeading: live.heading,
+    lockedAt: new Date().toISOString(),
+  }
+
+  setState({ mode: 'target', sticky })
+  return { ok: true, sticky }
+}
+
+export async function moveAimedTarget(
+  lat: number,
+  lon: number
+): Promise<MoveTargetResult> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return { ok: false, reason: 'bad_distance' }
+  }
+
+  const live = getSharedGeoSnapshot()
+  if (live.lat == null || live.lon == null) {
+    return { ok: false, reason: 'no_gps' }
+  }
+
+  const distance = parseAimDistanceMeters(
+    Math.round(haversineMeters(live.lat, live.lon, lat, lon))
+  )
+  if (distance == null) {
+    return { ok: false, reason: 'bad_distance' }
+  }
+
+  const lockedHeading = bearingDegrees(live.lat, live.lon, lat, lon)
+  const address = await reverseGeocodeCoords(lat, lon)
+  const sticky: StickyTarget = {
+    lat,
+    lon,
+    address,
+    distanceM: distance,
+    lockedHeading,
     lockedAt: new Date().toISOString(),
   }
 

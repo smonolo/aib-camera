@@ -125,6 +125,29 @@ describe('buildIosZoomOptions', () => {
       factor: 2,
     })
     expect(options[1]!.zoom).toBeGreaterThan(0)
+    expect(lensBaseFactor(options[1]!)).toBe(1)
+  })
+
+  it('classifies Italian localized lens names', () => {
+    const options = buildIosZoomOptions([
+      {
+        deviceType: 'unknown',
+        localizedName: 'Fotocamera grandangolare posteriore',
+      },
+      {
+        deviceType: 'unknown',
+        localizedName: 'Fotocamera ultra grandangolare posteriore',
+      },
+      {
+        deviceType: 'unknown',
+        localizedName: 'Fotocamera teleobiettivo posteriore',
+      },
+    ])
+    expect(options.map(option => option.kind)).toEqual([
+      'ultraWide',
+      'wide',
+      'tele',
+    ])
   })
 
   it('ignores composite / virtual lenses', () => {
@@ -134,6 +157,14 @@ describe('buildIosZoomOptions', () => {
         lens('TrueDepth Camera'),
       ])
     ).toEqual([])
+  })
+
+  it('keeps the first lens of each kind when duplicates appear', () => {
+    const options = buildIosZoomOptions([
+      lens('Back Camera', 'AVCaptureDeviceTypeBuiltInWideAngleCamera'),
+      lens('Back Camera 2', 'AVCaptureDeviceTypeBuiltInWideAngleCamera'),
+    ])
+    expect(options.filter(option => option.kind === 'wide')).toHaveLength(1)
   })
 })
 
@@ -247,5 +278,25 @@ describe('pinchFactorRange', () => {
     const range = pinchFactorRange(options)
     expect(range.min).toBe(0.5)
     expect(range.max).toBeGreaterThan(range.min)
+  })
+
+  it('falls back to a 1×–1× range when options are empty', () => {
+    expect(pinchFactorRange([])).toEqual({ min: 1, max: 1 })
+  })
+})
+
+describe('resolveAbsoluteFactor edges', () => {
+  it('returns null for an empty option list', () => {
+    expect(resolveAbsoluteFactor([], 1)).toBeNull()
+  })
+
+  it('clamps factors below the available minimum onto ultra-wide', () => {
+    const options = buildIosZoomOptions([
+      lens('Back Ultra Wide Camera'),
+      lens('Back Camera'),
+    ])
+    const resolved = resolveAbsoluteFactor(options, 0.1)
+    expect(resolved?.option.kind).toBe('ultraWide')
+    expect(resolved?.zoom).toBe(0)
   })
 })

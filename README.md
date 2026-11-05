@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.1.0` · iOS `buildNumber`: `14` · Android `versionCode`: `5` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.2.0` · iOS `buildNumber`: `15` · Android `versionCode`: `6` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -17,7 +17,7 @@ Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`
 ## Features
 
 - Letterboxed camera preview with black chrome (portrait and landscape). Portrait: flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center. Landscape: secondary chrome on the left rail, shutter/thumb/zoom on the right. Live stamp overlay matches the burned-in stamp.
-- **Aimed target:** open via the **Aim** chrome button or by pressing and holding the viewfinder (~0.5 s); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets or meters), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) without losing the sticky point; stamp labels aimed coords as estimated
+- **Aimed target (app-level):** same sheet from **Camera** (Aim chrome or ~0.5 s viewfinder long-press) or **Map** (header crosshair); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets 100 / 250 / 500 / 1000 m or custom meters), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) on Camera and Map; on Map, drag the red aimed pin to update locked coords and distance; stamp and map label aimed coords as estimated
 - **Stamp configuration:** camera tune control opens a full-height full-width bottom sheet (same chrome as Aim; dismiss with ✕ or tap outside)
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
@@ -25,8 +25,9 @@ Terms of use source: [TERMS.md](./TERMS.md) — host at `extra.termsOfUseUrl` (`
 - Settings toggles for datetime, coordinates, place, accuracy, altitude, heading
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
-- In-app gallery (source of truth, 5-column day grid) + optional Photos album «AIB Camera»
-- Recent-shot thumbnail beside the shutter (opens photo detail)
+- **Map tab:** live map of the effective point (Me or Aimed), stamp-parity location lines, copy / share (text + maps link), and open in the system Maps app. **iOS** uses Apple Maps; **Android** uses Leaflet + OpenStreetMap (no Google Maps SDK / billing). Aimed red pin is draggable — drop updates locked coords and distance from your GPS
+- In-app gallery (source of truth, 5-column day grid) + optional Photos album «AIB Camera»; open a shot for the **photo viewer** (swipe or bottom filmstrip, share/delete current)
+- Recent-shot thumbnail beside the shutter (opens the same viewer on the latest ready shot)
 - Deleting from the app also removes the copy in Photos when available; capture log stays
 - System share sheet (WhatsApp, Mail, …)
 - Camera required; GPS optional — shutter works without location or cell coverage
@@ -53,13 +54,13 @@ npm run smoke-checklist   # prints the device QA checklist
 
 ## Project layout
 
-| Path             | Role                                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| `app/`           | Expo Router screens (tabs: camera, gallery, settings; root: `configuration`, `photo/[id]`, `audit-log`) |
-| `components/`    | UI (stamp overlay, permissions, buttons, surfaces, `AppSheet`, shared glass `AppTabBar`)                |
-| `lib/`           | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config               |
-| `tests/`         | jest-expo unit tests                                                                                    |
-| `assets/images/` | App icon, adaptive icon layers, splash, favicon                                                         |
+| Path             | Role                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `app/`           | Expo Router screens (tabs: camera, map, gallery, settings; root: `configuration`, `photo/[id]`, `audit-log`) |
+| `components/`    | UI (stamp overlay, permissions, buttons, surfaces, `AppSheet`, shared glass `AppTabBar`)                     |
+| `lib/`           | Geo, stamp, composite, EXIF, storage (gallery + audit log), i18n, settings, media, config                    |
+| `tests/`         | jest-expo unit tests                                                                                         |
+| `assets/images/` | App icon, adaptive icon layers, splash, favicon                                                              |
 
 ## Emergency design notes
 
@@ -119,7 +120,7 @@ Before uploading binaries:
 
 1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and [TERMS.md](./TERMS.md) at `extra.termsOfUseUrl`; paste the privacy URL into App Store Connect / Play Console as required.
 2. Prepare store screenshots (iPhone 6.9″ required; iPad not required — `supportsTablet: false`). Play also needs a 512×512 icon and 1024×500 feature graphic.
-3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Mention on-device EXIF and capture-log IDs if asked about identifiers. If Apple asks whether the app is for a specific organization or set of people: **no** — it is for the general public (see Privacy / Terms / site).
+3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Map tiles may load from Apple Maps (iOS) or OpenStreetMap/CARTO via Leaflet (Android) when the Map tab is open — no Google Maps API key. Mention on-device EXIF and capture-log IDs if asked about identifiers. If Apple asks whether the app is for a specific organization or set of people: **no** — it is for the general public (see Privacy / Terms / site).
 4. Increment `version` for user-visible releases; increment `ios.buildNumber` for every App Store binary (and `android.versionCode` when shipping Play).
 5. Run `npm run typecheck`, `npm test`, `npx expo-doctor`, and `npm run smoke-checklist` on a physical device.
 

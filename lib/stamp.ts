@@ -48,7 +48,7 @@ export function formatStampDateTime(
   })
 }
 
-function formatCoordinates(lat: number, lon: number): string {
+export function formatStampCoordinates(lat: number, lon: number): string {
   const latHem = lat >= 0 ? 'N' : 'S'
   const lonHem = lon >= 0 ? 'E' : 'W'
   return `${Math.abs(lat).toFixed(6)}° ${latHem}, ${Math.abs(lon).toFixed(6)}° ${lonHem}`
@@ -277,7 +277,7 @@ export function buildInfoStampLines(
 
   if (settings.showCoordinates) {
     if (geo.lat != null && geo.lon != null) {
-      lines.push(formatCoordinates(geo.lat, geo.lon))
+      lines.push(formatStampCoordinates(geo.lat, geo.lon))
     } else {
       lines.push(copy.stamp.noCoordinates)
     }
@@ -291,6 +291,53 @@ export function buildInfoStampLines(
   }
 
   return lines
+}
+
+export function buildLocationInfoLines(
+  geo: GeoSnapshot,
+  settings: StampSettings,
+  options?: { wrapAddress?: boolean }
+): string[] {
+  const lines: string[] = []
+  const copy = t()
+  const wrap = options?.wrapAddress !== false
+
+  if (settings.showDateTime) {
+    lines.push(formatStampDateTime(geo.takenAt, settings.dateTimeFormat))
+  }
+
+  if (geo.isAimedTarget) {
+    lines.push(copy.stamp.aimedPoint)
+  }
+
+  if (settings.showCoordinates) {
+    if (geo.lat != null && geo.lon != null) {
+      lines.push(formatStampCoordinates(geo.lat, geo.lon))
+      lines.push(formatLatLon(geo.lat, geo.lon, 6))
+    } else {
+      lines.push(copy.stamp.noCoordinates)
+    }
+  }
+
+  const meta = buildMetaStampLine(geo, settings)
+  if (meta) lines.push(meta)
+
+  if (settings.showAddress) {
+    const address = geo.address?.trim() || copy.stamp.noAddress
+    if (wrap) lines.push(...wrapAddress(address))
+    else lines.push(address)
+  }
+
+  return lines
+}
+
+export function buildLocationInfoText(
+  geo: GeoSnapshot,
+  settings: StampSettings
+): string {
+  return buildLocationInfoLines(geo, settings, { wrapAddress: false }).join(
+    '\n'
+  )
 }
 
 export function buildCustomStampLines(settings: StampSettings): string[] {

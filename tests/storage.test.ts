@@ -147,6 +147,22 @@ describe('stamp settings persistence', () => {
     expect(loaded.showHeading).toBe(false)
     expect(loaded.fontSize).toBe('large')
   })
+
+  it('returns defaults when settings JSON is corrupt', async () => {
+    await AsyncStorage.setItem('aib-camera.settings.v1', '{bad')
+    expect(await loadStampSettings()).toEqual(DEFAULT_STAMP_SETTINGS)
+  })
+
+  it('normalizes legacy numeric font size on load', async () => {
+    await AsyncStorage.setItem(
+      'aib-camera.settings.v1',
+      JSON.stringify({ fontSize: 11, opacity: 0.8, textColor: '#00ff00' })
+    )
+    const loaded = await loadStampSettings()
+    expect(loaded.fontSize).toBe('small')
+    expect(loaded.opacity).toBe(0.75)
+    expect(loaded.textColor).toBe('#FFFFFF')
+  })
 })
 
 describe('geocode cache', () => {
@@ -169,5 +185,73 @@ describe('geocode cache', () => {
 
     const miss = await findNearestGeocodeCache(45.4642, 9.1901, 5)
     expect(miss).toBeNull()
+  })
+
+  it('returns null for an empty cache', async () => {
+    expect(await findNearestGeocodeCache(45.46, 9.19, 2500)).toBeNull()
+  })
+
+  it('replaces an existing cache key and keeps newest first', async () => {
+    await upsertGeocodeCacheEntry({
+      key: 'same',
+      address: 'Old',
+      lat: 45.46,
+      lon: 9.19,
+      savedAt: 1,
+    })
+    await upsertGeocodeCacheEntry({
+      key: 'same',
+      address: 'New',
+      lat: 45.46,
+      lon: 9.19,
+      savedAt: 2,
+    })
+    const hit = await findNearestGeocodeCache(45.46, 9.19, 2500)
+    expect(hit?.address).toBe('New')
+  })
+})
+
+describe('corrupt storage recovery', () => {
+  it('loads an empty capture list when JSON is invalid', async () => {
+    await AsyncStorage.setItem('aib-camera.captures.v1', '{not-array')
+    expect(await loadCaptures()).toEqual([])
+  })
+
+  it('drops corrupt audit-log rows', async () => {
+    await AsyncStorage.setItem(
+      'aib-camera.audit-log.v1',
+      JSON.stringify([
+        { id: 'ok', takenAt: '2024-07-15T14:30:45.000Z', lat: 1, lon: 2 },
+        { id: '', takenAt: '2024-07-15T14:30:45.000Z' },
+        { id: 'no-date', takenAt: '' },
+        { takenAt: '2024-07-15T14:30:45.000Z' },
+        {
+          id: 'partial',
+          takenAt: '2024-07-15T14:30:45.000Z',
+          lat: 'bad',
+          lon: 9,
+        },
+      ])
+    )
+    resetStorageCaches()
+    expect(await loadAuditLog()).toEqual([
+      { id: 'ok', takenAt: '2024-07-15T14:30:45.000Z', lat: 1, lon: 2 },
+      {
+        id: 'partial',
+        takenAt: '2024-07-15T14:30:45.000Z',
+        lat: null,
+        lon: 9,
+      },
+    ])
+  })
+
+  it('no-ops removeCaptures with an empty id list', async () => {
+    await addCapture(capture({ id: 'keep' }))
+    expect(await removeCaptures([])).toHaveLength(1)
+    expect(await getCapture('keep')).not.toBeNull()
+  })
+
+  it('returns null when setting a media asset id for a missing capture', async () => {
+    expect(await setCaptureMediaAssetId('missing', 'asset-1')).toBeNull()
   })
 })

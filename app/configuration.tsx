@@ -63,7 +63,7 @@ export default function ConfigurationSheet() {
   return (
     <AppSheet
       title={copy.settings.configuration}
-      closeLabel={copy.camera.aimClose}
+      closeLabel={copy.aim.close}
       onClose={dismiss}
       height="full"
     >
