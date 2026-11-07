@@ -15,7 +15,9 @@ import {
   cameraLandscapeTopBandMin,
   cameraLetterboxLayout,
   cameraTopBandMin,
-  GALLERY_COLUMNS,
+  galleryColumns,
+  GALLERY_COLUMNS_LANDSCAPE,
+  GALLERY_COLUMNS_PORTRAIT,
   SCREEN_PAD,
   SCREEN_PAD_NARROW,
   screenEdgePad,
@@ -259,8 +261,11 @@ describe('layout helpers', () => {
     )
   })
 
-  it('keeps the gallery on a five-column grid', () => {
-    expect(GALLERY_COLUMNS).toBe(5)
+  it('uses three gallery columns in portrait and five in landscape', () => {
+    expect(GALLERY_COLUMNS_PORTRAIT).toBe(3)
+    expect(GALLERY_COLUMNS_LANDSCAPE).toBe(5)
+    expect(galleryColumns(false)).toBe(3)
+    expect(galleryColumns(true)).toBe(5)
   })
 
   it('keeps action buttons full-width in portrait and capped in landscape', () => {

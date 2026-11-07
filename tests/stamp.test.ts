@@ -6,9 +6,11 @@ import {
   buildLocationInfoText,
   buildStampContent,
   formatGalleryDayLabel,
+  formatCoordinates,
   formatLatLon,
   formatStampCoordinates,
   formatStampDateTime,
+  formatStampDms,
   galleryDayKey,
   parseCustomLines,
   stampChromePad,
@@ -73,6 +75,29 @@ describe('formatStampCoordinates', () => {
   it('labels southern / western hemispheres with absolute degrees', () => {
     expect(formatStampCoordinates(-33.8688, -151.2093)).toBe(
       '33.868800° S, 151.209300° W'
+    )
+  })
+})
+
+describe('formatStampDms', () => {
+  it('formats degrees minutes seconds with hemispheres', () => {
+    expect(formatStampDms(45.4642, 9.19)).toBe('45°27′51″ N, 9°11′24″ E')
+    expect(formatStampDms(-33.8688, -151.2093)).toBe(
+      '33°52′08″ S, 151°12′33″ W'
+    )
+  })
+})
+
+describe('formatCoordinates', () => {
+  it('selects hemisphere, decimal, or dms', () => {
+    expect(formatCoordinates(45.4642, 9.19, 'hemisphere')).toBe(
+      '45.464200° N, 9.190000° E'
+    )
+    expect(formatCoordinates(45.4642, 9.19, 'decimal')).toBe(
+      '45.464200, 9.190000'
+    )
+    expect(formatCoordinates(45.4642, 9.19, 'dms')).toBe(
+      '45°27′51″ N, 9°11′24″ E'
     )
   })
 })
@@ -260,14 +285,21 @@ describe('buildInfoStampLines', () => {
 })
 
 describe('buildLocationInfoText', () => {
-  it('keeps address on one line and adds decimal lat/lon', () => {
+  it('keeps address on one line and uses the selected coordinate format', () => {
     const text = buildLocationInfoText(geo(), DEFAULT_STAMP_SETTINGS)
     expect(text).toContain('45.464200° N, 9.190000° E')
-    expect(text).toContain('45.464200, 9.190000')
+    expect(text).not.toContain('45.464200, 9.190000\n')
     expect(text).toContain('Milano, Lombardia')
     expect(text.split('\n').some(line => line === 'Milano, Lombardia')).toBe(
       true
     )
+
+    const decimal = buildLocationInfoText(geo(), {
+      ...DEFAULT_STAMP_SETTINGS,
+      coordinateFormat: 'decimal',
+    })
+    expect(decimal).toContain('45.464200, 9.190000')
+    expect(decimal).not.toContain('45.464200° N')
   })
 
   it('labels aimed targets for map copy/share', () => {

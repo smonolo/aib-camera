@@ -44,7 +44,6 @@ const ICONS = {
   success: CheckCircleIcon,
   info: InfoCircleIcon,
 } as const
-
 export type AppIconName = keyof typeof ICONS
 
 type Props = {

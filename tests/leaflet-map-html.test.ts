@@ -1,5 +1,6 @@
 import {
   buildLeafletMapHtml,
+  leafletCaptureScript,
   leafletRecenterScript,
   leafletUpdateScript,
   parseLeafletMapMessage,
@@ -17,15 +18,22 @@ describe('buildLeafletMapHtml', () => {
       aimedTitle: 'Aimed',
       dark: false,
     })
-    expect(html).toContain('openstreetmap.org')
+    expect(html).toContain('tile.openstreetmap.fr/hot')
     expect(html).toContain('leaflet')
+    expect(html).not.toContain('leaflet-rotate')
     expect(html).toContain('45.5')
     expect(html).toContain('"zoom":15')
     expect(html).toContain('#2563eb')
+    expect(html).toContain('aim-hit')
+    expect(html).toContain('iconSize: [48, 48]')
+    expect(html).toContain('iconAnchor: [18, 18]')
+    expect(html).not.toContain('margin-left: -18px')
     expect(html).not.toContain('cartocdn.com')
+    expect(html).not.toContain('<html class="aib-dark">')
+    expect(html).not.toContain('html.aib-dark .leaflet-tile-pane')
   })
 
-  it('embeds CARTO dark tiles in dark mode', () => {
+  it('uses HOT OSM with a dark tile filter in dark mode', () => {
     const html = buildLeafletMapHtml({
       focusLat: 45.5,
       focusLon: 9.2,
@@ -36,10 +44,19 @@ describe('buildLeafletMapHtml', () => {
       aimedTitle: 'Aimed',
       dark: true,
     })
-    expect(html).toContain('cartocdn.com')
+    expect(html).toContain('tile.openstreetmap.fr/hot')
+    expect(html).toContain('invert(1)')
+    expect(html).toContain('aib-dark')
+    expect(html).toContain('color-scheme')
+    expect(html).toContain('only light')
+    expect(html).toContain('restoreCaptureTheme')
+    expect(html).toContain("backgroundColor: '#e5e5e5'")
+    expect(html).not.toContain('cartocdn.com')
     expect(html).toContain('isAimedTarget')
     expect(html).toContain('#AF2525')
     expect(html).toContain('draggable: true')
+    expect(html).toContain('autoPan: false')
+    expect(html).toContain('map.dragging.disable()')
     expect(html).toContain('aim-drag-end')
     expect(html).toContain('#111111')
   })
@@ -101,6 +118,10 @@ describe('leaflet scripts', () => {
   it('passes an explicit recenter zoom', () => {
     expect(leafletRecenterScript(45.1, 9.2, 18)).toContain('45.1, 9.2, 18')
   })
+
+  it('builds a capture script', () => {
+    expect(leafletCaptureScript()).toContain('captureFieldMap')
+  })
 })
 
 describe('parseLeafletMapMessage', () => {
@@ -110,6 +131,28 @@ describe('parseLeafletMapMessage', () => {
         JSON.stringify({ type: 'aim-drag-end', lat: 45.1, lon: 9.2 })
       )
     ).toEqual({ type: 'aim-drag-end', lat: 45.1, lon: 9.2 })
+  })
+
+  it('parses map snapshot messages', () => {
+    expect(
+      parseLeafletMapMessage(
+        JSON.stringify({
+          type: 'map-snapshot',
+          dataUrl: 'data:image/jpeg;base64,abc',
+        })
+      )
+    ).toEqual({
+      type: 'map-snapshot',
+      dataUrl: 'data:image/jpeg;base64,abc',
+    })
+    expect(
+      parseLeafletMapMessage(
+        JSON.stringify({ type: 'map-snapshot-error', message: 'boom' })
+      )
+    ).toEqual({ type: 'map-snapshot-error', message: 'boom' })
+    expect(
+      parseLeafletMapMessage(JSON.stringify({ type: 'map-snapshot-error' }))
+    ).toEqual({ type: 'map-snapshot-error', message: 'snapshot failed' })
   })
 
   it('rejects invalid payloads', () => {
@@ -144,5 +187,31 @@ describe('parseLeafletMapMessage', () => {
     expect(
       parseLeafletMapMessage(JSON.stringify({ type: 'aim-drag-end' }))
     ).toBeNull()
+    expect(
+      parseLeafletMapMessage(
+        JSON.stringify({ type: 'map-snapshot', dataUrl: '' })
+      )
+    ).toBeNull()
+    expect(
+      parseLeafletMapMessage(JSON.stringify({ type: 'map-snapshot' }))
+    ).toBeNull()
+  })
+})
+
+describe('buildLeafletMapHtml capture wiring', () => {
+  it('includes html2canvas and captureFieldMap', () => {
+    const html = buildLeafletMapHtml({
+      focusLat: 45.5,
+      focusLon: 9.2,
+      liveLat: 45.5,
+      liveLon: 9.2,
+      heading: null,
+      isAimedTarget: false,
+      aimedTitle: 'Aimed',
+      dark: false,
+    })
+    expect(html).toContain('html2canvas')
+    expect(html).toContain('captureFieldMap')
+    expect(html).toContain('crossOrigin: true')
   })
 })

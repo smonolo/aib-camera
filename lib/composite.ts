@@ -72,6 +72,7 @@ function drawStampBox({
   lineGap,
   scale,
   bgAlpha,
+  backgroundColor,
   textPaint,
   shadowPaint,
 }: {
@@ -87,6 +88,7 @@ function drawStampBox({
   lineGap: number
   scale: number
   bgAlpha: number
+  backgroundColor: string
   textPaint: SkPaint
   shadowPaint: SkPaint
 }): number {
@@ -105,7 +107,8 @@ function drawStampBox({
 
   if (bgAlpha > 0) {
     const bgPaint = Skia.Paint()
-    bgPaint.setColor(Skia.Color(`rgba(0,0,0,${bgAlpha})`))
+    bgPaint.setColor(Skia.Color(backgroundColor))
+    if (bgAlpha < 1) bgPaint.setAlphaf(bgAlpha)
     const rr = Skia.RRectXY(
       Skia.XYWHRect(originX, originY, blockWidth, blockHeight),
       Math.round(14 * scale),
@@ -126,10 +129,20 @@ function drawStampBox({
   return blockHeight
 }
 
+export type CompositeStampOptions = {
+  minScale?: number
+  referenceMultiplier?: number
+  textColor?: string
+  shadowColor?: string
+  backgroundColor?: string
+  backgroundAlpha?: number
+}
+
 export async function compositeStampOntoPhoto(
   photoUri: string,
   content: StampBurnInContent,
-  settings: StampSettings
+  settings: StampSettings,
+  options?: CompositeStampOptions
 ): Promise<string> {
   const data = await Skia.Data.fromURI(photoUri)
   const image = Skia.Image.MakeImageFromEncoded(data)
@@ -139,9 +152,25 @@ export async function compositeStampOntoPhoto(
 
   const width = image.width()
   const height = image.height()
-  const reference = stampReferenceSize(width, height)
-  const { scale, fontSize, lineGap, edgePad, boxPadX, boxPadY, bgAlpha } =
-    stampLayoutMetrics(reference, settings, { minScale: 1 })
+  const multiplier = options?.referenceMultiplier ?? 1
+  const reference = Math.max(
+    1,
+    stampReferenceSize(width, height) * Math.max(0.25, Math.min(1, multiplier))
+  )
+  const metrics = stampLayoutMetrics(reference, settings, {
+    minScale: options?.minScale ?? 1,
+  })
+  const {
+    scale,
+    fontSize,
+    lineGap,
+    edgePad,
+    boxPadX,
+    boxPadY,
+    bgAlpha: settingsBgAlpha,
+  } = metrics
+  const bgAlpha = options?.backgroundAlpha ?? settingsBgAlpha
+  const backgroundColor = options?.backgroundColor ?? '#000000'
   const font = await resolveFont(fontSize)
   const blockWidth = Math.max(1, reference - edgePad * 2)
 
@@ -154,10 +183,10 @@ export async function compositeStampOntoPhoto(
   canvas.drawImage(image, 0, 0)
 
   const textPaint = Skia.Paint()
-  textPaint.setColor(Skia.Color('#FFFFFF'))
+  textPaint.setColor(Skia.Color(options?.textColor ?? '#FFFFFF'))
 
   const shadowPaint = Skia.Paint()
-  shadowPaint.setColor(Skia.Color('rgba(0,0,0,0.85)'))
+  shadowPaint.setColor(Skia.Color(options?.shadowColor ?? 'rgba(0,0,0,0.85)'))
 
   const boxArgs = {
     canvas,
@@ -170,6 +199,7 @@ export async function compositeStampOntoPhoto(
     lineGap,
     scale,
     bgAlpha,
+    backgroundColor,
     textPaint,
     shadowPaint,
   }

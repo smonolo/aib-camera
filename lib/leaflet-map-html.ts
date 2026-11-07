@@ -13,12 +13,9 @@ type LeafletMapHtmlOptions = {
 export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   const zoom = options.zoom ?? 15
   const dark = options.dark
-  const tileUrl = dark
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-  const attribution = dark
-    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  const tileUrl = 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
+  const attribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://www.hotosm.org/" target="_blank">HOT</a>'
 
   const initial = JSON.stringify({
     focusLat: options.focusLat,
@@ -31,21 +28,50 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
     zoom,
   })
 
+  const darkFilter =
+    'invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)'
+
   return `<!DOCTYPE html>
-<html>
+<html${dark ? ' class="aib-dark"' : ''}>
 <head>
 <meta charset="utf-8" />
+<meta name="color-scheme" content="only light" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
+  :root { color-scheme: only light; }
   html, body, #map { margin: 0; height: 100%; width: 100%; background: ${dark ? '#111111' : '#e5e5e5'}; }
-  .leaflet-control-attribution { font-size: 10px; }
+  .leaflet-control-attribution {
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+    padding: 1px 4px !important;
+    margin: 0 !important;
+    background: rgba(255,255,255,0.55) !important;
+    color: rgba(0,0,0,0.55) !important;
+    box-shadow: none !important;
+    max-width: 40%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .leaflet-control-attribution a { color: inherit !important; }
+  ${
+    dark
+      ? `html.aib-dark .leaflet-tile-pane {
+    filter: ${darkFilter};
+    -webkit-filter: ${darkFilter};
+  }
+  html.aib-dark .leaflet-control-attribution {
+    filter: ${darkFilter};
+    -webkit-filter: ${darkFilter};
+  }`
+      : ''
+  }
   .user-puck {
     width: 36px;
     height: 36px;
-    margin-left: -18px;
-    margin-top: -18px;
   }
   .user-puck-inner {
     width: 36px;
@@ -77,11 +103,18 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
     border: 2px solid #ffffff;
     box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
   }
+  .aim-hit {
+    width: 48px;
+    height: 48px;
+    position: relative;
+  }
   .aim-pin {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
     width: 22px;
     height: 22px;
     margin-left: -11px;
-    margin-top: -22px;
     border-radius: 50% 50% 50% 0;
     background: #AF2525;
     transform: rotate(-45deg);
@@ -97,9 +130,21 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   var map = L.map('map', { zoomControl: false, attributionControl: true });
   L.tileLayer(${JSON.stringify(tileUrl)}, {
     maxZoom: 19,
+    crossOrigin: true,
     attribution: ${JSON.stringify(attribution)}
   }).addTo(map);
   map.setView([state.focusLat, state.focusLon], state.zoom);
+  var mapBg = ${JSON.stringify(dark ? '#111111' : '#e5e5e5')};
+  var isDark = ${dark ? 'true' : 'false'};
+  var darkFilterCss = ${dark ? JSON.stringify(darkFilter) : '""'};
+
+  if (isDark) {
+    var tilePane = map.getPane('tilePane');
+    if (tilePane) {
+      tilePane.style.filter = darkFilterCss;
+      tilePane.style.webkitFilter = darkFilterCss;
+    }
+  }
 
   var userIcon = L.divIcon({
     className: '',
@@ -109,22 +154,26 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   });
   var aimIcon = L.divIcon({
     className: '',
-    html: '<div class="aim-pin"></div>',
-    iconSize: [22, 22],
-    iconAnchor: [11, 22]
+    html: '<div class="aim-hit"><div class="aim-pin"></div></div>',
+    iconSize: [48, 48],
+    iconAnchor: [24, 48]
   });
 
   var userMarker = null;
   var aimMarker = null;
   var aimDragging = false;
 
-  function postAimDragEnd(lat, lon) {
+  function postMessage(payload) {
     if (!window.ReactNativeWebView || !window.ReactNativeWebView.postMessage) return;
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'aim-drag-end',
-      lat: lat,
-      lon: lon
-    }));
+    window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+  }
+
+  function postAimDragEnd(lat, lon) {
+    postMessage({ type: 'aim-drag-end', lat: lat, lon: lon });
+  }
+
+  function postSnapshotError(message) {
+    postMessage({ type: 'map-snapshot-error', message: String(message || 'snapshot failed') });
   }
 
   function applyHeading(heading) {
@@ -143,9 +192,11 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
     marker.off('dragend');
     marker.on('dragstart', function() {
       aimDragging = true;
+      map.dragging.disable();
     });
     marker.on('dragend', function(event) {
       aimDragging = false;
+      map.dragging.enable();
       var ll = event.target.getLatLng();
       state.focusLat = ll.lat;
       state.focusLon = ll.lng;
@@ -176,7 +227,7 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
           icon: aimIcon,
           title: state.aimedTitle || '',
           draggable: true,
-          autoPan: true
+          autoPan: false
         }).addTo(map);
         bindAimDrag(aimMarker);
       } else if (!aimDragging) {
@@ -198,6 +249,47 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   window.recenterFieldMap = function(lat, lon, zoom) {
     if (aimDragging) return;
     map.setView([lat, lon], zoom == null ? map.getZoom() : zoom, { animate: true });
+  };
+
+  function restoreCaptureTheme() {
+    if (isDark) {
+      document.documentElement.classList.add('aib-dark');
+      var tilePane = map.getPane('tilePane');
+      if (tilePane) {
+        tilePane.style.filter = darkFilterCss;
+        tilePane.style.webkitFilter = darkFilterCss;
+      }
+    }
+  }
+
+  window.captureFieldMap = function() {
+    var el = document.getElementById('map');
+    if (!el || typeof window.html2canvas !== 'function') {
+      postSnapshotError('snapshot unavailable');
+      return;
+    }
+    document.documentElement.classList.remove('aib-dark');
+    var tilePane = map.getPane('tilePane');
+    if (tilePane) {
+      tilePane.style.filter = 'none';
+      tilePane.style.webkitFilter = 'none';
+    }
+    window.html2canvas(el, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: '#e5e5e5',
+      logging: false,
+      scale: Math.min(2, window.devicePixelRatio || 2)
+    }).then(function(canvas) {
+      restoreCaptureTheme();
+      postMessage({
+        type: 'map-snapshot',
+        dataUrl: canvas.toDataURL('image/jpeg', 0.92)
+      });
+    }).catch(function(error) {
+      restoreCaptureTheme();
+      postSnapshotError(error && error.message ? error.message : error);
+    });
   };
 
   syncMarkers();
@@ -227,23 +319,49 @@ export function leafletRecenterScript(
   return `window.recenterFieldMap && window.recenterFieldMap(${lat}, ${lon}, ${z}); true;`
 }
 
-export function parseLeafletMapMessage(
-  raw: string
-): { type: 'aim-drag-end'; lat: number; lon: number } | null {
+export function leafletCaptureScript(): string {
+  return `window.captureFieldMap && window.captureFieldMap(); true;`
+}
+
+export type LeafletMapMessage =
+  | { type: 'aim-drag-end'; lat: number; lon: number }
+  | { type: 'map-snapshot'; dataUrl: string }
+  | { type: 'map-snapshot-error'; message: string }
+
+export function parseLeafletMapMessage(raw: string): LeafletMapMessage | null {
   try {
     const parsed = JSON.parse(raw) as {
       type?: unknown
       lat?: unknown
       lon?: unknown
+      dataUrl?: unknown
+      message?: unknown
     }
-    if (parsed.type !== 'aim-drag-end') return null
-    if (typeof parsed.lat !== 'number' || typeof parsed.lon !== 'number') {
-      return null
+    if (parsed.type === 'aim-drag-end') {
+      if (typeof parsed.lat !== 'number' || typeof parsed.lon !== 'number') {
+        return null
+      }
+      if (!Number.isFinite(parsed.lat) || !Number.isFinite(parsed.lon)) {
+        return null
+      }
+      return { type: 'aim-drag-end', lat: parsed.lat, lon: parsed.lon }
     }
-    if (!Number.isFinite(parsed.lat) || !Number.isFinite(parsed.lon)) {
-      return null
+    if (parsed.type === 'map-snapshot') {
+      if (typeof parsed.dataUrl !== 'string' || parsed.dataUrl.length === 0) {
+        return null
+      }
+      return { type: 'map-snapshot', dataUrl: parsed.dataUrl }
     }
-    return { type: 'aim-drag-end', lat: parsed.lat, lon: parsed.lon }
+    if (parsed.type === 'map-snapshot-error') {
+      return {
+        type: 'map-snapshot-error',
+        message:
+          typeof parsed.message === 'string' && parsed.message
+            ? parsed.message
+            : 'snapshot failed',
+      }
+    }
+    return null
   } catch {
     return null
   }

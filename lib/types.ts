@@ -1,5 +1,7 @@
 export type DateTimeFormat = 'it-full' | 'it-short' | 'iso'
 
+export type CoordinateFormat = 'hemisphere' | 'decimal' | 'dms'
+
 export type StampFontSize = 'small' | 'medium' | 'large'
 
 export type StampOpacityStep = 0 | 0.25 | 0.5 | 0.75 | 1
@@ -13,6 +15,7 @@ export type StampSettings = {
   showHeading: boolean
   customLines: string[]
   dateTimeFormat: DateTimeFormat
+  coordinateFormat: CoordinateFormat
   fontSize: StampFontSize
   textColor: string
   opacity: StampOpacityStep
@@ -82,10 +85,13 @@ export const DEFAULT_STAMP_SETTINGS: StampSettings = {
   showHeading: true,
   customLines: [],
   dateTimeFormat: 'it-short',
+  coordinateFormat: 'hemisphere',
   fontSize: 'medium',
   textColor: '#FFFFFF',
   opacity: 0,
 }
+
+const COORDINATE_FORMATS: CoordinateFormat[] = ['hemisphere', 'decimal', 'dms']
 
 export function normalizeStampSettings(
   raw: Partial<StampSettings> | null | undefined
@@ -115,6 +121,10 @@ export function normalizeStampSettings(
           : best,
       0.75
     )
+  }
+
+  if (!COORDINATE_FORMATS.includes(base.coordinateFormat as CoordinateFormat)) {
+    base.coordinateFormat = DEFAULT_STAMP_SETTINGS.coordinateFormat
   }
 
   base.textColor = '#FFFFFF'

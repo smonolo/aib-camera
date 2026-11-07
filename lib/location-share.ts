@@ -1,6 +1,4 @@
-import { Platform, Share } from 'react-native'
-
-import { warn } from './soft'
+import { Platform } from 'react-native'
 
 export function mapsHttpUrl(lat: number, lon: number): string {
   const q = `${lat},${lon}`
@@ -18,27 +16,4 @@ export function mapsOpenUrl(lat: number, lon: number): string {
   return Platform.OS === 'android'
     ? mapsGeoUrl(lat, lon)
     : mapsHttpUrl(lat, lon)
-}
-
-export function buildLocationShareMessage(
-  infoText: string,
-  lat: number | null,
-  lon: number | null
-): string {
-  if (lat == null || lon == null) return infoText
-  const link = mapsHttpUrl(lat, lon)
-  if (!infoText.trim()) return link
-  return `${infoText}\n\n${link}`
-}
-
-export async function shareLocationText(
-  message: string,
-  dialogTitle: string
-): Promise<void> {
-  try {
-    await Share.share({ message, title: dialogTitle })
-  } catch (error) {
-    warn('Share location failed', error)
-    throw error
-  }
 }

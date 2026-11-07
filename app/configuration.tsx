@@ -13,6 +13,7 @@ import { useStampSettings } from '@/lib/settings-context'
 import { parseCustomLines } from '@/lib/stamp'
 import { radii, useAppColors } from '@/lib/theme'
 import type {
+  CoordinateFormat,
   DateTimeFormat,
   StampFontSize,
   StampOpacityStep,
@@ -148,6 +149,24 @@ export default function ConfigurationSheet() {
               { value: 'it-full', label: copy.settings.formatFull },
               { value: 'it-short', label: copy.settings.formatShort },
               { value: 'iso', label: copy.settings.formatIso },
+            ]}
+          />
+        </View>
+
+        <FieldLabel color={colors.muted}>
+          {copy.settings.coordinateFormat}
+        </FieldLabel>
+        <View style={{ marginBottom: 20 }}>
+          <SegmentedControl<CoordinateFormat>
+            value={settings.coordinateFormat}
+            onChange={value => bump('coordinateFormat', value)}
+            options={[
+              {
+                value: 'hemisphere',
+                label: copy.settings.formatHemisphere,
+              },
+              { value: 'decimal', label: copy.settings.formatDecimal },
+              { value: 'dms', label: copy.settings.formatDms },
             ]}
           />
         </View>

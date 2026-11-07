@@ -22,7 +22,7 @@ import { fonts } from '@/lib/fonts'
 import type { AppLocale, TranslationKeys } from '@/lib/i18n'
 import { useI18n } from '@/lib/i18n/locale-context'
 import {
-  GALLERY_COLUMNS,
+  galleryColumns,
   GALLERY_HEADER_HEIGHT,
   GALLERY_HEADER_SIDE,
   SCREEN_HEADER_TOP_GAP,
@@ -62,12 +62,12 @@ export default function PhotosScreen() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [busy, setBusy] = useState<'share' | 'delete' | null>(null)
 
+  const columns = galleryColumns(landscape)
   const edgeBase = landscape ? SCREEN_PAD : SCREEN_PAD_NARROW
   const padLeft = screenEdgePad(insets.left, edgeBase)
   const padRight = screenEdgePad(insets.right, edgeBase)
   const tileSize =
-    (windowWidth - padLeft - padRight - GAP * (GALLERY_COLUMNS - 1)) /
-    GALLERY_COLUMNS
+    (windowWidth - padLeft - padRight - GAP * (columns - 1)) / columns
 
   const refresh = useCallback(async () => {
     setCaptures(await loadCaptures())
@@ -84,8 +84,8 @@ export default function PhotosScreen() {
   )
 
   const sections = useMemo(
-    () => buildPhotoSections(captures, copy, locale),
-    [captures, copy, locale]
+    () => buildPhotoSections(captures, copy, locale, columns),
+    [captures, copy, locale, columns]
   )
 
   const selectedCount = selectedIds.size
@@ -248,9 +248,9 @@ export default function PhotosScreen() {
             }}
           />
         ))}
-        {item.items.length < GALLERY_COLUMNS
+        {item.items.length < columns
           ? Array.from({
-              length: GALLERY_COLUMNS - item.items.length,
+              length: columns - item.items.length,
             }).map((_, i) => (
               <View key={`pad-${item.key}-${i}`} style={{ width: tileSize }} />
             ))
@@ -258,6 +258,7 @@ export default function PhotosScreen() {
       </View>
     ),
     [
+      columns,
       padLeft,
       padRight,
       tileSize,
@@ -527,7 +528,8 @@ function GalleryEmpty() {
 function buildPhotoSections(
   captures: CaptureRecord[],
   copy: TranslationKeys,
-  locale: AppLocale
+  locale: AppLocale,
+  columns: number
 ): PhotoSection[] {
   const groups = new Map<string, CaptureRecord[]>()
 
@@ -545,14 +547,18 @@ function buildPhotoSections(
       { today: copy.photos.today, yesterday: copy.photos.yesterday },
       locale
     ),
-    data: chunkRows(items, dayKey),
+    data: chunkRows(items, dayKey, columns),
   }))
 }
 
-function chunkRows(items: CaptureRecord[], dayKey: string): PhotoRow[] {
+function chunkRows(
+  items: CaptureRecord[],
+  dayKey: string,
+  columns: number
+): PhotoRow[] {
   const rows: PhotoRow[] = []
-  for (let i = 0; i < items.length; i += GALLERY_COLUMNS) {
-    const slice = items.slice(i, i + GALLERY_COLUMNS)
+  for (let i = 0; i < items.length; i += columns) {
+    const slice = items.slice(i, i + columns)
     rows.push({
       key: `${dayKey}-${i}`,
       items: slice,

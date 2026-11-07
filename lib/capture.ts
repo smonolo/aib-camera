@@ -1,4 +1,7 @@
-import { compositeStampOntoPhoto } from './composite'
+import {
+  compositeStampOntoPhoto,
+  type CompositeStampOptions,
+} from './composite'
 import { newCaptureId } from './config'
 import { writeCaptureExif } from './exif'
 import { buildEffectiveGeoSnapshot, getGeoSourceState } from './geo-source'
@@ -40,13 +43,15 @@ export async function resolveCaptureGeo(): Promise<GeoSnapshot> {
 async function stampOrPersistRaw(
   photoUri: string,
   snap: GeoSnapshot,
-  settings: StampSettings
+  settings: StampSettings,
+  stampOptions?: CompositeStampOptions
 ): Promise<string> {
   try {
     return await compositeStampOntoPhoto(
       photoUri,
       buildStampContent(snap, settings),
-      settings
+      settings,
+      stampOptions
     )
   } catch (error) {
     warn('Stamp composite failed; keeping unstamped photo', error)
@@ -57,9 +62,15 @@ async function stampOrPersistRaw(
 export async function finalizeCapture(
   photoUri: string,
   snap: GeoSnapshot,
-  settings: StampSettings
+  settings: StampSettings,
+  stampOptions?: CompositeStampOptions
 ): Promise<CaptureRecord> {
-  const stampedUri = await stampOrPersistRaw(photoUri, snap, settings)
+  const stampedUri = await stampOrPersistRaw(
+    photoUri,
+    snap,
+    settings,
+    stampOptions
+  )
 
   const captureId = newCaptureId()
   const record: CaptureRecord = {

@@ -16,10 +16,14 @@ type ResolvedZoom = {
   factor: number
 }
 
-const ASSUMED_DEVICE_MAX_ZOOM = 125
+const ANDROID_ASSUMED_MAX_RATIO = 8
+const IOS_ASSUMED_MAX_RATIO = 15
 
-const PINCH_MAX_FACTOR_MULTIPLIER = 4
-const PINCH_MAX_FACTOR_FLOOR = 8
+export function assumedDeviceMaxRatio(): number {
+  return Platform.OS === 'android'
+    ? ANDROID_ASSUMED_MAX_RATIO
+    : IOS_ASSUMED_MAX_RATIO
+}
 
 function formatZoomFactor(factor: number, useComma: boolean): string {
   if (factor === 0.5) return useComma ? '0,5' : '0.5'
@@ -60,14 +64,6 @@ export function formatZoomChipLabel(
   return formatZoomLabel(option.factor, useComma, active)
 }
 
-function normalizedZoomForFactor(
-  factor: number,
-  assumedMax = ASSUMED_DEVICE_MAX_ZOOM
-): number {
-  if (factor <= 1) return 0
-  return Math.min(1, Math.log(factor) / Math.log(assumedMax))
-}
-
 export type CameraLensInfo = {
   deviceType: string
   localizedName: string
@@ -77,7 +73,7 @@ function classifyLensName(name: string): ZoomKind | null {
   const n = name.toLowerCase()
 
   if (
-    /dual|doppia|triple|tripla|lidar|truedepth|true\s*depth|continuum|multi|virtual|profondit/.test(
+    /dual|doppia|triple|tripla|lidar|truedepth|true\s*depth|continuum|multi|profondit/.test(
       n
     )
   ) {
@@ -115,6 +111,13 @@ function classifyLens(lens: CameraLensInfo): ZoomKind | null {
   return (
     classifyLensName(lens.deviceType) ?? classifyLensName(lens.localizedName)
   )
+}
+
+function digitalZoomForFactor(
+  absoluteFactor: number,
+  maxRatio = assumedDeviceMaxRatio()
+): number {
+  return cameraZoomFromFactor(1, absoluteFactor, maxRatio)
 }
 
 export function buildIosZoomOptions(lenses: CameraLensInfo[]): ZoomOption[] {
@@ -165,24 +168,41 @@ export function buildIosZoomOptions(lenses: CameraLensInfo[]): ZoomOption[] {
       kind: 'tele',
       factor: 2,
       lens: wide,
-      zoom: normalizedZoomForFactor(2),
+      zoom: digitalZoomForFactor(2),
     })
   }
 
   return options
 }
 
-export function defaultZoomOptions(): ZoomOption[] {
+export function defaultZoomOptions(
+  maxRatio = assumedDeviceMaxRatio()
+): ZoomOption[] {
   if (Platform.OS === 'ios') return []
-  return [
+
+  const options: ZoomOption[] = [
     { key: 'wide', kind: 'wide', factor: 1, zoom: 0 },
-    {
+  ]
+
+  if (maxRatio >= 2) {
+    options.push({
       key: 'tele-digital',
       kind: 'tele',
       factor: 2,
-      zoom: normalizedZoomForFactor(2),
-    },
-  ]
+      zoom: digitalZoomForFactor(2, maxRatio),
+    })
+  }
+
+  if (maxRatio >= 4) {
+    options.push({
+      key: 'tele-digital-4',
+      kind: 'tele',
+      factor: 4,
+      zoom: digitalZoomForFactor(4, maxRatio),
+    })
+  }
+
+  return options
 }
 
 export function pickDefaultOption(options: ZoomOption[]): ZoomOption | null {
@@ -197,7 +217,7 @@ export function clampCameraZoom(value: number): number {
 
 export function lensBaseFactor(option: ZoomOption): number {
   if (option.kind === 'ultraWide') return 0.5
-  if (option.key === 'tele-digital') return 1
+  if (option.key.startsWith('tele-digital')) return 1
   if (option.kind === 'tele') return 2
   return 1
 }
@@ -205,36 +225,36 @@ export function lensBaseFactor(option: ZoomOption): number {
 export function factorFromCameraZoom(
   baseFactor: number,
   zoom: number,
-  assumedMax = ASSUMED_DEVICE_MAX_ZOOM
+  maxRatio = assumedDeviceMaxRatio()
 ): number {
   if (zoom <= 0) return baseFactor
-  return baseFactor * assumedMax ** zoom
+  const span = Math.max(0, maxRatio - baseFactor)
+  if (span <= 0) return baseFactor
+  return baseFactor + clampCameraZoom(zoom) * span
 }
 
 export function cameraZoomFromFactor(
   baseFactor: number,
   absoluteFactor: number,
-  assumedMax = ASSUMED_DEVICE_MAX_ZOOM
+  maxRatio = assumedDeviceMaxRatio()
 ): number {
   if (absoluteFactor <= baseFactor) return 0
-  return clampCameraZoom(
-    Math.log(absoluteFactor / baseFactor) / Math.log(assumedMax)
-  )
+  const span = Math.max(0, maxRatio - baseFactor)
+  if (span <= 0) return 0
+  return clampCameraZoom((absoluteFactor - baseFactor) / span)
 }
 
-export function pinchFactorRange(options: ZoomOption[]): {
+export function pinchFactorRange(
+  options: ZoomOption[],
+  maxRatio = assumedDeviceMaxRatio()
+): {
   min: number
   max: number
 } {
   if (options.length === 0) return { min: 1, max: 1 }
   const sorted = [...options].sort((a, b) => a.factor - b.factor)
   const min = sorted[0]!.factor
-  const top = sorted[sorted.length - 1]!
-  const max = Math.max(
-    top.factor * PINCH_MAX_FACTOR_MULTIPLIER,
-    PINCH_MAX_FACTOR_FLOOR
-  )
-  return { min, max }
+  return { min, max: Math.max(min, maxRatio) }
 }
 
 export function currentAbsoluteFactor(

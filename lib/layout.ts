@@ -18,7 +18,12 @@ export const SCREEN_PAD = 20
 export const SCREEN_PAD_NARROW = 16
 export const SCREEN_HEADER_TOP_GAP = 16
 export const GALLERY_HEADER_HEIGHT = 44
-export const GALLERY_COLUMNS = 5
+export const GALLERY_COLUMNS_PORTRAIT = 3
+export const GALLERY_COLUMNS_LANDSCAPE = 5
+
+export function galleryColumns(landscape: boolean): number {
+  return landscape ? GALLERY_COLUMNS_LANDSCAPE : GALLERY_COLUMNS_PORTRAIT
+}
 export const GALLERY_HEADER_SIDE = 96
 export const ACTION_BUTTON_MAX_WIDTH = 360
 

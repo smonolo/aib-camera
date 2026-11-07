@@ -217,7 +217,8 @@ describe('finalizeCapture', () => {
         infoLines: expect.any(Array),
         customLines: ['Squadra Nord'],
       }),
-      settings
+      settings,
+      undefined
     )
     expect(persistRawPhoto).not.toHaveBeenCalled()
     expect(writeCaptureExif).toHaveBeenCalledWith(
@@ -302,7 +303,36 @@ describe('finalizeCapture', () => {
       expect.objectContaining({
         infoLines: expect.arrayContaining(['Punto mirato (stimato)']),
       }),
-      DEFAULT_STAMP_SETTINGS
+      DEFAULT_STAMP_SETTINGS,
+      undefined
+    )
+  })
+
+  it('forwards stamp layout options for map saves', async () => {
+    await finalizeCapture(
+      'file:///tmp/map.jpg',
+      snap(),
+      DEFAULT_STAMP_SETTINGS,
+      {
+        minScale: 0,
+        referenceMultiplier: 0.72,
+        textColor: '#000000',
+        backgroundColor: '#FFFFFF',
+        shadowColor: 'rgba(255,255,255,0.9)',
+      }
+    )
+
+    expect(compositeStampOntoPhoto).toHaveBeenCalledWith(
+      'file:///tmp/map.jpg',
+      expect.any(Object),
+      DEFAULT_STAMP_SETTINGS,
+      {
+        minScale: 0,
+        referenceMultiplier: 0.72,
+        textColor: '#000000',
+        backgroundColor: '#FFFFFF',
+        shadowColor: 'rgba(255,255,255,0.9)',
+      }
     )
   })
 

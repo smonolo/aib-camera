@@ -196,11 +196,27 @@ export function AppTabBar() {
   }))
 
   const barWidth = TAB_BAR.padding * 2 + TAB_BAR.itemWidth * tabs.length
-  const glassTint = 'default' as const
+  const glassTint = scheme === 'dark' ? ('dark' as const) : ('light' as const)
   const wash =
-    scheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)'
+    scheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)'
   const selectorFill =
-    scheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.28)'
+    scheme === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.1)'
+  const barShadow =
+    scheme === 'dark'
+      ? {
+          shadowColor: '#000000',
+          shadowOpacity: 0.18,
+          shadowRadius: 22,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: 12,
+        }
+      : {
+          shadowColor: '#000000',
+          shadowOpacity: 0.12,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 8,
+        }
 
   return (
     <View
@@ -222,11 +238,7 @@ export function AppTabBar() {
             width: barWidth,
             height: TAB_BAR.height,
             borderRadius: radii.full,
-            shadowColor: '#000000',
-            shadowOpacity: 0.18,
-            shadowRadius: 22,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 12,
+            ...barShadow,
           }}
         >
           <View

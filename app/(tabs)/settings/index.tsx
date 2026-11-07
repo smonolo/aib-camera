@@ -253,12 +253,14 @@ export default function SettingsScreen() {
           />
           <NavRow
             label={copy.settings.auditLogLink}
-            showDivider
             onPress={() => {
               void Haptics.selectionAsync()
               router.push('/audit-log')
             }}
           />
+        </CardGroup>
+
+        <CardGroup>
           <NavRow
             label={copy.settings.guideLink}
             accessibilityRole="link"

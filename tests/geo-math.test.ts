@@ -8,7 +8,7 @@ import {
 
 describe('AIM_DISTANCE_PRESETS', () => {
   it('exposes field presets used by the Aim sheet', () => {
-    expect(AIM_DISTANCE_PRESETS).toEqual([100, 250, 500, 1000])
+    expect(AIM_DISTANCE_PRESETS).toEqual([1000, 2000, 5000, 10000])
   })
 })
 

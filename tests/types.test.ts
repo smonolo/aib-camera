@@ -63,4 +63,14 @@ describe('normalizeStampSettings', () => {
     expect(next).not.toHaveProperty('corner')
     expect(next).not.toHaveProperty('position')
   })
+
+  it('defaults unknown coordinate formats to hemisphere', () => {
+    expect(
+      normalizeStampSettings({ coordinateFormat: 'utm' as never })
+        .coordinateFormat
+    ).toBe('hemisphere')
+    expect(
+      normalizeStampSettings({ coordinateFormat: 'dms' }).coordinateFormat
+    ).toBe('dms')
+  })
 })

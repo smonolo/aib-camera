@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.2.0` · iOS `buildNumber`: `15` · Android `versionCode`: `6` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.2.1` · iOS `buildNumber`: `16` · Android `versionCode`: `7` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -19,20 +19,20 @@ Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/c
 ## Features
 
 - Letterboxed camera preview with black chrome (portrait and landscape). Portrait: flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center. Landscape: secondary chrome on the left rail, shutter/thumb/zoom on the right. Live stamp overlay matches the burned-in stamp.
-- **Aimed target (app-level):** same sheet from **Camera** (Aim chrome or ~0.5 s viewfinder long-press) or **Map** (header crosshair); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets 100 / 250 / 500 / 1000 m or custom meters), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) on Camera and Map; on Map, drag the red aimed pin to update locked coords and distance; stamp and map label aimed coords as estimated
-- **Stamp configuration:** camera tune control opens a full-height full-width bottom sheet (same chrome as Aim; dismiss with ✕ or tap outside)
+- **Aimed target (app-level):** same sheet from **Camera** (Aim chrome or ~0.5 s viewfinder long-press) or **Map** (header crosshair); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets 1 / 2 / 5 / 10 km or custom meters with an `m` suffix), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) on Camera and Map; on Map, drag the red aimed pin to update locked coords and distance; stamp and map label aimed coords as estimated
+- **Stamp configuration:** camera tune control opens a full-height full-width bottom sheet (same chrome as Aim; dismiss with ✕ or tap outside); date format and **coordinate format** (N/E, decimal, DMS)
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
 - Per-install UUID plus an on-device **capture log** (capture ID, date, coords) that survives gallery deletes; Settings → About shows version and install ID (tap either to copy); export the full log as CSV (includes `install_id`) via the share sheet
 - Settings toggles for datetime, coordinates, place, accuracy, altitude, heading
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
-- **Map tab:** live map of the effective point (Me or Aimed), stamp-parity location lines, copy / share (text + maps link), and open in the system Maps app. **iOS** uses Apple Maps; **Android** uses Leaflet + OpenStreetMap (no Google Maps SDK / billing). Aimed red pin is draggable — drop updates locked coords and distance from your GPS
-- In-app gallery (source of truth, 5-column day grid) + optional Photos album «AIB Camera»; open a shot for the **photo viewer** (swipe or bottom filmstrip, share/delete current)
+- **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Open in Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing). Aimed red pin is draggable — drop updates locked coords and distance from your GPS
+- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape) + optional Photos album «AIB Camera»; open a shot for the **photo viewer** (swipe or bottom filmstrip, share/delete current)
 - Recent-shot thumbnail beside the shutter (opens the same viewer on the latest ready shot)
 - Deleting from the app also removes the copy in Photos when available; capture log stays
 - System share sheet (WhatsApp, Mail, …)
-- Camera required; GPS optional — shutter works without location or cell coverage
+- Camera required; GPS and Photos library optional (requested early) — shutter works without them or cell coverage
 
 ## Stack
 
@@ -66,7 +66,7 @@ npm run smoke-checklist   # prints the device QA checklist
 
 ## Emergency design notes
 
-- **Camera** is the only hard permission. Location improves the stamp but is never required to shoot.
+- **Camera** is the only hard permission. Location and Photos library are optional but requested early (GPS on the stamp; sync to the «AIB Camera» album) and never required to shoot.
 - Shutter uses live HUD geo (or a locked aimed point) when available so capture does not wait on a slow GPS fix.
 - Aimed-point mode needs GPS + compass; without them Lock soft-fails and the shutter still uses Me / unavailable copy. Aimed coords are a flat-ground estimate along heading — not a GNSS fix on the fire.
 - Reverse geocode is time-bounded; the place label stays sticky until you move ~600 m (avoids flipping between neighboring towns on a highway); on failure the app uses the nearest cached place (~2.5 km). Same behavior on iOS and Android.
@@ -122,7 +122,7 @@ Before uploading binaries:
 
 1. Host [PRIVACY.md](./PRIVACY.md) at `extra.privacyPolicyUrl` and [TERMS.md](./TERMS.md) at `extra.termsOfUseUrl`; paste the privacy URL into App Store Connect / Play Console as required.
 2. Prepare store screenshots (iPhone 6.9″ required; iPad not required — `supportsTablet: false`). Play also needs a 512×512 icon and 1024×500 feature graphic.
-3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Map tiles may load from Apple Maps (iOS) or OpenStreetMap/CARTO via Leaflet (Android) when the Map tab is open — no Google Maps API key. Mention on-device EXIF and capture-log IDs if asked about identifiers. If Apple asks whether the app is for a specific organization or set of people: **no** — it is for the general public (see Privacy / Terms / site).
+3. Answer App Privacy / Data safety honestly: location and photos processed **on device**; no developer-operated collection/tracking. Map tiles may load from OpenStreetMap (HOT) via Leaflet when the Map tab is open — no Google Maps API key. Mention on-device EXIF and capture-log IDs if asked about identifiers. If Apple asks whether the app is for a specific organization or set of people: **no** — it is for the general public (see Privacy / Terms / site).
 4. Increment `version` for user-visible releases; increment `ios.buildNumber` for every App Store binary (and `android.versionCode` when shipping Play).
 5. Run `npm run typecheck`, `npm test`, `npx expo-doctor`, and `npm run smoke-checklist` on a physical device.
 

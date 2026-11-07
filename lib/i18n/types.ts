@@ -15,9 +15,9 @@ export type TranslationKeys = {
     copied: string
     copyFailed: string
     copyFailedBody: string
-    share: string
-    shareFailed: string
-    shareDialogTitle: string
+    savePhoto: string
+    savedPhoto: string
+    savePhotoFailed: string
     retrySoon: string
   }
   permissions: {
@@ -25,11 +25,12 @@ export type TranslationKeys = {
     body: string
     camera: string
     location: string
+    photos: string
     needed: string
     denied: string
     blocked: string
     optionalLater: string
-    locationOptionalHint: string
+    optionalHint: string
     cameraDeniedHint: string
     cameraBlockedHint: string
     continue: string
@@ -113,6 +114,10 @@ export type TranslationKeys = {
     formatFull: string
     formatShort: string
     formatIso: string
+    coordinateFormat: string
+    formatHemisphere: string
+    formatDecimal: string
+    formatDms: string
     fontSize: string
     sizeSmall: string
     sizeMedium: string

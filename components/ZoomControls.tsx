@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native'
 import { formatZoomChipLabel, type ZoomOption } from '@/lib/camera-zoom'
 import { fonts } from '@/lib/fonts'
 import { useI18n } from '@/lib/i18n/locale-context'
-import { radii, useAppColors } from '@/lib/theme'
+import { radii, useAppColorScheme, useAppColors } from '@/lib/theme'
 
 type Props = {
   options: ZoomOption[]
@@ -26,8 +26,11 @@ export function ZoomControls({
   direction = 'row',
 }: Props) {
   const colors = useAppColors()
+  const scheme = useAppColorScheme()
   const { locale } = useI18n()
   const useComma = locale === 'it'
+  const activeFill = scheme === 'dark' ? '#FFFFFF' : colors.fg
+  const activeLabel = scheme === 'dark' ? '#171717' : colors.fgInverse
 
   if (options.length < 2) return null
 
@@ -68,7 +71,7 @@ export function ZoomControls({
               borderRadius: radii.full,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: active ? '#F5D74E' : 'transparent',
+              backgroundColor: active ? activeFill : 'transparent',
             }}
           >
             <Text
@@ -76,7 +79,7 @@ export function ZoomControls({
                 fontFamily: fonts.semibold,
                 fontSize: active ? 12 : 11,
                 letterSpacing: -0.2,
-                color: active ? '#171717' : colors.fg,
+                color: active ? activeLabel : colors.fg,
               }}
               numberOfLines={1}
             >

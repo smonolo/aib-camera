@@ -37,8 +37,13 @@ export default function AimTargetSheet() {
   const { sticky } = useGeoSource()
   const live = useLiveGeoSnapshot()
   const dismiss = useDismissSheet()
-  const [distanceText, setDistanceText] = useState('250')
+  const [distanceText, setDistanceText] = useState('1000')
   const [locking, setLocking] = useState(false)
+
+  const presetLabel = (meters: number): string => {
+    if (meters >= 1000 && meters % 1000 === 0) return `${meters / 1000} km`
+    return `${meters} m`
+  }
 
   useEffect(() => {
     if (sticky != null) setDistanceText(String(sticky.distanceM))
@@ -115,29 +120,47 @@ export default function AimTargetSheet() {
         <SegmentedControl
           options={AIM_DISTANCE_PRESETS.map(meters => ({
             value: String(meters),
-            label: `${meters} m`,
+            label: presetLabel(meters),
           }))}
           value={presetValue}
           onChange={setDistanceText}
         />
 
-        <TextInput
-          value={distanceText}
-          onChangeText={setDistanceText}
-          keyboardType="number-pad"
-          placeholder={copy.aim.distancePlaceholder}
-          placeholderTextColor={colors.placeholder}
-          accessibilityLabel={copy.aim.distance}
+        <View
           style={{
-            fontFamily: fonts.regular,
-            fontSize: 16,
-            color: colors.fg,
+            flexDirection: 'row',
+            alignItems: 'center',
             backgroundColor: colors.surface,
             borderRadius: radii.sm,
             paddingHorizontal: 14,
-            paddingVertical: 12,
           }}
-        />
+        >
+          <TextInput
+            value={distanceText}
+            onChangeText={setDistanceText}
+            keyboardType="number-pad"
+            placeholder={copy.aim.distancePlaceholder}
+            placeholderTextColor={colors.placeholder}
+            accessibilityLabel={copy.aim.distance}
+            style={{
+              flex: 1,
+              fontFamily: fonts.regular,
+              fontSize: 16,
+              color: colors.fg,
+              paddingVertical: 12,
+              paddingRight: 8,
+            }}
+          />
+          <Text
+            style={{
+              fontFamily: fonts.semibold,
+              fontSize: 16,
+              color: colors.muted,
+            }}
+          >
+            m
+          </Text>
+        </View>
 
         <Button
           label={copy.aim.lock}

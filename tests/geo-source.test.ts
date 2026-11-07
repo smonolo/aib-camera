@@ -415,7 +415,7 @@ describe('hydrateGeoSource', () => {
 describe('lockAimedTarget presets', () => {
   it('locks each Aim distance preset', async () => {
     mockGetSharedGeoSnapshot.mockReturnValue(live({ heading: 45 }))
-    for (const distance of [100, 250, 500, 1000] as const) {
+    for (const distance of [1000, 2000, 5000, 10000] as const) {
       resetGeoSourceForTests()
       const result = await lockAimedTarget(distance)
       expect(result.ok).toBe(true)

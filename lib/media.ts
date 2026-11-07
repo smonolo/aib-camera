@@ -34,6 +34,10 @@ async function ensureMediaLibraryPermission(
   )
 }
 
+export async function ensurePhotosLibraryPermission(): Promise<boolean> {
+  return ensureMediaLibraryPermission(true)
+}
+
 export async function saveToAibAlbum(uri: string): Promise<string> {
   const granted = await ensureMediaLibraryPermission(true)
   if (!granted) {

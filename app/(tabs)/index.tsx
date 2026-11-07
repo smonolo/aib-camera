@@ -53,7 +53,7 @@ import {
   stampReferenceSize,
 } from '@/lib/stamp'
 import { getLatestCapture } from '@/lib/storage'
-import { cameraOverlay, radii } from '@/lib/theme'
+import { radii, useAppColorScheme, useAppColors } from '@/lib/theme'
 import {
   cloneStampSettings,
   type CaptureRecord,
@@ -73,11 +73,14 @@ export default function CameraScreen() {
 function CameraExperience() {
   useKeepAwake()
   const insets = useSafeAreaInsets()
+  const colors = useAppColors()
+  const scheme = useAppColorScheme()
   const cameraRef = useRef<CameraView>(null)
   const { settings } = useStampSettings()
   const { showError } = useToast()
   const { copy } = useI18n()
   const enqueue = useRef(createSerialQueue()).current
+  const lightChrome = scheme === 'light'
 
   const [flash, setFlash] = useState<FlashMode>('off')
   const [shutterBusy, setShutterBusy] = useState(false)
@@ -202,7 +205,9 @@ function CameraExperience() {
   const updatePinchZoom = useCallback(
     (startFactor: number, scale: number) => {
       if (!pinchingRef.current) return
-      applyResolvedZoom(factorFromPinchScale(startFactor, scale))
+      const next = factorFromPinchScale(startFactor, scale)
+      if (Math.abs(next - pinchFactorRef.current) < 0.02) return
+      applyResolvedZoom(next)
     },
     [applyResolvedZoom]
   )
@@ -436,8 +441,8 @@ function CameraExperience() {
         height: CAMERA.thumbSize,
         borderRadius: CAMERA.thumbRadius,
         borderWidth: 1.5,
-        borderColor: cameraOverlay.stroke,
-        backgroundColor: 'rgba(0,0,0,0.35)',
+        borderColor: lightChrome ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.4)',
+        backgroundColor: lightChrome ? 'rgba(0,0,0,0.08)' : 'rgba(0,0,0,0.35)',
       }}
     >
       <View
@@ -469,7 +474,7 @@ function CameraExperience() {
               backgroundColor: 'rgba(0,0,0,0.45)',
             }}
           >
-            <ActivityIndicator color="#FAFAFA" />
+            <ActivityIndicator color={lightChrome ? colors.fg : '#FAFAFA'} />
           </View>
         ) : null}
       </View>
@@ -486,7 +491,7 @@ function CameraExperience() {
         height: CAMERA.shutterOuter,
         borderRadius: radii.full,
         borderWidth: 4,
-        borderColor: 'rgba(255,255,255,0.85)',
+        borderColor: lightChrome ? colors.fg : 'rgba(255,255,255,0.85)',
         alignItems: 'center',
         justifyContent: 'center',
         opacity: shutterBusy ? 0.7 : 1,
@@ -497,7 +502,7 @@ function CameraExperience() {
           width: CAMERA.shutterInner,
           height: CAMERA.shutterInner,
           borderRadius: radii.full,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: lightChrome ? colors.fg : '#FFFFFF',
         }}
       />
     </Pressable>
@@ -557,7 +562,10 @@ function CameraExperience() {
   )
 
   return (
-    <View className="flex-1 bg-black" onLayout={onViewportLayout}>
+    <View
+      className="flex-1 bg-canvas dark:bg-canvas-inverse"
+      onLayout={onViewportLayout}
+    >
       {previewReady ? (
         letterbox.landscape ? (
           <>

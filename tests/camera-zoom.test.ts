@@ -183,13 +183,32 @@ describe('defaultZoomOptions', () => {
     expect(defaultZoomOptions()).toEqual([])
   })
 
-  it('returns wide + digital tele on Android', () => {
+  it('returns wide + digital 2× and 4× on Android', () => {
     Object.defineProperty(Platform, 'OS', {
       configurable: true,
       value: 'android',
     })
     const options = defaultZoomOptions()
-    expect(options.map(option => option.key)).toEqual(['wide', 'tele-digital'])
+    expect(options.map(option => option.key)).toEqual([
+      'wide',
+      'tele-digital',
+      'tele-digital-4',
+    ])
+    expect(options[1]).toMatchObject({ factor: 2 })
+    expect(options[2]).toMatchObject({ factor: 4 })
+    expect(options[1]!.zoom).toBeCloseTo(1 / 7, 5)
+    expect(options[2]!.zoom).toBeCloseTo(3 / 7, 5)
+  })
+
+  it('omits 4× when max ratio is below 4', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    })
+    expect(defaultZoomOptions(2).map(option => option.key)).toEqual([
+      'wide',
+      'tele-digital',
+    ])
   })
 })
 
@@ -230,11 +249,15 @@ describe('absolute factor mapping', () => {
     expect(lensBaseFactor(options[2]!)).toBe(2)
   })
 
-  it('converts between camera zoom and absolute factor', () => {
-    expect(factorFromCameraZoom(1, 0)).toBe(1)
-    expect(cameraZoomFromFactor(1, 1)).toBe(0)
-    expect(factorFromCameraZoom(0.5, 0)).toBe(0.5)
-    expect(cameraZoomFromFactor(0.5, 0.5)).toBe(0)
+  it('converts between camera zoom and absolute factor linearly', () => {
+    expect(factorFromCameraZoom(1, 0, 8)).toBe(1)
+    expect(cameraZoomFromFactor(1, 1, 8)).toBe(0)
+    expect(factorFromCameraZoom(0.5, 0, 8)).toBe(0.5)
+    expect(cameraZoomFromFactor(0.5, 0.5, 8)).toBe(0)
+    expect(cameraZoomFromFactor(1, 2, 8)).toBeCloseTo(1 / 7, 5)
+    expect(factorFromCameraZoom(1, 1 / 7, 8)).toBeCloseTo(2, 5)
+    expect(cameraZoomFromFactor(1, 8, 8)).toBe(1)
+    expect(factorFromCameraZoom(1, 1, 8)).toBe(8)
   })
 
   it('switches to ultra-wide when pinching out below 1×', () => {

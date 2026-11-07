@@ -1,7 +1,7 @@
 const EARTH_RADIUS_M = 6_371_000
 const MAX_AIM_DISTANCE_M = 50_000
 
-export const AIM_DISTANCE_PRESETS = [100, 250, 500, 1000] as const
+export const AIM_DISTANCE_PRESETS = [1000, 2000, 5000, 10000] as const
 
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180

@@ -5,11 +5,12 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AppIcon } from '@/components/AppIcon'
+import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import { Button } from '@/components/Button'
 import { fonts } from '@/lib/fonts'
 import { useOnAppActive } from '@/lib/hooks'
 import { useI18n } from '@/lib/i18n/locale-context'
+import { ensurePhotosLibraryPermission } from '@/lib/media'
 import { warn } from '@/lib/soft'
 import { radii, useAppColors } from '@/lib/theme'
 
@@ -26,6 +27,7 @@ export function PermissionGate({ children }: Props) {
   const [busy, setBusy] = useState(false)
   const [hint, setHint] = useState<string | null>(null)
   const autoRequested = useRef(false)
+  const photosRequested = useRef(false)
 
   const refreshCamera = useCallback(async () => {
     await getCameraPermission()
@@ -99,6 +101,12 @@ export function PermissionGate({ children }: Props) {
     requestCamera,
   ])
 
+  useEffect(() => {
+    if (!cameraReady || photosRequested.current) return
+    photosRequested.current = true
+    void ensurePhotosLibraryPermission()
+  }, [cameraReady])
+
   if (cameraReady) {
     return <>{children}</>
   }
@@ -164,6 +172,11 @@ export function PermissionGate({ children }: Props) {
           icon="mapPin"
           value={copy.permissions.optionalLater}
         />
+        <StatusRow
+          label={copy.permissions.photos}
+          icon="images"
+          value={copy.permissions.optionalLater}
+        />
       </View>
 
       <Text
@@ -178,7 +191,7 @@ export function PermissionGate({ children }: Props) {
         {hint ??
           (cameraBlocked
             ? copy.permissions.cameraBlockedHint
-            : copy.permissions.locationOptionalHint)}
+            : copy.permissions.optionalHint)}
       </Text>
 
       <View style={{ flex: 1 }} />
@@ -199,7 +212,7 @@ function StatusRow({
   value,
 }: {
   label: string
-  icon: 'camera' | 'mapPin'
+  icon: Extract<AppIconName, 'camera' | 'mapPin' | 'images'>
   value: string
 }) {
   const colors = useAppColors()

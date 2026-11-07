@@ -69,12 +69,6 @@ export const radii = {
   full: 999,
 } as const
 
-export const cameraOverlay = {
-  fill: 'rgba(0,0,0,0.42)',
-  text: 'rgba(255,255,255,0.92)',
-  stroke: 'rgba(255,255,255,0.4)',
-} as const
-
 export type AppColors = {
   [K in keyof (typeof palette)['light']]: string
 }

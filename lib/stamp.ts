@@ -3,6 +3,7 @@ import { CAMERA } from './layout'
 import { ROME_TZ } from './time'
 import {
   FONT_SIZE_PX,
+  type CoordinateFormat,
   type DateTimeFormat,
   type GeoSnapshot,
   type StampSettings,
@@ -52,6 +53,41 @@ export function formatStampCoordinates(lat: number, lon: number): string {
   const latHem = lat >= 0 ? 'N' : 'S'
   const lonHem = lon >= 0 ? 'E' : 'W'
   return `${Math.abs(lat).toFixed(6)}° ${latHem}, ${Math.abs(lon).toFixed(6)}° ${lonHem}`
+}
+
+function formatDmsComponent(
+  value: number,
+  positive: string,
+  negative: string
+): string {
+  const hem = value >= 0 ? positive : negative
+  const abs = Math.abs(value)
+  let deg = Math.floor(abs)
+  let min = Math.floor((abs - deg) * 60)
+  let sec = Math.round(((abs - deg) * 60 - min) * 60)
+  if (sec === 60) {
+    sec = 0
+    min += 1
+  }
+  if (min === 60) {
+    min = 0
+    deg += 1
+  }
+  return `${deg}°${String(min).padStart(2, '0')}′${String(sec).padStart(2, '0')}″ ${hem}`
+}
+
+export function formatStampDms(lat: number, lon: number): string {
+  return `${formatDmsComponent(lat, 'N', 'S')}, ${formatDmsComponent(lon, 'E', 'W')}`
+}
+
+export function formatCoordinates(
+  lat: number,
+  lon: number,
+  format: CoordinateFormat
+): string {
+  if (format === 'decimal') return formatLatLon(lat, lon, 6)
+  if (format === 'dms') return formatStampDms(lat, lon)
+  return formatStampCoordinates(lat, lon)
 }
 
 function formatAccuracy(meters: number): string {
@@ -277,7 +313,7 @@ export function buildInfoStampLines(
 
   if (settings.showCoordinates) {
     if (geo.lat != null && geo.lon != null) {
-      lines.push(formatStampCoordinates(geo.lat, geo.lon))
+      lines.push(formatCoordinates(geo.lat, geo.lon, settings.coordinateFormat))
     } else {
       lines.push(copy.stamp.noCoordinates)
     }
@@ -312,8 +348,7 @@ export function buildLocationInfoLines(
 
   if (settings.showCoordinates) {
     if (geo.lat != null && geo.lon != null) {
-      lines.push(formatStampCoordinates(geo.lat, geo.lon))
-      lines.push(formatLatLon(geo.lat, geo.lon, 6))
+      lines.push(formatCoordinates(geo.lat, geo.lon, settings.coordinateFormat))
     } else {
       lines.push(copy.stamp.noCoordinates)
     }
@@ -363,14 +398,36 @@ export function stampFontPx(settings: StampSettings): number {
   return FONT_SIZE_PX[settings.fontSize]
 }
 
+export const MAP_STAMP_SCALE = 0.72
+
+export const MAP_STAMP_SAVE_APPEARANCE = {
+  textColor: '#000000',
+  backgroundColor: '#FFFFFF',
+  shadowColor: 'rgba(255,255,255,0.9)',
+} as const
+
+export function mapStampLiveAppearance(scheme: 'light' | 'dark'): {
+  textColor: string
+  backgroundColor: string
+} {
+  if (scheme === 'dark') {
+    return { textColor: '#FFFFFF', backgroundColor: '#000000' }
+  }
+  return { textColor: '#000000', backgroundColor: '#FFFFFF' }
+}
+
 export function stampReferenceSize(width: number, height: number): number {
   return Math.max(1, Math.min(width, height))
+}
+
+export type StampLayoutOptions = {
+  minScale?: number
 }
 
 export function stampLayoutMetrics(
   referenceWidth: number,
   settings: StampSettings,
-  options?: { minScale?: number }
+  options?: StampLayoutOptions
 ) {
   const scale = Math.max(referenceWidth / 1080, options?.minScale ?? 0)
   const fontSize = Math.round(stampFontPx(settings) * scale * 1.85)

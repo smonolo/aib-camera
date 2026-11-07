@@ -7,6 +7,7 @@ import {
   deleteCaptures,
   deleteLocalPhotoFiles,
   deleteMediaLibraryAssets,
+  ensurePhotosLibraryPermission,
   saveToAibAlbum,
   sharePhotos,
 } from '@/lib/media'
@@ -73,6 +74,21 @@ function capture(overrides: Partial<CaptureRecord> = {}): CaptureRecord {
     ...overrides,
   }
 }
+
+describe('ensurePhotosLibraryPermission', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('requests write access when not already granted', async () => {
+    ;(getPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false })
+    const { requestPermissionsAsync } = jest.requireMock('expo-media-library')
+    requestPermissionsAsync.mockResolvedValue({ granted: true })
+
+    await expect(ensurePhotosLibraryPermission()).resolves.toBe(true)
+    expect(requestPermissionsAsync).toHaveBeenCalled()
+  })
+})
 
 describe('saveToAibAlbum', () => {
   beforeEach(() => {
