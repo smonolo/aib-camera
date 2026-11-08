@@ -1,6 +1,6 @@
 # AIB Camera
 
-Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wildfire-related photography: capture photos with date, time, GPS, altitude, heading, and place burned into the JPEG, then save or share — offline-first, usable in an emergency without GPS or network.
+Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wildfire-related photography: capture photos with date, time, GPS, altitude, heading, wind (when online), and place burned into the JPEG, then save or share — offline-first, usable in an emergency without GPS or network.
 
 **Open to anyone** — not limited to a specific organization, squad, or professional role. Citizens can use it to document a wildfire, share a stamped photo (WhatsApp, Telegram, Mail, …), or read coordinates and stamp details to emergency services (e.g. 112). Volunteers and operators may use it too; that does not make the app exclusive to them.
 
@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.2.1` · iOS `buildNumber`: `16` · Android `versionCode`: `7` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.2.2` · iOS `buildNumber`: `17` · Android `versionCode`: `8` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -24,7 +24,8 @@ Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/c
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
 - Per-install UUID plus an on-device **capture log** (capture ID, date, coords) that survives gallery deletes; Settings → About shows version and install ID (tap either to copy); export the full log as CSV (includes `install_id`) via the share sheet
-- Settings toggles for datetime, coordinates, place, accuracy, altitude, heading
+- Settings toggles for datetime, coordinates, place, accuracy, altitude, heading, wind
+- Optional current wind (Open-Meteo) on the Camera/Map stamp for the effective point (Me or Aimed); cached; omitted offline; never blocks the shutter
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
 - **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Open in Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing). Aimed red pin is draggable — drop updates locked coords and distance from your GPS

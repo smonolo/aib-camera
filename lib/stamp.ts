@@ -9,7 +9,7 @@ import {
   type StampSettings,
 } from './types'
 
-const ADDRESS_MAX_CHARS = 38
+const ADDRESS_MAX_CHARS = 56
 
 export function formatLatLon(lat: number, lon: number, digits = 5): string {
   return `${lat.toFixed(digits)}, ${lon.toFixed(digits)}`
@@ -97,7 +97,7 @@ function formatAccuracy(meters: number): string {
 }
 
 function formatAltitude(meters: number): string {
-  return `${Math.round(meters)} m s.l.m.`
+  return `${Math.round(meters)} m`
 }
 
 const CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const
@@ -106,6 +106,20 @@ function formatHeading(degrees: number): string {
   const normalized = ((degrees % 360) + 360) % 360
   const index = Math.round(normalized / 45) % 8
   return `${Math.round(normalized)}° ${CARDINALS[index]}`
+}
+
+function formatWindCardinal(degrees: number): string {
+  const normalized = ((degrees % 360) + 360) % 360
+  const index = Math.round(normalized / 45) % 8
+  return CARDINALS[index]
+}
+
+export function formatWindStamp(
+  wind: NonNullable<GeoSnapshot['wind']>
+): string {
+  const speed = Math.round(wind.speedKmh)
+  const cardinal = formatWindCardinal(wind.directionDeg)
+  return `${speed} km/h ${cardinal}`
 }
 
 function formatTargetDistance(meters: number): string {
@@ -129,6 +143,9 @@ function buildMetaStampLine(
   }
   if (settings.showHeading && geo.heading != null) {
     parts.push(formatHeading(geo.heading))
+  }
+  if (settings.showWind && geo.wind != null) {
+    parts.push(formatWindStamp(geo.wind))
   }
 
   return parts.length > 0 ? parts.join(' · ') : null

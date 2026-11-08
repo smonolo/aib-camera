@@ -11,6 +11,7 @@ import {
   formatStampCoordinates,
   formatStampDateTime,
   formatStampDms,
+  formatWindStamp,
   galleryDayKey,
   parseCustomLines,
   stampChromePad,
@@ -162,11 +163,77 @@ describe('buildInfoStampLines', () => {
       showAccuracy: false,
       showAltitude: false,
       showHeading: false,
+      showWind: false,
       showAddress: false,
     })
     expect(lines).toEqual([])
   })
 
+  it('includes wind on the meta line when enabled', () => {
+    const lines = buildInfoStampLines(
+      geo({
+        wind: {
+          speedKmh: 12.4,
+          directionDeg: 225,
+          fetchedAt: Date.now(),
+          lat: 45.4642,
+          lon: 9.19,
+        },
+      }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showCoordinates: false,
+        showAccuracy: false,
+        showAltitude: false,
+        showHeading: false,
+        showAddress: false,
+      }
+    )
+    expect(lines).toEqual(['12 km/h SW'])
+  })
+
+  it('omits wind when the toggle is off', () => {
+    const lines = buildInfoStampLines(
+      geo({
+        wind: {
+          speedKmh: 12,
+          directionDeg: 90,
+          fetchedAt: Date.now(),
+          lat: 45.4642,
+          lon: 9.19,
+        },
+      }),
+      {
+        ...DEFAULT_STAMP_SETTINGS,
+        showDateTime: false,
+        showCoordinates: false,
+        showAccuracy: false,
+        showAltitude: false,
+        showHeading: false,
+        showWind: false,
+        showAddress: false,
+      }
+    )
+    expect(lines).toEqual([])
+  })
+})
+
+describe('formatWindStamp', () => {
+  it('formats speed and cardinal only', () => {
+    expect(
+      formatWindStamp({
+        speedKmh: 12.4,
+        directionDeg: 225,
+        fetchedAt: 0,
+        lat: 0,
+        lon: 0,
+      })
+    ).toBe('12 km/h SW')
+  })
+})
+
+describe('buildInfoStampLines aimed', () => {
   it('labels aimed targets and shows distance in meta', () => {
     const lines = buildInfoStampLines(
       geo({
@@ -234,7 +301,8 @@ describe('buildInfoStampLines', () => {
     )
     const meta = lines[0] ?? ''
     expect(meta).toContain('±12 m')
-    expect(meta).toContain('10 m s.l.m.')
+    expect(meta).toContain('10 m')
+    expect(meta).not.toContain('s.l.m.')
     expect(meta).toMatch(/0° N|359°/)
   })
 
@@ -268,7 +336,8 @@ describe('buildInfoStampLines', () => {
   it('wraps long unbroken address tokens', () => {
     const lines = buildInfoStampLines(
       geo({
-        address: 'SupercalifragilisticexpialidociousPlaceNameWithoutSpaces',
+        address:
+          'SupercalifragilisticexpialidociousPlaceNameWithoutSpacesAndMoreChars',
       }),
       {
         ...DEFAULT_STAMP_SETTINGS,
@@ -277,6 +346,7 @@ describe('buildInfoStampLines', () => {
         showAccuracy: false,
         showAltitude: false,
         showHeading: false,
+        showWind: false,
       }
     )
     expect(lines.length).toBeGreaterThan(1)
@@ -313,7 +383,7 @@ describe('buildLocationInfoText', () => {
 })
 
 describe('buildLocationInfoLines', () => {
-  it('wraps long addresses by default', () => {
+  it('wraps long addresses onto at most two lines', () => {
     const long =
       'Via Roma 1 · Quartiere Centro Storico · Comune Di Esempio · Regione Lombardia · Italia'
     const lines = buildLocationInfoLines(geo({ address: long }), {
@@ -323,8 +393,9 @@ describe('buildLocationInfoLines', () => {
       showAccuracy: false,
       showAltitude: false,
       showHeading: false,
+      showWind: false,
     })
-    expect(lines.length).toBeGreaterThan(1)
+    expect(lines.length).toBe(2)
     expect(lines.join(' ')).toContain('Via Roma 1')
   })
 
@@ -373,7 +444,7 @@ describe('buildCustomStampLines', () => {
   })
 
   it('wraps oversized custom lines', () => {
-    const long = 'A'.repeat(50)
+    const long = 'A'.repeat(70)
     const lines = buildCustomStampLines({
       ...DEFAULT_STAMP_SETTINGS,
       customLines: [long],
@@ -385,11 +456,13 @@ describe('buildCustomStampLines', () => {
   it('wraps multi-word custom lines that overflow the stamp width', () => {
     const lines = buildCustomStampLines({
       ...DEFAULT_STAMP_SETTINGS,
-      customLines: ['Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa'],
+      customLines: [
+        'Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu',
+      ],
     })
     expect(lines.length).toBeGreaterThan(1)
     expect(lines.join(' ')).toContain('Alpha')
-    expect(lines.join(' ')).toContain('Kappa')
+    expect(lines.join(' ')).toContain('Mu')
   })
 })
 

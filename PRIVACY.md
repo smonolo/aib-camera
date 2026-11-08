@@ -1,6 +1,6 @@
 # Privacy Policy — AIB Camera
 
-**Last updated:** 5 November 2026
+**Last updated:** 8 November 2026
 
 AIB Camera is an independent, unofficial mobile app for Antincendio Boschivo (AIB) and wildfire-related field photography. It is **open to anyone** — not limited to a specific organization, squad, or set of professionals. Anyone can download it to take stamped, geolocalized photos (for example to share with local civil protection via WhatsApp or Telegram, or to read coordinates and other stamp details to emergency services such as 112). It is **not** affiliated with, endorsed by, or built by Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution.
 
@@ -11,24 +11,25 @@ This policy describes how the app handles data on your device.
 - The app works **offline-first**. Photos, settings, the in-app gallery, and the capture log stay on your device.
 - There is **no account**, **no analytics SDK**, and **no cloud sync** operated by the developer.
 - **Camera** is required to take photos.
-- **Location** is optional and used to stamp coordinates, altitude, heading, and place on the photo, to show the same fields on the **Map** tab, and to write matching fields into JPEG EXIF when possible. You may also lock an **aimed point** (your GPS + compass heading + a distance you enter); those estimated coordinates can be stamped or shown on the map instead of your own position until you clear them.
+- **Location** is optional and used to stamp coordinates, altitude, heading, wind (when available), and place on the photo, to show the same fields on the **Map** tab, and to write matching GPS fields into JPEG EXIF when possible. You may also lock an **aimed point** (your GPS + compass heading + a distance you enter); those estimated coordinates can be stamped or shown on the map instead of your own position until you clear them.
 - **Photos library** access is optional (requested early after Camera, like Location) and used to save stamped photos to an album named «AIB Camera», and to remove those copies when you delete photos in the app.
-- Network is used for **optional reverse geocoding** (turning GPS into a place label) when a connection is available, and for **map tiles** when you open the Map tab (OpenStreetMap HOT via Leaflet on iOS and Android — not Google Maps). Nearby place labels may be cached on device for offline reuse. Map tiles are not cached by the developer and are not required to copy coordinates or open a maps link. Saving a map as a photo captures the on-screen map (including any pins) and stamps it on device like a camera shot.
+- Network is used for **optional reverse geocoding** (turning GPS into a place label) when a connection is available, **optional current wind** for the effective stamp point (Open-Meteo; speed and direction; cached on device), and for **map tiles** when you open the Map tab (OpenStreetMap HOT via Leaflet on iOS and Android — not Google Maps). Nearby place labels and wind samples may be cached on device for offline reuse. Map tiles are not cached by the developer and are not required to copy coordinates or open a maps link. Saving a map as a photo captures the on-screen map (including any pins) and stamps it on device like a camera shot. Wind is omitted from the stamp when offline or unavailable; capture never waits on a wind request.
 
 ## Data the app processes
 
-| Data                                         | Where it stays                                                      | Why                                                           |
-| -------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Camera image                                 | On device (app storage; optionally Photos/Gallery)                  | Capture and share stamped field photos                        |
-| Date & time                                  | Burned into the JPEG stamp (`Europe/Rome`); also EXIF DateTime      | Operational context on the photo                              |
-| GPS coordinates, accuracy, altitude, heading | On device; burned into stamp / EXIF when available                  | Location context on the photo                                 |
-| Aimed-point estimate (distance + heading)    | On device (session sticky); may be stamped / logged / EXIF GPS      | Stamp coords of what you are pointing at                      |
-| Place label (reverse geocode)                | On device; optional network lookup; local cache; may appear in EXIF | Human-readable place on the stamp                             |
-| Capture ID (UUID)                            | On device (capture log); EXIF `ImageUniqueID` / `UserComment` JSON  | Identify which photos were taken with this app                |
-| Install ID (UUID)                            | On device (local storage); Settings (tap to copy); CSV              | Correlate capture-log exports from one install                |
-| Custom stamp text you type                   | On device (settings); may appear in EXIF description / comment      | Optional notes on the photo                                   |
-| App settings                                 | On device (local storage)                                           | Remember stamp preferences and UI language                    |
-| Map view (optional)                          | Device only; OpenStreetMap HOT tiles via Leaflet when online        | Show the effective point; copy coords; save map photo locally |
+| Data                                         | Where it stays                                                              | Why                                                           |
+| -------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Camera image                                 | On device (app storage; optionally Photos/Gallery)                          | Capture and share stamped field photos                        |
+| Date & time                                  | Burned into the JPEG stamp (`Europe/Rome`); also EXIF DateTime              | Operational context on the photo                              |
+| GPS coordinates, accuracy, altitude, heading | On device; burned into stamp / EXIF when available                          | Location context on the photo                                 |
+| Aimed-point estimate (distance + heading)    | On device (session sticky); may be stamped / logged / EXIF GPS              | Stamp coords of what you are pointing at                      |
+| Current wind (speed, direction)              | On device; optional Open-Meteo lookup with lat/lon; local cache; stamp only | Weather context on the photo / map stamp                      |
+| Place label (reverse geocode)                | On device; optional network lookup; local cache; may appear in EXIF         | Human-readable place on the stamp                             |
+| Capture ID (UUID)                            | On device (capture log); EXIF `ImageUniqueID` / `UserComment` JSON          | Identify which photos were taken with this app                |
+| Install ID (UUID)                            | On device (local storage); Settings (tap to copy); CSV                      | Correlate capture-log exports from one install                |
+| Custom stamp text you type                   | On device (settings); may appear in EXIF description / comment              | Optional notes on the photo                                   |
+| App settings                                 | On device (local storage)                                                   | Remember stamp preferences and UI language                    |
+| Map view (optional)                          | Device only; OpenStreetMap HOT tiles via Leaflet when online                | Show the effective point; copy coords; save map photo locally |
 
 ### Capture log
 

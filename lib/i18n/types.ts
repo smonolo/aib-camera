@@ -108,6 +108,7 @@ export type TranslationKeys = {
     accuracy: string
     altitude: string
     heading: string
+    wind: string
     customText: string
     customPlaceholder: string
     dateFormat: string

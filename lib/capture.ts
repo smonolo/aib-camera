@@ -13,6 +13,14 @@ import { buildStampContent } from './stamp'
 import { recordCapture, setCaptureMediaAssetId } from './storage'
 import type { CaptureRecord, GeoSnapshot, StampSettings } from './types'
 import { getSharedGeoSnapshot } from './use-live-geo'
+import { getCachedWindSync } from './wind'
+
+function withCachedWind(snap: GeoSnapshot): GeoSnapshot {
+  if (snap.lat == null || snap.lon == null) {
+    return { ...snap, wind: null }
+  }
+  return { ...snap, wind: getCachedWindSync(snap.lat, snap.lon) }
+}
 
 export async function resolveCaptureGeo(): Promise<GeoSnapshot> {
   try {
@@ -33,7 +41,7 @@ export async function resolveCaptureGeo(): Promise<GeoSnapshot> {
       }
     }
 
-    return buildEffectiveGeoSnapshot(live, mode, sticky)
+    return withCachedWind(buildEffectiveGeoSnapshot(live, mode, sticky))
   } catch (error) {
     warn('Capture geo fallback', error)
     return emptyGeoSnapshot()

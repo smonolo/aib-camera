@@ -40,6 +40,7 @@ import {
 } from '@/lib/stamp'
 import { radii, useAppColorScheme, useAppColors } from '@/lib/theme'
 import { useLiveGeoSnapshot } from '@/lib/use-live-geo'
+import { useWindForGeo } from '@/lib/wind'
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets()
@@ -52,6 +53,8 @@ export default function MapScreen() {
   const { showError, showSuccess } = useToast()
   const live = useLiveGeoSnapshot()
   const geo = useEffectiveGeoSnapshot()
+  const wind = useWindForGeo(geo.lat, geo.lon)
+  const stampGeo = useMemo(() => ({ ...geo, wind }), [geo, wind])
   const { mode, sticky } = useGeoSource()
   const mapRef = useRef<FieldMapHandle>(null)
   const [saving, setSaving] = useState(false)
@@ -76,8 +79,8 @@ export default function MapScreen() {
   const focusLon = geo.lon
   const hasCoords = focusLat != null && focusLon != null
   const infoText = useMemo(
-    () => buildLocationInfoText(geo, settings),
-    [geo, settings]
+    () => buildLocationInfoText(stampGeo, settings),
+    [stampGeo, settings]
   )
   const canShareLocation = infoText.trim().length > 0
   const recenterToken = `${mode}:${sticky != null ? 'aimed' : 'live'}`
@@ -134,7 +137,7 @@ export default function MapScreen() {
     setSaving(true)
     try {
       const photoUri = await map.captureJpeg()
-      await finalizeCapture(photoUri, geo, settings, {
+      await finalizeCapture(photoUri, stampGeo, settings, {
         minScale: 0,
         referenceMultiplier: MAP_STAMP_SCALE,
         textColor: MAP_STAMP_SAVE_APPEARANCE.textColor,

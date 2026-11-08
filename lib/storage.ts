@@ -16,6 +16,8 @@ const CAPTURES_KEY = 'aib-camera.captures.v1'
 const AUDIT_LOG_KEY = 'aib-camera.audit-log.v1'
 const GEOCODE_CACHE_KEY = 'aib-camera.geocode-cache.v1'
 const GEOCODE_CACHE_MAX = 80
+const WIND_CACHE_KEY = 'aib-camera.wind-cache.v1'
+const WIND_CACHE_MAX = 80
 
 type GeocodeCacheEntry = {
   key: string
@@ -25,14 +27,26 @@ type GeocodeCacheEntry = {
   savedAt: number
 }
 
+type WindCacheEntry = {
+  key: string
+  speedKmh: number
+  directionDeg: number
+  fetchedAt: number
+  lat: number
+  lon: number
+  savedAt: number
+}
+
 let capturesCache: CaptureRecord[] | null = null
 let auditLogCache: AuditLogEntry[] | null = null
 let geocodeCacheMemory: GeocodeCacheEntry[] | null = null
+let windCacheMemory: WindCacheEntry[] | null = null
 
 export function resetStorageCaches(): void {
   capturesCache = null
   auditLogCache = null
   geocodeCacheMemory = null
+  windCacheMemory = null
   resetInstallIdCache()
 }
 
@@ -274,6 +288,60 @@ export async function findNearestGeocodeCache(
   if (list.length === 0) return null
 
   let best: GeocodeCacheEntry | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  for (const entry of list) {
+    const distance = haversineMeters(lat, lon, entry.lat, entry.lon)
+    if (distance < bestDistance && distance <= maxMeters) {
+      best = entry
+      bestDistance = distance
+    }
+  }
+
+  return best
+}
+
+async function loadWindCache(): Promise<WindCacheEntry[]> {
+  if (windCacheMemory) return windCacheMemory
+
+  const parsed = await readJsonArray(WIND_CACHE_KEY)
+  windCacheMemory = parsed == null ? [] : (parsed as WindCacheEntry[])
+  return windCacheMemory
+}
+
+async function saveWindCache(entries: WindCacheEntry[]): Promise<void> {
+  windCacheMemory = entries
+  try {
+    await AsyncStorage.setItem(WIND_CACHE_KEY, JSON.stringify(entries))
+  } catch (error) {
+    warn('Wind cache save failed', error)
+  }
+}
+
+export async function upsertWindCacheEntry(
+  entry: Omit<WindCacheEntry, 'savedAt'> & { savedAt?: number }
+): Promise<void> {
+  const list = await loadWindCache()
+  const nextEntry: WindCacheEntry = {
+    ...entry,
+    savedAt: entry.savedAt ?? Date.now(),
+  }
+  const without = list.filter(item => item.key !== nextEntry.key)
+  const next = [nextEntry, ...without]
+    .sort((a, b) => b.savedAt - a.savedAt)
+    .slice(0, WIND_CACHE_MAX)
+  await saveWindCache(next)
+}
+
+export async function findNearestWindCache(
+  lat: number,
+  lon: number,
+  maxMeters: number
+): Promise<WindCacheEntry | null> {
+  const list = await loadWindCache()
+  if (list.length === 0) return null
+
+  let best: WindCacheEntry | null = null
   let bestDistance = Number.POSITIVE_INFINITY
 
   for (const entry of list) {

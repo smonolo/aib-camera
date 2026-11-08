@@ -6,6 +6,7 @@ import { useEffectiveGeoSnapshot } from '@/lib/geo-source'
 import { useI18n } from '@/lib/i18n/locale-context'
 import { useStampSettings } from '@/lib/settings-context'
 import { buildStampContent, stampLayoutMetrics } from '@/lib/stamp'
+import { useWindForGeo } from '@/lib/wind'
 
 type StampAppearance = {
   textColor: string
@@ -109,6 +110,7 @@ export function StampOverlay({ frameWidth, scale = 1, appearance }: Props) {
   const { settings } = useStampSettings()
   const { locale } = useI18n()
   const geo = useEffectiveGeoSnapshot()
+  const wind = useWindForGeo(geo.lat, geo.lon)
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -130,7 +132,11 @@ export function StampOverlay({ frameWidth, scale = 1, appearance }: Props) {
     backgroundColor: appearance?.backgroundColor ?? '#000000',
     width: Math.max(1, width - metrics.edgePad * 2),
   }
-  const stampGeo = settings.showDateTime ? { ...geo, takenAt: now } : geo
+  const stampGeo = {
+    ...geo,
+    wind,
+    ...(settings.showDateTime ? { takenAt: now } : null),
+  }
   const { infoLines, customLines } = buildStampContent(stampGeo, settings)
 
   return (

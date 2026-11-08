@@ -109,6 +109,11 @@ export default function ConfigurationSheet() {
             label={copy.settings.heading}
             value={settings.showHeading}
             onChange={value => bump('showHeading', value)}
+          />
+          <ToggleRow
+            label={copy.settings.wind}
+            value={settings.showWind}
+            onChange={value => bump('showWind', value)}
             isLast
           />
         </CardGroup>

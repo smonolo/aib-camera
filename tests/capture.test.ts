@@ -54,6 +54,16 @@ jest.mock('@/lib/location', () => {
   }
 })
 
+const mockGetCachedWindSync = jest.fn(
+  (_lat: number, _lon: number): import('@/lib/types').WindSnapshot | null =>
+    null
+)
+
+jest.mock('@/lib/wind', () => ({
+  getCachedWindSync: (lat: number, lon: number) =>
+    mockGetCachedWindSync(lat, lon),
+}))
+
 import { finalizeCapture, resolveCaptureGeo } from '@/lib/capture'
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { writeCaptureExif } from '@/lib/exif'
@@ -64,6 +74,7 @@ import {
   DEFAULT_STAMP_SETTINGS,
   type GeoSnapshot,
   type StickyTarget,
+  type WindSnapshot,
 } from '@/lib/types'
 
 const takenAt = new Date('2024-07-15T14:30:45.000Z')
@@ -144,6 +155,20 @@ describe('resolveCaptureGeo', () => {
     expect(result.lat).toBe(45.4642)
     expect(result.lon).toBe(9.19)
     expect(mockCaptureGeoSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('merges cached wind synchronously without fetching', async () => {
+    const wind: WindSnapshot = {
+      speedKmh: 14,
+      directionDeg: 180,
+      fetchedAt: Date.now(),
+      lat: 45.4642,
+      lon: 9.19,
+    }
+    mockGetCachedWindSync.mockReturnValueOnce(wind)
+    const result = await resolveCaptureGeo()
+    expect(result.wind).toEqual(wind)
+    expect(mockGetCachedWindSync).toHaveBeenCalledWith(45.4642, 9.19)
   })
 
   it('falls back to one-shot GPS when live coords are missing', async () => {

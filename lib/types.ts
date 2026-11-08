@@ -6,6 +6,14 @@ export type StampFontSize = 'small' | 'medium' | 'large'
 
 export type StampOpacityStep = 0 | 0.25 | 0.5 | 0.75 | 1
 
+export type WindSnapshot = {
+  speedKmh: number
+  directionDeg: number
+  fetchedAt: number
+  lat: number
+  lon: number
+}
+
 export type StampSettings = {
   showDateTime: boolean
   showCoordinates: boolean
@@ -13,6 +21,7 @@ export type StampSettings = {
   showAccuracy: boolean
   showAltitude: boolean
   showHeading: boolean
+  showWind: boolean
   customLines: string[]
   dateTimeFormat: DateTimeFormat
   coordinateFormat: CoordinateFormat
@@ -53,6 +62,7 @@ export type GeoSnapshot = {
   takenAt: Date
   isAimedTarget?: boolean
   targetDistanceM?: number | null
+  wind?: WindSnapshot | null
 }
 
 export type GeoSourceMode = 'me' | 'target'
@@ -83,6 +93,7 @@ export const DEFAULT_STAMP_SETTINGS: StampSettings = {
   showAccuracy: true,
   showAltitude: true,
   showHeading: true,
+  showWind: true,
   customLines: [],
   dateTimeFormat: 'it-short',
   coordinateFormat: 'hemisphere',
@@ -127,6 +138,7 @@ export function normalizeStampSettings(
     base.coordinateFormat = DEFAULT_STAMP_SETTINGS.coordinateFormat
   }
 
+  base.showWind = base.showWind ?? DEFAULT_STAMP_SETTINGS.showWind
   base.textColor = '#FFFFFF'
   return base as StampSettings
 }
