@@ -1,14 +1,14 @@
 # AIB Camera
 
-Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wildfire-related photography: capture photos with date, time, GPS, altitude, heading, wind (when online), and place burned into the JPEG, then save or share — offline-first, usable in an emergency without GPS or network.
+Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wildfire-related photography: capture photos and short videos with date, time, GPS, altitude, heading, wind (when online), and place burned into the JPEG or MP4, then save or share — offline-first, usable in an emergency without GPS or network.
 
-**Open to anyone** — not limited to a specific organization, squad, or professional role. Citizens can use it to document a wildfire, share a stamped photo (WhatsApp, Telegram, Mail, …), or read coordinates and stamp details to emergency services (e.g. 112). Volunteers and operators may use it too; that does not make the app exclusive to them.
+**Open to anyone** — not limited to a specific organization, squad, or professional role. Citizens can use it to document a wildfire, share a stamped photo or video (WhatsApp, Telegram, Mail, …), or read coordinates and stamp details to emergency services (e.g. 112). Volunteers and operators may use it too; that does not make the app exclusive to them.
 
 **Not affiliated with** Protezione Civile, Vigili del Fuoco, Regione Lombardia, or any other public institution. Built by a volunteer; available to the general public.
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.2.2` · iOS `buildNumber`: `17` · Android `versionCode`: `8` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.3.0` · iOS `buildNumber`: `18` · Android `versionCode`: `9` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -18,8 +18,9 @@ Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/c
 
 ## Features
 
-- Letterboxed camera preview with black chrome (portrait and landscape). Portrait: flash top-left, **Aim** next to flash, stamp configuration top-right, zoom bottom-right, shutter center. Landscape: secondary chrome on the left rail, shutter/thumb/zoom on the right. Live stamp overlay matches the burned-in stamp.
-- **Aimed target (app-level):** same sheet from **Camera** (Aim chrome or ~0.5 s viewfinder long-press) or **Map** (header crosshair); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets 1 / 2 / 5 / 10 km or custom meters with an `m` suffix), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) on Camera and Map; on Map, drag the red aimed pin to update locked coords and distance; stamp and map label aimed coords as estimated
+- Letterboxed camera preview with black chrome (portrait and landscape). Portrait: flash top-left; **Aim**, Me/Target (when sticky), and stamp configuration top-right; shutter center; last-shot thumb left; **zoom** and **Photo/Video** icons side by side bottom-right (each with a menu). Landscape: flash / Aim / Me-Target / stamp settings on the left rail; thumb / shutter / zoom+mode stacked on the right. Live stamp overlay matches the burned-in stamp.
+- **Video (optional mic):** up to **60 s** clips with audio when microphone is allowed (mute if denied); geo is snapped at record start; after stop a full-frame Skia stamp PNG is burned into the MP4 via native overlay (`react-native-video-pipeline` + **Nitro Modules** — requires a **development/production native rebuild**, not Expo Go and not a JS-only reload); soft-fail keeps the unstamped clip if Nitro is missing. A poster JPEG is always extracted for the recent thumb / gallery (real frame when possible, placeholder otherwise). The viewer plays with `expo-video`.
+- **Aimed target (app-level):** same sheet from **Camera** (Aim chrome top-right beside stamp settings, or ~0.5 s viewfinder long-press) or **Map** (header: Aim then stamp settings); content-height full-width bottom sheet (dismiss with ✕ or tap outside); enter distance (presets 1 / 2 / 5 / 10 km or custom meters with an `m` suffix), lock estimated coordinates from GPS + compass heading; toggle **Me ↔ Target** (IT: Qui ↔ Mirato) on Camera and Map; on Map, drag the red aimed pin to update locked coords and distance; stamp and map label aimed coords as estimated
 - **Stamp configuration:** camera tune control opens a full-height full-width bottom sheet (same chrome as Aim; dismiss with ✕ or tap outside); date format and **coordinate format** (N/E, decimal, DMS)
 - Burn-in stamp via Skia in Geist (info block top, custom text bottom)
 - JPEG EXIF after stamp: `Software` / `Artist`, `ImageUniqueID` (UUID), GPS tags, and a JSON `UserComment` for machine-readable use
@@ -28,12 +29,12 @@ Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/c
 - Optional current wind (Open-Meteo) on the Camera/Map stamp for the effective point (Me or Aimed); cached; omitted offline; never blocks the shutter
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
-- **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Open in Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing). Aimed red pin is draggable — drop updates locked coords and distance from your GPS
-- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape) + optional Photos album «AIB Camera»; open a shot for the **photo viewer** (swipe or bottom filmstrip, share/delete current)
-- Recent-shot thumbnail beside the shutter (opens the same viewer on the latest ready shot)
+- **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Open in Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing); returning to the tab repairs/redraws tiles if the WebView went stale. Aimed red pin is draggable — drop updates locked coords and distance from your GPS
+- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape) + optional Photos album «AIB Camera»; open a shot for the **viewer** (photos + videos; swipe or bottom filmstrip, share/delete current)
+- Recent-capture thumbnail left of the shutter (opens the viewer; videos use a poster). On the right: zoom and Photo/Video icons side by side, each opening a short menu.
 - Deleting from the app also removes the copy in Photos when available; capture log stays
-- System share sheet (WhatsApp, Mail, …)
-- Camera required; GPS and Photos library optional (requested early) — shutter works without them or cell coverage
+- System share sheet (WhatsApp, Mail, …) for JPEG and MP4
+- Camera required; GPS, Photos library, and microphone optional (mic only for video sound; requested when entering Video mode) — shutter/record still work without them or cell coverage
 
 ## Stack
 
@@ -67,7 +68,7 @@ npm run smoke-checklist   # prints the device QA checklist
 
 ## Emergency design notes
 
-- **Camera** is the only hard permission. Location and Photos library are optional but requested early (GPS on the stamp; sync to the «AIB Camera» album) and never required to shoot.
+- **Camera** is the only hard permission. Location and Photos library are optional but requested early (GPS on the stamp; sync to the «AIB Camera» album) and never required to shoot. Microphone is optional for video audio (mute recording if denied).
 - Shutter uses live HUD geo (or a locked aimed point) when available so capture does not wait on a slow GPS fix.
 - Aimed-point mode needs GPS + compass; without them Lock soft-fails and the shutter still uses Me / unavailable copy. Aimed coords are a flat-ground estimate along heading — not a GNSS fix on the fire.
 - Reverse geocode is time-bounded; the place label stays sticky until you move ~600 m (avoids flipping between neighboring towns on a highway); on failure the app uses the nearest cached place (~2.5 km). Same behavior on iOS and Android.
@@ -88,8 +89,10 @@ Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 58). Non-criti
 | ----------------------------------- | --------------------------------------------------------- |
 | GPS / compass / geocode             | Stamp shows clear “unavailable” copy; shutter still fires |
 | Stamp compositing (Skia)            | Unstamped JPEG is kept in the in-app gallery              |
+| Video stamp overlay                 | Unstamped MP4 is kept in the in-app gallery               |
 | EXIF native module                  | Skipped; photo + gallery + capture log still succeed      |
 | Photos library                      | In-app gallery only                                       |
+| Microphone                          | Video records muted                                       |
 | Custom Geist fonts                  | System typefaces                                          |
 | Haptics / clipboard / share helpers | Silent no-op or RN `Share` fallback                       |
 | Capture at full JPEG quality        | Retry at lower quality without shutter sound              |

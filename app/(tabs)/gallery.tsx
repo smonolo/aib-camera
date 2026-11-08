@@ -31,7 +31,7 @@ import {
   screenEdgePad,
   tabScrollBottomPad,
 } from '@/lib/layout'
-import { deleteCaptures, sharePhotos } from '@/lib/media'
+import { capturePreviewUri, deleteCaptures, shareCaptures } from '@/lib/media'
 import { formatGalleryDayLabel, galleryDayKey } from '@/lib/stamp'
 import { loadCaptures } from '@/lib/storage'
 import { radii, useAppColors } from '@/lib/theme'
@@ -118,7 +118,7 @@ export default function PhotosScreen() {
     setBusy('share')
     try {
       await Haptics.selectionAsync()
-      await sharePhotos(selectedCaptures.map(item => item.uri))
+      await shareCaptures(selectedCaptures)
       exitSelecting()
     } catch (error) {
       showError(
@@ -133,11 +133,18 @@ export default function PhotosScreen() {
   const confirmDeleteSelected = useCallback(() => {
     if (selectedCaptures.length === 0) return
     const count = selectedCaptures.length
+    const onlyVideo = count === 1 && selectedCaptures[0]?.kind === 'video'
     const title =
-      count === 1 ? copy.photos.deleteTitle : copy.photos.deleteManyTitle
+      count === 1
+        ? onlyVideo
+          ? copy.photos.deleteVideoTitle
+          : copy.photos.deleteTitle
+        : copy.photos.deleteManyTitle
     const body =
       count === 1
-        ? copy.photos.deleteBody
+        ? onlyVideo
+          ? copy.photos.deleteVideoBody
+          : copy.photos.deleteBody
         : copy.photos.deleteManyBody.replace('{n}', String(count))
 
     Alert.alert(title, body, [
@@ -453,6 +460,7 @@ const GalleryTile = memo(function GalleryTile({
   onLongPress: () => void
 }) {
   const colors = useAppColors()
+  const { copy } = useI18n()
 
   return (
     <Pressable
@@ -467,11 +475,35 @@ const GalleryTile = memo(function GalleryTile({
       }}
     >
       <Image
-        source={{ uri: item.uri }}
+        source={{ uri: capturePreviewUri(item) }}
         recyclingKey={item.id}
         style={{ width: '100%', height: '100%' }}
         contentFit="cover"
       />
+      {item.kind === 'video' ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 6,
+            bottom: 6,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+            borderRadius: radii.full,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: fonts.semibold,
+              fontSize: 10,
+              color: '#FFFFFF',
+            }}
+          >
+            {copy.photos.videoBadge}
+          </Text>
+        </View>
+      ) : null}
       {selecting ? (
         <View
           pointerEvents="none"

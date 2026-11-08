@@ -69,12 +69,17 @@ function normalizeAuditLogEntry(
   }
 }
 
+function normalizeCaptureKind(raw: unknown): CaptureRecord['kind'] {
+  return raw === 'video' ? 'video' : 'photo'
+}
+
 function normalizeCaptureRecord(
   raw: Partial<CaptureRecord> & Pick<CaptureRecord, 'id' | 'uri' | 'takenAt'>
 ): CaptureRecord {
   return {
     id: raw.id,
     uri: raw.uri,
+    kind: normalizeCaptureKind(raw.kind),
     mediaLibraryAssetId:
       typeof raw.mediaLibraryAssetId === 'string' && raw.mediaLibraryAssetId
         ? raw.mediaLibraryAssetId
@@ -92,6 +97,9 @@ function normalizeCaptureRecord(
         )
       : [],
     stampConfigSnapshot: normalizeStampSettings(raw.stampConfigSnapshot),
+    durationMs: typeof raw.durationMs === 'number' ? raw.durationMs : null,
+    posterUri:
+      typeof raw.posterUri === 'string' && raw.posterUri ? raw.posterUri : null,
   }
 }
 

@@ -42,11 +42,21 @@ export type TranslationKeys = {
     flashOff: string
     stampSettings: string
     shutter: string
+    shutterVideoStart: string
+    shutterVideoStop: string
+    modePhoto: string
+    modeVideo: string
+    modeToggle: string
+    modeMenuTitle: string
+    recording: string
     recentPhoto: string
     processingPhoto: string
+    processingVideo: string
     zoom: string
     captureFailed: string
     captureFailedBody: string
+    videoFailed: string
+    videoFailedBody: string
   }
   aim: {
     open: string
@@ -81,6 +91,8 @@ export type TranslationKeys = {
     delete: string
     deleteTitle: string
     deleteBody: string
+    deleteVideoTitle: string
+    deleteVideoBody: string
     deleteManyTitle: string
     deleteManyBody: string
     cancel: string
@@ -97,6 +109,7 @@ export type TranslationKeys = {
     yesterday: string
     viewerPosition: string
     viewerThumb: string
+    videoBadge: string
   }
   settings: {
     title: string

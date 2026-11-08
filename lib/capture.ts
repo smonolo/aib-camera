@@ -7,12 +7,13 @@ import { writeCaptureExif } from './exif'
 import { buildEffectiveGeoSnapshot, getGeoSourceState } from './geo-source'
 import { captureGeoSnapshot, emptyGeoSnapshot } from './location'
 import { saveToAibAlbum } from './media'
-import { persistRawPhoto } from './persist-photo'
+import { persistRawPhoto, persistRawVideo } from './persist-photo'
 import { softVoid, warn } from './soft'
 import { buildStampContent } from './stamp'
 import { recordCapture, setCaptureMediaAssetId } from './storage'
 import type { CaptureRecord, GeoSnapshot, StampSettings } from './types'
 import { getSharedGeoSnapshot } from './use-live-geo'
+import { stampVideoCapture } from './video-stamp'
 import { getCachedWindSync } from './wind'
 
 function withCachedWind(snap: GeoSnapshot): GeoSnapshot {
@@ -67,6 +68,28 @@ async function stampOrPersistRaw(
   }
 }
 
+function baseCaptureRecord(
+  captureId: string,
+  uri: string,
+  snap: GeoSnapshot,
+  settings: StampSettings
+): Omit<CaptureRecord, 'kind' | 'durationMs' | 'posterUri'> {
+  return {
+    id: captureId,
+    uri,
+    mediaLibraryAssetId: null,
+    takenAt: snap.takenAt.toISOString(),
+    lat: snap.lat,
+    lon: snap.lon,
+    accuracy: snap.accuracy,
+    altitude: snap.altitude,
+    heading: snap.heading,
+    address: snap.address,
+    customText: settings.customLines,
+    stampConfigSnapshot: settings,
+  }
+}
+
 export async function finalizeCapture(
   photoUri: string,
   snap: GeoSnapshot,
@@ -82,18 +105,10 @@ export async function finalizeCapture(
 
   const captureId = newCaptureId()
   const record: CaptureRecord = {
-    id: captureId,
-    uri: stampedUri,
-    mediaLibraryAssetId: null,
-    takenAt: snap.takenAt.toISOString(),
-    lat: snap.lat,
-    lon: snap.lon,
-    accuracy: snap.accuracy,
-    altitude: snap.altitude,
-    heading: snap.heading,
-    address: snap.address,
-    customText: settings.customLines,
-    stampConfigSnapshot: settings,
+    ...baseCaptureRecord(captureId, stampedUri, snap, settings),
+    kind: 'photo',
+    durationMs: null,
+    posterUri: null,
   }
 
   await softVoid('EXIF step failed', () =>
@@ -108,6 +123,43 @@ export async function finalizeCapture(
   )
 
   void saveToAibAlbum(stampedUri)
+    .then(assetId => setCaptureMediaAssetId(captureId, assetId))
+    .catch(error => warn('Photos album save failed', error))
+
+  return record
+}
+
+export async function finalizeVideoCapture(
+  videoUri: string,
+  snap: GeoSnapshot,
+  settings: StampSettings,
+  stampOptions?: CompositeStampOptions
+): Promise<CaptureRecord> {
+  const stamped = await stampVideoCapture(
+    videoUri,
+    snap,
+    buildStampContent(snap, settings),
+    settings,
+    stampOptions
+  )
+
+  const persistedUri = stamped.stamped
+    ? stamped.uri
+    : await persistRawVideo(stamped.uri)
+
+  const captureId = newCaptureId()
+  const record: CaptureRecord = {
+    ...baseCaptureRecord(captureId, persistedUri, snap, settings),
+    kind: 'video',
+    durationMs: stamped.durationMs || null,
+    posterUri: stamped.posterUri,
+  }
+
+  await softVoid('Capture log/gallery persist failed', () =>
+    recordCapture(record)
+  )
+
+  void saveToAibAlbum(persistedUri)
     .then(assetId => setCaptureMediaAssetId(captureId, assetId))
     .catch(error => warn('Photos album save failed', error))
 

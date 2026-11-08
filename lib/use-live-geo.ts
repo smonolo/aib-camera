@@ -4,6 +4,7 @@ import {
   captureGeoSnapshot,
   emptyGeoSnapshot,
   ensureForegroundLocationPermission,
+  setHeadingOrientationOffset,
   watchHeading,
   watchPosition,
 } from './location'
@@ -11,6 +12,11 @@ import { warn } from './soft'
 import type { GeoSnapshot } from './types'
 
 type Listener = (geo: GeoSnapshot) => void
+
+type PositionUpdate = Pick<
+  GeoSnapshot,
+  'lat' | 'lon' | 'accuracy' | 'altitude' | 'address'
+>
 
 let sharedGeo: GeoSnapshot = emptyGeoSnapshot()
 let listeners = new Set<Listener>()
@@ -26,6 +32,39 @@ function notify(next: GeoSnapshot) {
   }
 }
 
+export function mergeHeadingUpdate(
+  current: GeoSnapshot,
+  heading: number | null
+): GeoSnapshot {
+  const nextHeading =
+    heading != null && Number.isFinite(heading) ? heading : current.heading
+  return {
+    ...current,
+    heading: nextHeading,
+    takenAt: current.takenAt,
+  }
+}
+
+export function mergePositionUpdate(
+  current: GeoSnapshot,
+  update: PositionUpdate,
+  takenAt: Date = new Date()
+): GeoSnapshot | null {
+  if (
+    typeof update.lat !== 'number' ||
+    typeof update.lon !== 'number' ||
+    !Number.isFinite(update.lat) ||
+    !Number.isFinite(update.lon)
+  ) {
+    return null
+  }
+  return {
+    ...current,
+    ...update,
+    takenAt,
+  }
+}
+
 function startShared() {
   const generation = ++startGeneration
   let active = true
@@ -38,26 +77,21 @@ function startShared() {
       const snap = await captureGeoSnapshot({
         headingHint: sharedGeo.heading,
         positionTimeoutMs: 5000,
+        skipHeadingFetch: true,
       })
       if (!active || generation !== startGeneration) return
       notify(snap)
 
       positionSub = await watchPosition(update => {
         if (!active || generation !== startGeneration) return
-        notify({
-          ...sharedGeo,
-          ...update,
-          takenAt: new Date(),
-        })
+        const next = mergePositionUpdate(sharedGeo, update)
+        if (!next) return
+        notify(next)
       })
 
       headingSub = await watchHeading(heading => {
         if (!active || generation !== startGeneration) return
-        notify({
-          ...sharedGeo,
-          heading,
-          takenAt: sharedGeo.takenAt,
-        })
+        notify(mergeHeadingUpdate(sharedGeo, heading))
       })
     } catch (error) {
       warn('Live geo start failed; continuing without GPS', error)
@@ -83,6 +117,19 @@ function stopShared(cancelStart: () => void) {
 
 export function getSharedGeoSnapshot(): GeoSnapshot {
   return sharedGeo
+}
+
+export function applyHeadingOrientationOffset(offset: number): void {
+  const heading = setHeadingOrientationOffset(offset)
+  if (heading == null || !Number.isFinite(heading)) return
+  notify(mergeHeadingUpdate(sharedGeo, heading))
+}
+
+export function resetLiveGeoForTests(next?: GeoSnapshot): void {
+  stopShared(() => {})
+  sharedGeo = next ?? emptyGeoSnapshot()
+  listeners = new Set()
+  refCount = 0
 }
 
 export function useLiveGeoSnapshot(): GeoSnapshot {

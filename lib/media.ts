@@ -15,7 +15,13 @@ import type { CaptureRecord } from './types'
 import { uniqueStrings } from './util'
 
 const ALBUM_NAME = APP_NAME
-export const PHOTO_GRANULAR = ['photo'] as const
+export const MEDIA_GRANULAR = ['photo', 'video'] as const
+export const PHOTO_GRANULAR = MEDIA_GRANULAR
+
+export function capturePreviewUri(item: CaptureRecord): string {
+  if (item.kind === 'video' && item.posterUri) return item.posterUri
+  return item.uri
+}
 
 async function ensureMediaLibraryPermission(
   writeOnly: boolean
@@ -23,10 +29,10 @@ async function ensureMediaLibraryPermission(
   return softTry(
     'Media library permission check failed',
     async () => {
-      const current = await getPermissionsAsync(writeOnly, [...PHOTO_GRANULAR])
+      const current = await getPermissionsAsync(writeOnly, [...MEDIA_GRANULAR])
       if (current.granted) return true
       const requested = await requestPermissionsAsync(writeOnly, [
-        ...PHOTO_GRANULAR,
+        ...MEDIA_GRANULAR,
       ])
       return requested.granted
     },
@@ -98,7 +104,10 @@ export async function deleteCaptures(ids: string[]): Promise<CaptureRecord[]> {
     'deleteCaptures step failed',
     await Promise.allSettled([
       deleteMediaLibraryAssets(doomed.map(item => item.mediaLibraryAssetId)),
-      deleteLocalPhotoFiles(doomed.map(item => item.uri)),
+      deleteLocalPhotoFiles([
+        ...doomed.map(item => item.uri),
+        ...doomed.map(item => item.posterUri),
+      ]),
       removeCaptures(ids),
     ])
   )
@@ -106,21 +115,40 @@ export async function deleteCaptures(ids: string[]): Promise<CaptureRecord[]> {
   return loadCaptures()
 }
 
+export async function shareCaptures(items: CaptureRecord[]): Promise<void> {
+  const copy = t()
+  if (items.length === 0) return
+
+  try {
+    for (const item of items) {
+      const isVideo = item.kind === 'video'
+      await shareFile(item.uri, {
+        mimeType: isVideo ? 'video/mp4' : 'image/jpeg',
+        dialogTitle: copy.media.shareDialogTitle,
+        uti: isVideo ? 'public.mpeg-4' : 'public.jpeg',
+        title: copy.media.shareTitle,
+      })
+    }
+  } catch (error) {
+    warn('shareCaptures failed', error)
+    throw error
+  }
+}
+
 export async function sharePhotos(uris: string[]): Promise<void> {
   const copy = t()
   const unique = uniqueStrings(uris)
   if (unique.length === 0) return
 
-  const jpegOptions = {
-    mimeType: 'image/jpeg',
-    dialogTitle: copy.media.shareDialogTitle,
-    uti: 'public.jpeg',
-    title: copy.media.shareTitle,
-  }
-
   try {
     for (const uri of unique) {
-      await shareFile(uri, jpegOptions)
+      const isVideo = uri.toLowerCase().includes('.mp4')
+      await shareFile(uri, {
+        mimeType: isVideo ? 'video/mp4' : 'image/jpeg',
+        dialogTitle: copy.media.shareDialogTitle,
+        uti: isVideo ? 'public.mpeg-4' : 'public.jpeg',
+        title: copy.media.shareTitle,
+      })
     }
   } catch (error) {
     warn('sharePhotos failed', error)

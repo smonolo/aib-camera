@@ -1,6 +1,7 @@
 import * as Haptics from '@/lib/haptics'
 import { Image } from 'expo-image'
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useVideoPlayer, VideoView } from 'expo-video'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -30,7 +31,7 @@ import {
   SCREEN_PAD,
   screenEdgePad,
 } from '@/lib/layout'
-import { deleteCaptures, sharePhotos } from '@/lib/media'
+import { capturePreviewUri, deleteCaptures, shareCaptures } from '@/lib/media'
 import { loadCaptures } from '@/lib/storage'
 import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
@@ -39,15 +40,44 @@ function formatViewerLabel(template: string, n: number, total: number): string {
   return template.replace('{n}', String(n)).replace('{total}', String(total))
 }
 
-const PagerPage = memo(function PagerPage({
+const PagerVideo = memo(function PagerVideo({
   uri,
-  id,
+  active,
+}: {
+  uri: string
+  active: boolean
+}) {
+  const player = useVideoPlayer(uri, instance => {
+    instance.loop = true
+  })
+
+  useEffect(() => {
+    if (active) {
+      player.play()
+    } else {
+      player.pause()
+    }
+  }, [active, player])
+
+  return (
+    <VideoView
+      player={player}
+      style={{ flex: 1, borderRadius: radii.sm }}
+      contentFit="contain"
+      nativeControls
+    />
+  )
+})
+
+const PagerPage = memo(function PagerPage({
+  item,
+  active,
   width,
   padLeft,
   padRight,
 }: {
-  uri: string
-  id: string
+  item: CaptureRecord
+  active: boolean
   width: number
   padLeft: number
   padRight: number
@@ -60,12 +90,16 @@ const PagerPage = memo(function PagerPage({
         paddingRight: padRight,
       }}
     >
-      <Image
-        source={{ uri }}
-        recyclingKey={id}
-        style={{ flex: 1, borderRadius: radii.sm }}
-        contentFit="contain"
-      />
+      {item.kind === 'video' ? (
+        <PagerVideo uri={item.uri} active={active} />
+      ) : (
+        <Image
+          source={{ uri: item.uri }}
+          recyclingKey={item.id}
+          style={{ flex: 1, borderRadius: radii.sm }}
+          contentFit="contain"
+        />
+      )}
     </View>
   )
 })
@@ -239,7 +273,7 @@ export default function PhotoDetailScreen() {
     if (!current) return
     try {
       await Haptics.selectionAsync()
-      await sharePhotos([current.uri])
+      await shareCaptures([current])
     } catch (error) {
       showError(
         copy.photos.shareFailed,
@@ -251,43 +285,53 @@ export default function PhotoDetailScreen() {
   const onDelete = useCallback(() => {
     const current = photosRef.current?.[indexRef.current]
     if (!current) return
-    Alert.alert(copy.photos.deleteTitle, copy.photos.deleteBody, [
-      { text: copy.photos.cancel, style: 'cancel' },
-      {
-        text: copy.photos.delete,
-        style: 'destructive',
-        onPress: () => {
-          void (async () => {
-            try {
-              const remaining = await deleteCaptures([current.id])
-              showSuccess(copy.photos.deleted)
-              await Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success
-              )
-              if (remaining.length === 0) {
-                router.back()
-                return
+    const isVideo = current.kind === 'video'
+    Alert.alert(
+      isVideo ? copy.photos.deleteVideoTitle : copy.photos.deleteTitle,
+      isVideo ? copy.photos.deleteVideoBody : copy.photos.deleteBody,
+      [
+        { text: copy.photos.cancel, style: 'cancel' },
+        {
+          text: copy.photos.delete,
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                const remaining = await deleteCaptures([current.id])
+                showSuccess(copy.photos.deleted)
+                await Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success
+                )
+                if (remaining.length === 0) {
+                  router.back()
+                  return
+                }
+                const nextIndex = Math.min(
+                  indexRef.current,
+                  remaining.length - 1
+                )
+                photosRef.current = remaining
+                setPhotos(remaining)
+                goTo(nextIndex, 'delete', remaining)
+              } catch (error) {
+                showError(
+                  copy.photos.deleteFailed,
+                  errorMessage(error, copy.photos.retrySoon)
+                )
               }
-              const nextIndex = Math.min(indexRef.current, remaining.length - 1)
-              photosRef.current = remaining
-              setPhotos(remaining)
-              goTo(nextIndex, 'delete', remaining)
-            } catch (error) {
-              showError(
-                copy.photos.deleteFailed,
-                errorMessage(error, copy.photos.retrySoon)
-              )
-            }
-          })()
+            })()
+          },
         },
-      },
-    ])
+      ]
+    )
   }, [
     copy.photos.cancel,
     copy.photos.delete,
     copy.photos.deleteBody,
     copy.photos.deleteFailed,
     copy.photos.deleteTitle,
+    copy.photos.deleteVideoBody,
+    copy.photos.deleteVideoTitle,
     copy.photos.deleted,
     copy.photos.retrySoon,
     goTo,
@@ -316,14 +360,14 @@ export default function PhotoDetailScreen() {
   const renderPagerItem = useCallback<ListRenderItem<CaptureRecord>>(
     ({ item }) => (
       <PagerPage
-        uri={item.uri}
-        id={item.id}
+        item={item}
+        active={item.id === selectedId}
         width={width}
         padLeft={padLeft}
         padRight={padRight}
       />
     ),
-    [padLeft, padRight, width]
+    [padLeft, padRight, selectedId, width]
   )
 
   const onSelectStrip = useCallback(
@@ -336,7 +380,7 @@ export default function PhotoDetailScreen() {
   const renderStripItem = useCallback<ListRenderItem<CaptureRecord>>(
     ({ item, index: itemIndex }) => (
       <StripThumb
-        uri={item.uri}
+        uri={capturePreviewUri(item)}
         id={item.id}
         index={itemIndex}
         selected={item.id === selectedId}

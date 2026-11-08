@@ -1,7 +1,9 @@
 import {
   buildLeafletMapHtml,
   leafletCaptureScript,
+  leafletPingScript,
   leafletRecenterScript,
+  leafletRepairScript,
   leafletUpdateScript,
   parseLeafletMapMessage,
 } from '@/lib/leaflet-map-html'
@@ -122,6 +124,12 @@ describe('leaflet scripts', () => {
   it('builds a capture script', () => {
     expect(leafletCaptureScript()).toContain('captureFieldMap')
   })
+
+  it('builds repair and ping scripts', () => {
+    expect(leafletRepairScript(45.1, 9.2)).toContain('repairFieldMap')
+    expect(leafletRepairScript(45.1, 9.2)).toContain('45.1, 9.2')
+    expect(leafletPingScript()).toContain('pingFieldMap')
+  })
 })
 
 describe('parseLeafletMapMessage', () => {
@@ -133,7 +141,7 @@ describe('parseLeafletMapMessage', () => {
     ).toEqual({ type: 'aim-drag-end', lat: 45.1, lon: 9.2 })
   })
 
-  it('parses map snapshot messages', () => {
+  it('parses map snapshot and pong messages', () => {
     expect(
       parseLeafletMapMessage(
         JSON.stringify({
@@ -153,6 +161,9 @@ describe('parseLeafletMapMessage', () => {
     expect(
       parseLeafletMapMessage(JSON.stringify({ type: 'map-snapshot-error' }))
     ).toEqual({ type: 'map-snapshot-error', message: 'snapshot failed' })
+    expect(
+      parseLeafletMapMessage(JSON.stringify({ type: 'map-pong' }))
+    ).toEqual({ type: 'map-pong' })
   })
 
   it('rejects invalid payloads', () => {
@@ -213,5 +224,7 @@ describe('buildLeafletMapHtml capture wiring', () => {
     expect(html).toContain('html2canvas')
     expect(html).toContain('captureFieldMap')
     expect(html).toContain('crossOrigin: true')
+    expect(html).toContain('repairFieldMap')
+    expect(html).toContain('invalidateSize')
   })
 })

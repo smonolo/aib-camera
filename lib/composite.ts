@@ -20,7 +20,7 @@ import {
 } from './stamp'
 import type { StampSettings } from './types'
 
-type StampBurnInContent = {
+export type StampBurnInContent = {
   infoLines: string[]
   customLines: string[]
 }
@@ -138,20 +138,14 @@ export type CompositeStampOptions = {
   backgroundAlpha?: number
 }
 
-export async function compositeStampOntoPhoto(
-  photoUri: string,
+async function paintStampOnCanvas(
+  canvas: SkCanvas,
+  width: number,
+  height: number,
   content: StampBurnInContent,
   settings: StampSettings,
   options?: CompositeStampOptions
-): Promise<string> {
-  const data = await Skia.Data.fromURI(photoUri)
-  const image = Skia.Image.MakeImageFromEncoded(data)
-  if (!image) {
-    throw new Error(t().composite.loadFailed)
-  }
-
-  const width = image.width()
-  const height = image.height()
+): Promise<void> {
   const multiplier = options?.referenceMultiplier ?? 1
   const reference = Math.max(
     1,
@@ -173,14 +167,6 @@ export async function compositeStampOntoPhoto(
   const backgroundColor = options?.backgroundColor ?? '#000000'
   const font = await resolveFont(fontSize)
   const blockWidth = Math.max(1, reference - edgePad * 2)
-
-  const surface = Skia.Surface.MakeOffscreen(width, height)
-  if (!surface) {
-    throw new Error(t().composite.surfaceFailed)
-  }
-
-  const canvas = surface.getCanvas()
-  canvas.drawImage(image, 0, 0)
 
   const textPaint = Skia.Paint()
   textPaint.setColor(Skia.Color(options?.textColor ?? '#FFFFFF'))
@@ -227,6 +213,30 @@ export async function compositeStampOntoPhoto(
       originY: height - edgePad - customBlockHeight,
     })
   }
+}
+
+export async function compositeStampOntoPhoto(
+  photoUri: string,
+  content: StampBurnInContent,
+  settings: StampSettings,
+  options?: CompositeStampOptions
+): Promise<string> {
+  const data = await Skia.Data.fromURI(photoUri)
+  const image = Skia.Image.MakeImageFromEncoded(data)
+  if (!image) {
+    throw new Error(t().composite.loadFailed)
+  }
+
+  const width = image.width()
+  const height = image.height()
+  const surface = Skia.Surface.MakeOffscreen(width, height)
+  if (!surface) {
+    throw new Error(t().composite.surfaceFailed)
+  }
+
+  const canvas = surface.getCanvas()
+  canvas.drawImage(image, 0, 0)
+  await paintStampOnCanvas(canvas, width, height, content, settings, options)
 
   const snapshot = surface.makeImageSnapshot()
   const encoded = snapshot.encodeToBytes(ImageFormat.JPEG, 92)
@@ -235,6 +245,49 @@ export async function compositeStampOntoPhoto(
   const outFile = new File(capturesDirectory(), filename)
   outFile.create({ overwrite: true })
   await outFile.write(encoded)
+
+  return outFile.uri
+}
+
+export async function renderStampOverlayPng(
+  width: number,
+  height: number,
+  content: StampBurnInContent,
+  settings: StampSettings,
+  options?: CompositeStampOptions
+): Promise<string> {
+  const surface = Skia.Surface.MakeOffscreen(
+    Math.max(1, Math.round(width)),
+    Math.max(1, Math.round(height))
+  )
+  if (!surface) {
+    throw new Error(t().composite.surfaceFailed)
+  }
+
+  const canvas = surface.getCanvas()
+  canvas.clear(Skia.Color('#00000000'))
+  await paintStampOnCanvas(
+    canvas,
+    Math.max(1, Math.round(width)),
+    Math.max(1, Math.round(height)),
+    content,
+    settings,
+    options
+  )
+
+  const snapshot = surface.makeImageSnapshot()
+  const encoded = snapshot.encodeToBytes(ImageFormat.PNG)
+  if (!encoded?.length) {
+    throw new Error(t().composite.surfaceFailed)
+  }
+
+  const filename = `aib-stamp-${Date.now()}.png`
+  const outFile = new File(capturesDirectory(), filename)
+  outFile.create({ overwrite: true })
+  await outFile.write(encoded)
+  if (!outFile.exists) {
+    throw new Error(t().composite.surfaceFailed)
+  }
 
   return outFile.uri
 }

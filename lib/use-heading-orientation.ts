@@ -1,11 +1,9 @@
 import * as ScreenOrientation from 'expo-screen-orientation'
 import { useEffect } from 'react'
 
-import {
-  headingOffsetForScreenOrientation,
-  setHeadingOrientationOffset,
-} from '@/lib/location'
+import { headingOffsetForScreenOrientation } from '@/lib/location'
 import { warn } from '@/lib/soft'
+import { applyHeadingOrientationOffset } from '@/lib/use-live-geo'
 
 export function useHeadingOrientationSync(): void {
   useEffect(() => {
@@ -15,7 +13,7 @@ export function useHeadingOrientationSync(): void {
       try {
         const orientation = await ScreenOrientation.getOrientationAsync()
         if (!active) return
-        setHeadingOrientationOffset(
+        applyHeadingOrientationOffset(
           headingOffsetForScreenOrientation(orientation)
         )
       } catch (error) {
@@ -25,7 +23,7 @@ export function useHeadingOrientationSync(): void {
 
     const subscription = ScreenOrientation.addOrientationChangeListener(
       event => {
-        setHeadingOrientationOffset(
+        applyHeadingOrientationOffset(
           headingOffsetForScreenOrientation(event.orientationInfo.orientation)
         )
       }

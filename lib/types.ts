@@ -30,9 +30,12 @@ export type StampSettings = {
   opacity: StampOpacityStep
 }
 
+export type CaptureKind = 'photo' | 'video'
+
 export type CaptureRecord = {
   id: string
   uri: string
+  kind: CaptureKind
   mediaLibraryAssetId: string | null
   takenAt: string
   lat: number | null
@@ -43,6 +46,8 @@ export type CaptureRecord = {
   address: string | null
   customText: string[]
   stampConfigSnapshot: StampSettings
+  durationMs: number | null
+  posterUri: string | null
 }
 
 export type AuditLogEntry = {

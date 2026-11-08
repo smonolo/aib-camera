@@ -7,7 +7,6 @@ import { IconButton } from '@/components/IconButton'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { setGeoSourceMode, useGeoSource } from '@/lib/geo-source'
 import { useI18n } from '@/lib/i18n/locale-context'
-import { CAMERA } from '@/lib/layout'
 import { useAppColors } from '@/lib/theme'
 import type { GeoSourceMode } from '@/lib/types'
 
@@ -74,32 +73,5 @@ export function AimHeaderButton() {
         openAimTargetSheet()
       }}
     />
-  )
-}
-
-export function AimModeToggle({
-  top,
-  left = 0,
-  width,
-}: {
-  top: number
-  left?: number
-  width?: number
-}) {
-  return (
-    <View
-      pointerEvents="box-none"
-      style={{
-        position: 'absolute',
-        top,
-        height: CAMERA.sideButton,
-        left,
-        width: width ?? '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <AimModeControl />
-    </View>
   )
 }

@@ -22,6 +22,7 @@ import {
 } from '@/lib/geo-source'
 import { useI18n } from '@/lib/i18n/locale-context'
 import {
+  CAMERA,
   SCREEN_HEADER_TOP_GAP,
   SCREEN_PAD,
   SCREEN_PAD_NARROW,
@@ -183,7 +184,14 @@ export default function MapScreen() {
         >
           {copy.map.title}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: CAMERA.sideGap,
+          }}
+        >
+          <AimHeaderButton />
           <IconButton
             name="sliders"
             accessibilityLabel={copy.camera.stampSettings}
@@ -192,7 +200,6 @@ export default function MapScreen() {
               router.push('/configuration')
             }}
           />
-          <AimHeaderButton />
         </View>
       </View>
 

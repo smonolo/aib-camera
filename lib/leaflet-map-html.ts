@@ -251,6 +251,21 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
     map.setView([lat, lon], zoom == null ? map.getZoom() : zoom, { animate: true });
   };
 
+  window.repairFieldMap = function(lat, lon) {
+    map.invalidateSize({ animate: false, pan: false });
+    if (lat != null && lon != null && isFinite(lat) && isFinite(lon)) {
+      map.setView([lat, lon], map.getZoom(), { animate: false });
+    }
+    map.eachLayer(function(layer) {
+      if (typeof layer.redraw === 'function') layer.redraw();
+    });
+    syncMarkers();
+  };
+
+  window.pingFieldMap = function() {
+    postMessage({ type: 'map-pong' });
+  };
+
   function restoreCaptureTheme() {
     if (isDark) {
       document.documentElement.classList.add('aib-dark');
@@ -293,6 +308,8 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   };
 
   syncMarkers();
+  setTimeout(function() { map.invalidateSize({ animate: false, pan: false }); }, 0);
+  setTimeout(function() { map.invalidateSize({ animate: false, pan: false }); }, 200);
 </script>
 </body>
 </html>`
@@ -319,6 +336,14 @@ export function leafletRecenterScript(
   return `window.recenterFieldMap && window.recenterFieldMap(${lat}, ${lon}, ${z}); true;`
 }
 
+export function leafletRepairScript(lat: number, lon: number): string {
+  return `window.repairFieldMap && window.repairFieldMap(${lat}, ${lon}); true;`
+}
+
+export function leafletPingScript(): string {
+  return `window.pingFieldMap && window.pingFieldMap(); true;`
+}
+
 export function leafletCaptureScript(): string {
   return `window.captureFieldMap && window.captureFieldMap(); true;`
 }
@@ -327,6 +352,7 @@ export type LeafletMapMessage =
   | { type: 'aim-drag-end'; lat: number; lon: number }
   | { type: 'map-snapshot'; dataUrl: string }
   | { type: 'map-snapshot-error'; message: string }
+  | { type: 'map-pong' }
 
 export function parseLeafletMapMessage(raw: string): LeafletMapMessage | null {
   try {
@@ -360,6 +386,9 @@ export function parseLeafletMapMessage(raw: string): LeafletMapMessage | null {
             ? parsed.message
             : 'snapshot failed',
       }
+    }
+    if (parsed.type === 'map-pong') {
+      return { type: 'map-pong' }
     }
     return null
   } catch {

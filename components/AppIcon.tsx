@@ -19,10 +19,12 @@ import {
   TargetIcon,
   TrashBinTrashIcon,
   Tuning2Icon,
+  VideocameraIcon,
 } from '@solar-icons/react-native/linear'
 
 const ICONS = {
   camera: CameraIcon,
+  videocamera: VideocameraIcon,
   images: GalleryIcon,
   map: MapPointIcon,
   settings: SettingsIcon,

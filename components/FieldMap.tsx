@@ -1,20 +1,26 @@
+import { useFocusEffect } from 'expo-router'
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
   type ComponentType,
   type Ref,
 } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { WebView as RNWebView } from 'react-native-webview'
 
 import type { FieldMapProps } from '@/lib/field-map'
+import { useOnAppActive } from '@/lib/hooks'
 import {
   buildLeafletMapHtml,
   leafletCaptureScript,
+  leafletPingScript,
   leafletRecenterScript,
+  leafletRepairScript,
   leafletUpdateScript,
   parseLeafletMapMessage,
 } from '@/lib/leaflet-map-html'
@@ -44,6 +50,7 @@ type MapWebViewProps = {
 const WebView = RNWebView as unknown as ComponentType<MapWebViewProps>
 
 const CAPTURE_TIMEOUT_MS = 20_000
+const PING_TIMEOUT_MS = 800
 
 export type FieldMapHandle = {
   captureJpeg: () => Promise<string>
@@ -76,12 +83,16 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
       reject: (error: Error) => void
       timer: ReturnType<typeof setTimeout>
     } | null>(null)
+    const pingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const awaitingPongRef = useRef(false)
+    const focusedRef = useRef(false)
+    const [surfaceKey, setSurfaceKey] = useState(0)
 
     const html = useMemo(
       () =>
         buildLeafletMapHtml({
-          focusLat,
-          focusLon,
+          focusLat: focusRef.current.lat,
+          focusLon: focusRef.current.lon,
           liveLat,
           liveLon,
           heading,
@@ -89,12 +100,55 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
           aimedTitle,
           dark: scheme === 'dark',
         }),
-      [aimedTitle, isAimedTarget, scheme]
+      [aimedTitle, isAimedTarget, scheme, surfaceKey]
     )
+
+    const clearPingTimer = useCallback(() => {
+      if (pingTimerRef.current == null) return
+      clearTimeout(pingTimerRef.current)
+      pingTimerRef.current = null
+    }, [])
+
+    const repairMap = useCallback(() => {
+      if (!readyRef.current) return
+      const { lat, lon } = focusRef.current
+      webRef.current?.injectJavaScript(leafletRepairScript(lat, lon))
+      webRef.current?.injectJavaScript(
+        leafletUpdateScript({
+          focusLat: lat,
+          focusLon: lon,
+          liveLat,
+          liveLon,
+          heading,
+          isAimedTarget,
+          aimedTitle,
+        })
+      )
+    }, [aimedTitle, heading, isAimedTarget, liveLat, liveLon])
+
+    const recoverMapSurface = useCallback(() => {
+      clearPingTimer()
+      awaitingPongRef.current = false
+      readyRef.current = false
+      setSurfaceKey(value => value + 1)
+    }, [clearPingTimer])
+
+    const pingOrRepair = useCallback(() => {
+      if (!readyRef.current || !webRef.current) return
+      clearPingTimer()
+      awaitingPongRef.current = true
+      webRef.current.injectJavaScript(leafletPingScript())
+      pingTimerRef.current = setTimeout(() => {
+        pingTimerRef.current = null
+        if (!awaitingPongRef.current) return
+        awaitingPongRef.current = false
+        recoverMapSurface()
+      }, PING_TIMEOUT_MS)
+    }, [clearPingTimer, recoverMapSurface])
 
     useEffect(() => {
       readyRef.current = false
-    }, [html])
+    }, [html, surfaceKey])
 
     useEffect(() => {
       if (!readyRef.current) return
@@ -125,6 +179,27 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
       webRef.current?.injectJavaScript(leafletRecenterScript(lat, lon))
     }, [recenterToken])
 
+    useFocusEffect(
+      useCallback(() => {
+        focusedRef.current = true
+        const immediate = setTimeout(pingOrRepair, 0)
+        const later = setTimeout(repairMap, 280)
+        return () => {
+          focusedRef.current = false
+          clearTimeout(immediate)
+          clearTimeout(later)
+          clearPingTimer()
+          awaitingPongRef.current = false
+        }
+      }, [clearPingTimer, pingOrRepair, repairMap])
+    )
+
+    useOnAppActive(() => {
+      if (!focusedRef.current) return
+      pingOrRepair()
+      setTimeout(repairMap, 280)
+    })
+
     useImperativeHandle(
       ref,
       () => ({
@@ -151,79 +226,86 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
 
     useEffect(
       () => () => {
+        clearPingTimer()
         const pending = pendingCaptureRef.current
         if (!pending) return
         clearTimeout(pending.timer)
         pendingCaptureRef.current = null
         pending.reject(new Error('Map unmounted'))
       },
-      []
+      [clearPingTimer]
     )
 
     return (
-      <WebView
-        key={scheme}
-        ref={webRef}
+      <View
         style={StyleSheet.absoluteFill}
-        originWhitelist={['*']}
-        source={{ html }}
-        onLoadEnd={() => {
-          readyRef.current = true
-          webRef.current?.injectJavaScript(
-            leafletUpdateScript({
-              focusLat,
-              focusLon,
-              liveLat,
-              liveLon,
-              heading,
-              isAimedTarget,
-              aimedTitle,
-            })
-          )
-          webRef.current?.injectJavaScript(
-            leafletRecenterScript(focusLat, focusLon)
-          )
+        onLayout={() => {
+          repairMap()
         }}
-        onMessage={event => {
-          const message = parseLeafletMapMessage(event.nativeEvent.data)
-          if (!message) return
+      >
+        <WebView
+          key={`${scheme}-${surfaceKey}`}
+          ref={webRef}
+          style={StyleSheet.absoluteFill}
+          originWhitelist={['*']}
+          source={{ html }}
+          onLoadEnd={() => {
+            readyRef.current = true
+            repairMap()
+            webRef.current?.injectJavaScript(
+              leafletRecenterScript(focusLat, focusLon)
+            )
+            setTimeout(repairMap, 120)
+            setTimeout(repairMap, 360)
+          }}
+          onMessage={event => {
+            const message = parseLeafletMapMessage(event.nativeEvent.data)
+            if (!message) return
 
-          if (message.type === 'aim-drag-end') {
-            onAimDragEndRef.current?.(message.lat, message.lon)
-            return
-          }
+            if (message.type === 'map-pong') {
+              awaitingPongRef.current = false
+              clearPingTimer()
+              repairMap()
+              return
+            }
 
-          const pending = pendingCaptureRef.current
-          if (!pending) return
+            if (message.type === 'aim-drag-end') {
+              onAimDragEndRef.current?.(message.lat, message.lon)
+              return
+            }
 
-          if (message.type === 'map-snapshot-error') {
-            clearTimeout(pending.timer)
-            pendingCaptureRef.current = null
-            pending.reject(new Error(message.message))
-            return
-          }
+            const pending = pendingCaptureRef.current
+            if (!pending) return
 
-          if (message.type === 'map-snapshot') {
-            clearTimeout(pending.timer)
-            pendingCaptureRef.current = null
-            void writeJpegDataUrl(message.dataUrl)
-              .then(uri => pending.resolve(uri))
-              .catch(error =>
-                pending.reject(
-                  error instanceof Error ? error : new Error(String(error))
+            if (message.type === 'map-snapshot-error') {
+              clearTimeout(pending.timer)
+              pendingCaptureRef.current = null
+              pending.reject(new Error(message.message))
+              return
+            }
+
+            if (message.type === 'map-snapshot') {
+              clearTimeout(pending.timer)
+              pendingCaptureRef.current = null
+              void writeJpegDataUrl(message.dataUrl)
+                .then(uri => pending.resolve(uri))
+                .catch(error =>
+                  pending.reject(
+                    error instanceof Error ? error : new Error(String(error))
+                  )
                 )
-              )
-          }
-        }}
-        javaScriptEnabled
-        domStorageEnabled
-        setSupportMultipleWindows={false}
-        nestedScrollEnabled
-        scrollEnabled={false}
-        overScrollMode="never"
-        androidLayerType="hardware"
-        forceDarkOn={false}
-      />
+            }
+          }}
+          javaScriptEnabled
+          domStorageEnabled
+          setSupportMultipleWindows={false}
+          nestedScrollEnabled
+          scrollEnabled={false}
+          overScrollMode="never"
+          androidLayerType="hardware"
+          forceDarkOn={false}
+        />
+      </View>
     )
   }
 )

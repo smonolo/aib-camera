@@ -161,13 +161,29 @@ export function headingFromLocationHeading(
   ) {
     return null
   }
-  if (heading.trueHeading >= 0) {
+  if (
+    typeof heading.trueHeading === 'number' &&
+    Number.isFinite(heading.trueHeading) &&
+    heading.trueHeading >= 0
+  ) {
     return normalizeHeadingDegrees(heading.trueHeading)
   }
-  if (heading.magHeading >= 0) {
+  if (
+    typeof heading.magHeading === 'number' &&
+    Number.isFinite(heading.magHeading) &&
+    heading.magHeading >= 0
+  ) {
     return normalizeHeadingDegrees(heading.magHeading)
   }
   return null
+}
+
+export function seedSmoothedHeading(heading: number | null): void {
+  if (heading == null || !Number.isFinite(heading)) {
+    smoothedHeading = null
+    return
+  }
+  smoothedHeading = normalizeHeadingDegrees(heading)
 }
 
 export function normalizeHeadingDegrees(value: number): number {
@@ -222,10 +238,14 @@ export function headingOffsetForScreenOrientation(orientation: number): number {
   }
 }
 
-export function setHeadingOrientationOffset(offset: number): void {
-  if (headingOrientationOffset === offset) return
+export function setHeadingOrientationOffset(offset: number): number | null {
+  if (headingOrientationOffset === offset) return smoothedHeading
+  const delta = offset - headingOrientationOffset
   headingOrientationOffset = offset
-  smoothedHeading = null
+  if (smoothedHeading != null) {
+    smoothedHeading = normalizeHeadingDegrees(smoothedHeading + delta)
+  }
+  return smoothedHeading
 }
 
 export function orientHeadingDegrees(
@@ -321,6 +341,7 @@ async function reverseGeocodeSafe(
 type CaptureGeoOptions = {
   headingHint?: number | null
   positionTimeoutMs?: number
+  skipHeadingFetch?: boolean
 }
 
 export async function captureGeoSnapshot(
@@ -358,7 +379,7 @@ export async function captureGeoSnapshot(
     const address = await reverseGeocodeSafe(latitude, longitude)
 
     let heading = headingHint
-    if (heading == null) {
+    if (heading == null && !options.skipHeadingFetch) {
       try {
         const headingSample = await withTimeout(
           Location.getHeadingAsync(),
@@ -370,6 +391,11 @@ export async function captureGeoSnapshot(
       } catch {
         heading = null
       }
+    }
+    if (heading != null && Number.isFinite(heading)) {
+      seedSmoothedHeading(heading)
+    } else if (heading != null) {
+      heading = null
     }
 
     return {
@@ -403,6 +429,7 @@ export async function watchPosition(
       },
       position => {
         const { latitude, longitude, accuracy, altitude } = position.coords
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return
         onUpdate({
           lat: latitude,
           lon: longitude,

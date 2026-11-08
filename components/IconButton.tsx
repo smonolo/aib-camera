@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native'
 
 import { AppIcon, type AppIconName } from '@/components/AppIcon'
+import { CAMERA } from '@/lib/layout'
 import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
@@ -16,7 +17,7 @@ export function IconButton({
   name,
   onPress,
   accessibilityLabel,
-  size = 20,
+  size = CAMERA.sideIcon,
   disabled = false,
   emphasized = false,
 }: Props) {
@@ -40,8 +41,8 @@ export function IconButton({
         accessibilityState={{ disabled }}
         hitSlop={8}
         style={{
-          width: 40,
-          height: 40,
+          width: CAMERA.sideButton,
+          height: CAMERA.sideButton,
           alignItems: 'center',
           justifyContent: 'center',
         }}

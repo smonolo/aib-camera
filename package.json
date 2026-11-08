@@ -1,6 +1,6 @@
 {
   "name": "aib-camera",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "license": "PolyForm-Noncommercial-1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
@@ -32,19 +32,24 @@
     "expo-splash-screen": "~58.0.13",
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "~58.0.7",
+    "expo-video": "~58.0.13",
+    "expo-video-thumbnails": "~58.0.2",
     "expo-web-browser": "~58.0.7",
     "nativewind": "^4.2.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
     "react-native-gesture-handler": "~3.3.0",
+    "react-native-nitro-modules": "^0.37.2",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",
     "react-native-svg": "15.16.0",
+    "react-native-video-pipeline": "^0.5.1",
     "react-native-web": "~0.21.4",
     "react-native-webview": "14.0.1",
     "react-native-worklets": "0.13.0",
+    "react-native-worklets-core": "^1.6.3",
     "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
@@ -71,7 +76,7 @@
     "submit:android": "npx eas-cli@latest submit -p android --profile production",
     "submit:android:internal": "npx eas-cli@latest submit -p android --profile internal",
     "submit:ios": "npx eas-cli@latest submit -p ios --profile production",
-    "smoke-checklist": "node -e \"console.log(['Device smoke checklist — AIB Camera','1. Grant camera; confirm Continue without GPS still opens camera','2. Confirm live HUD updates time/coords/accuracy/altitude/heading/place','3. Capture outdoors; verify stamp burned into JPEG (incl. meta line) and no confirm modal','4. Burst: take several shots without leaving camera; all appear in Photos; last shot thumbnail updates left of shutter','4b. Tap recent thumbnail → photo viewer; swipe or filmstrip browses other shots','5. Confirm EXIF: Software=AIB Camera, ImageUniqueID UUID, GPS, UserComment JSON','5b. Settings → Language (Italiano/English, default IT) switches UI; About → tap Version and Install ID to copy; Capture log shows ID/date; tap copies ID; export CSV includes install_id; entry remains after gallery delete','6. Album AIB Camera appears when library permission granted','7. Gallery: date-grouped 3-column portrait / 5 landscape squares; tap opens viewer with filmstrip','8. Select multiple → share / delete from gallery toolbar','8b. Delete in-app: photo gone from Photos album too; capture log entry remains','9. Share via system sheet (WhatsApp/Mail)','10. Toggle accuracy/altitude/heading/place and retake','11. Airplane mode: photo still saves; place from geocode cache if nearby cell was cached earlier','12. Rotate device: HUD heading stays camera-facing (same bearing portrait↔landscape); landscape camera shows side chrome and usable preview; capture stamp matches overlay','12b. Drive/walk across a municipal border: place label should not flip every few seconds; refresh after ~600 m','13. Deny Photos library: capture still keeps photo in-app gallery','14. Deny location: shutter still works; stamp shows unavailable geo lines; Map tab shows empty hint and still allows no crash','15. Shutter feels instant (no multi-second GPS wait)','16. Floating glass tab bar is icons-only (Camera / Map / Photos / Settings) and matches on iOS and Android (expo-blur; camera chrome stays solid)','16b. Map tab: Aim header opens same sheet as Camera; Me = blue puck; Aimed = draggable red pin (drop updates meters); Me↔Aimed; Copy / Open in Maps / Save as photo (map+pins+stamp in gallery)','17. Swipe left from camera opens gallery','18. Aim: open via chrome or ~0.5s viewfinder long-press; content-height full-width sheet; dismiss with X or tap outside','19. Aim: lock ~250 m target; HUD shows Punto mirato + new coords; capture stamps estimated point; Map tab can toggle Qui ↔ Mirato','20. Toggle Here / Aimed; Clear returns to live GPS; Lock without GPS/heading shows soft error','21. Stamp configuration: full-height full-width sheet from camera tune; dismiss with X or tap outside; toggles affect live HUD and Map info'].join('\\n'))\""
+    "smoke-checklist": "node -e \"console.log([\\\"Device smoke checklist — AIB Camera\\\",\\\"1. Grant camera; confirm Continue without GPS still opens camera\\\",\\\"2. Confirm live HUD updates time/coords/accuracy/altitude/heading/wind/place\\\",\\\"3. Capture outdoors; verify stamp burned into JPEG (incl. meta line) and no confirm modal\\\",\\\"3b. Switch to Video; record ≤60 s (mic optional → muted if denied); stamp burns into MP4 when Nitro/video-pipeline is linked; recent thumb shows poster\\\",\\\"4. Burst: take several shots without leaving camera; all appear in Photos; last shot thumbnail updates left of shutter\\\",\\\"4b. Tap recent thumbnail → photo viewer; swipe or filmstrip browses other shots (videos play)\\\",\\\"4c. Zoom and mode icons side by side right of shutter (stacked vertically in landscape); each opens a menu; zoom button shows live level\\\",\\\"4d. Top chrome: flash left; Aim + stamp settings right (Qui/Mirato beside them when sticky); Map header Aim then settings matches\\\",\\\"5. Confirm EXIF: Software=AIB Camera, ImageUniqueID UUID, GPS, UserComment JSON\\\",\\\"5b. Settings → Language (Italiano/English, default IT) switches UI; About → tap Version and Install ID to copy; Capture log shows ID/date; tap copies ID; export CSV includes install_id; entry remains after gallery delete\\\",\\\"6. Album AIB Camera appears when library permission granted (photos and videos)\\\",\\\"7. Gallery: date-grouped 3-column portrait / 5 landscape squares; videos use posters; tap opens viewer with filmstrip\\\",\\\"8. Select multiple → share / delete from gallery toolbar\\\",\\\"8b. Delete in-app: media gone from Photos album too; capture log entry remains\\\",\\\"9. Share via system sheet (WhatsApp/Mail); videos share as video/mp4\\\",\\\"10. Toggle accuracy/altitude/heading/wind/place and retake\\\",\\\"11. Airplane mode: photo still saves; place from geocode cache if nearby cell was cached earlier; wind omitted\\\",\\\"12. Rotate device: HUD heading stays camera-facing (same bearing portrait↔landscape); landscape camera shows side chrome and usable preview; capture stamp matches overlay\\\",\\\"12b. Drive/walk across a municipal border: place label should not flip every few seconds; refresh after ~600 m\\\",\\\"13. Deny Photos library: capture still keeps media in-app gallery\\\",\\\"14. Deny location: shutter still works; stamp shows unavailable geo lines; Map tab shows empty hint and still allows no crash\\\",\\\"15. Shutter feels instant (no multi-second GPS wait)\\\",\\\"16. Floating glass tab bar is icons-only (Camera / Map / Photos / Settings) and matches on iOS and Android (expo-blur; camera chrome stays solid)\\\",\\\"16b. Map tab: Aim header opens same sheet as Camera; Me = blue puck; Aimed = draggable red pin (drop updates meters); Me↔Aimed; Copy / Open in Maps / Save as photo (map+pins+stamp in gallery)\\\",\\\"16c. Leave Map, use other tabs, return: tiles redraw (not blank grey); coords stamp still correct\\\",\\\"17. Swipe left from camera opens gallery\\\",\\\"18. Aim: open via chrome or ~0.5s viewfinder long-press; content-height full-width sheet; dismiss with X or tap outside\\\",\\\"19. Aim: lock ~250 m target; HUD shows Punto mirato + new coords; capture stamps estimated point; Map tab can toggle Qui ↔ Mirato\\\",\\\"20. Toggle Here / Aimed; Clear returns to live GPS; Lock without GPS/heading shows soft error\\\",\\\"21. Stamp configuration: full-height full-width sheet from camera tune; dismiss with X or tap outside; toggles affect live HUD and Map info\\\"].join(\\\"\\\\n\\\"))\""
   },
   "private": true,
   "expo": {
@@ -90,7 +95,7 @@
       "^@/(.*)$": "<rootDir>/$1"
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@sentry/react-native|native-base|@lodev09/react-native-exify)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native-nitro-modules|react-native-video-pipeline|react-native-worklets-core)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@sentry/react-native|native-base|@lodev09/react-native-exify)"
     ],
     "clearMocks": true
   },

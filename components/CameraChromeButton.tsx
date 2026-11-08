@@ -1,14 +1,22 @@
-import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native'
+import {
+  Pressable,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native'
 
 import { AppIcon, type AppIconName } from '@/components/AppIcon'
 import { Surface } from '@/components/Surface'
+import { fonts } from '@/lib/fonts'
 import { CAMERA } from '@/lib/layout'
 import { radii, useAppColors } from '@/lib/theme'
 
 type Props = {
   onPress: () => void
   accessibilityLabel: string
-  name: AppIconName
+  name?: AppIconName
+  label?: string
   color?: string
   backgroundColor?: string
   style?: StyleProp<ViewStyle>
@@ -18,12 +26,13 @@ export function CameraChromeButton({
   onPress,
   accessibilityLabel,
   name,
+  label,
   color,
   backgroundColor,
   style,
 }: Props) {
   const colors = useAppColors()
-  const iconColor = color ?? colors.fg
+  const contentColor = color ?? colors.fg
 
   return (
     <View
@@ -54,7 +63,20 @@ export function CameraChromeButton({
             justifyContent: 'center',
           }}
         >
-          <AppIcon name={name} size={CAMERA.sideIcon} color={iconColor} />
+          {label != null ? (
+            <Text
+              style={{
+                fontFamily: fonts.semibold,
+                fontSize: 13,
+                color: contentColor,
+                fontVariant: ['tabular-nums'],
+              }}
+            >
+              {label}
+            </Text>
+          ) : name != null ? (
+            <AppIcon name={name} size={CAMERA.sideIcon} color={contentColor} />
+          ) : null}
         </Pressable>
       </Surface>
     </View>

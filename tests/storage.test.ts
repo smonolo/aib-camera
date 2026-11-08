@@ -26,6 +26,7 @@ function capture(overrides: Partial<CaptureRecord> = {}): CaptureRecord {
   return {
     id: '11111111-2222-4333-8444-555555555555',
     uri: 'file:///captures/aib-1.jpg',
+    kind: 'photo',
     mediaLibraryAssetId: null,
     takenAt: '2024-07-15T14:30:45.000Z',
     lat: 45.46,
@@ -36,6 +37,8 @@ function capture(overrides: Partial<CaptureRecord> = {}): CaptureRecord {
     address: 'Milano',
     customText: ['AIB Camera'],
     stampConfigSnapshot: DEFAULT_STAMP_SETTINGS,
+    durationMs: null,
+    posterUri: null,
     ...overrides,
   }
 }
@@ -100,6 +103,9 @@ describe('captures', () => {
 
     const loaded = await getCapture('legacy')
     expect(loaded?.mediaLibraryAssetId).toBeNull()
+    expect(loaded?.kind).toBe('photo')
+    expect(loaded?.durationMs).toBeNull()
+    expect(loaded?.posterUri).toBeNull()
   })
 })
 

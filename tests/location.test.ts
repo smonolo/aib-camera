@@ -175,7 +175,7 @@ describe('heading orientation compensation', () => {
     ).toBe(250)
   })
 
-  it('resets the smoother when the orientation offset changes', () => {
+  it('rotates the smoothed heading when the orientation offset changes', () => {
     setHeadingOrientationOffset(0)
     expect(
       updateSmoothedHeading({
@@ -185,14 +185,14 @@ describe('heading orientation compensation', () => {
       })
     ).toBe(250)
 
-    setHeadingOrientationOffset(90)
+    expect(setHeadingOrientationOffset(90)).toBe(340)
     expect(
       updateSmoothedHeading({
         trueHeading: 160,
         magHeading: 160,
         accuracy: 2,
       })
-    ).toBe(250)
+    ).toBe(315)
   })
 })
 
@@ -209,6 +209,23 @@ describe('updateSmoothedHeading', () => {
       updateSmoothedHeading({
         trueHeading: 200,
         magHeading: 200,
+        accuracy: 0,
+      })
+    ).toBe(90)
+  })
+
+  it('keeps the last good heading when neither heading value is valid', () => {
+    expect(
+      updateSmoothedHeading({
+        trueHeading: 90,
+        magHeading: 90,
+        accuracy: 2,
+      })
+    ).toBe(90)
+    expect(
+      updateSmoothedHeading({
+        trueHeading: -1,
+        magHeading: -1,
         accuracy: 0,
       })
     ).toBe(90)
@@ -389,6 +406,33 @@ describe('captureGeoSnapshot', () => {
       address: null,
     })
     expect(mockedLocation.getCurrentPositionAsync).not.toHaveBeenCalled()
+  })
+
+  it('skips heading fetch when requested and keeps the hint', async () => {
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(
+      permission(true)
+    )
+    mockedLocation.getCurrentPositionAsync.mockResolvedValue({
+      coords: {
+        latitude: 45.46,
+        longitude: 9.19,
+        accuracy: 6,
+        altitude: 110,
+        altitudeAccuracy: 4,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    } as never)
+    mockedLocation.reverseGeocodeAsync.mockResolvedValue([] as never)
+
+    const snap = await captureGeoSnapshot({
+      headingHint: 123,
+      skipHeadingFetch: true,
+    })
+
+    expect(snap.heading).toBe(123)
+    expect(mockedLocation.getHeadingAsync).not.toHaveBeenCalled()
   })
 
   it('captures coords, address, and heading when available', async () => {

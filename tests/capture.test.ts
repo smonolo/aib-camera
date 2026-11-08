@@ -13,6 +13,11 @@ jest.mock('@/lib/media', () => ({
 }))
 jest.mock('@/lib/persist-photo', () => ({
   persistRawPhoto: jest.fn(),
+  persistRawVideo: jest.fn(),
+}))
+jest.mock('@/lib/video-stamp', () => ({
+  VIDEO_MAX_DURATION_SEC: 60,
+  stampVideoCapture: jest.fn(),
 }))
 jest.mock('@/lib/storage', () => ({
   recordCapture: jest.fn(),
@@ -64,12 +69,17 @@ jest.mock('@/lib/wind', () => ({
     mockGetCachedWindSync(lat, lon),
 }))
 
-import { finalizeCapture, resolveCaptureGeo } from '@/lib/capture'
+import {
+  finalizeCapture,
+  finalizeVideoCapture,
+  resolveCaptureGeo,
+} from '@/lib/capture'
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { writeCaptureExif } from '@/lib/exif'
 import { saveToAibAlbum } from '@/lib/media'
-import { persistRawPhoto } from '@/lib/persist-photo'
+import { persistRawPhoto, persistRawVideo } from '@/lib/persist-photo'
 import { recordCapture, setCaptureMediaAssetId } from '@/lib/storage'
+import { stampVideoCapture } from '@/lib/video-stamp'
 import {
   DEFAULT_STAMP_SETTINGS,
   type GeoSnapshot,
@@ -126,6 +136,15 @@ beforeEach(() => {
     'file:///captures/stamped.jpg'
   )
   ;(persistRawPhoto as jest.Mock).mockResolvedValue('file:///captures/raw.jpg')
+  ;(persistRawVideo as jest.Mock).mockResolvedValue(
+    'file:///captures/raw-video.mp4'
+  )
+  ;(stampVideoCapture as jest.Mock).mockResolvedValue({
+    uri: 'file:///captures/stamped.mp4',
+    durationMs: 4500,
+    posterUri: 'file:///captures/poster.jpg',
+    stamped: true,
+  })
   ;(writeCaptureExif as jest.Mock).mockResolvedValue(true)
   ;(recordCapture as jest.Mock).mockResolvedValue(undefined)
   ;(saveToAibAlbum as jest.Mock).mockResolvedValue('asset-1')
@@ -255,12 +274,15 @@ describe('finalizeCapture', () => {
       expect.objectContaining({
         id: captureId,
         uri: 'file:///captures/stamped.jpg',
+        kind: 'photo',
         mediaLibraryAssetId: null,
         takenAt: takenAt.toISOString(),
         lat: 45.4642,
         lon: 9.19,
         customText: ['Squadra Nord'],
         stampConfigSnapshot: settings,
+        durationMs: null,
+        posterUri: null,
       })
     )
     expect(saveToAibAlbum).toHaveBeenCalledWith('file:///captures/stamped.jpg')
@@ -405,5 +427,65 @@ describe('finalizeCapture', () => {
     expect(record.id).toBe(captureId)
     expect(setCaptureMediaAssetId).not.toHaveBeenCalled()
     expect(console.warn).toHaveBeenCalled()
+  })
+})
+
+describe('finalizeVideoCapture', () => {
+  it('stamps video, records capture, and links album asset', async () => {
+    const settings = {
+      ...DEFAULT_STAMP_SETTINGS,
+      customLines: ['Squadra Nord'],
+    }
+    const geo = snap()
+
+    const record = await finalizeVideoCapture(
+      'file:///tmp/camera.mp4',
+      geo,
+      settings
+    )
+    await flushMicrotasks()
+
+    expect(stampVideoCapture).toHaveBeenCalledWith(
+      'file:///tmp/camera.mp4',
+      geo,
+      expect.objectContaining({
+        customLines: ['Squadra Nord'],
+      }),
+      settings,
+      undefined
+    )
+    expect(persistRawVideo).not.toHaveBeenCalled()
+    expect(writeCaptureExif).not.toHaveBeenCalled()
+    expect(recordCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: captureId,
+        uri: 'file:///captures/stamped.mp4',
+        kind: 'video',
+        durationMs: 4500,
+        posterUri: 'file:///captures/poster.jpg',
+      })
+    )
+    expect(saveToAibAlbum).toHaveBeenCalledWith('file:///captures/stamped.mp4')
+    expect(record.kind).toBe('video')
+  })
+
+  it('persists unstamped video when stamp soft-fails', async () => {
+    ;(stampVideoCapture as jest.Mock).mockResolvedValue({
+      uri: 'file:///tmp/camera.mp4',
+      durationMs: 2000,
+      posterUri: null,
+      stamped: false,
+    })
+
+    const record = await finalizeVideoCapture(
+      'file:///tmp/camera.mp4',
+      snap(),
+      DEFAULT_STAMP_SETTINGS
+    )
+    await flushMicrotasks()
+
+    expect(persistRawVideo).toHaveBeenCalledWith('file:///tmp/camera.mp4')
+    expect(record.uri).toBe('file:///captures/raw-video.mp4')
+    expect(record.kind).toBe('video')
   })
 })
