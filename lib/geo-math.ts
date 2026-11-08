@@ -1,5 +1,4 @@
 const EARTH_RADIUS_M = 6_371_000
-const MAX_AIM_DISTANCE_M = 50_000
 
 export const AIM_DISTANCE_PRESETS = [1000, 2000, 5000, 10000] as const
 
@@ -81,11 +80,7 @@ export function parseAimDistanceMeters(raw: string | number): number | null {
     typeof raw === 'number'
       ? Math.round(raw)
       : Number.parseInt(String(raw).replace(/\D/g, ''), 10)
-  if (
-    !(distance > 0) ||
-    !Number.isFinite(distance) ||
-    distance > MAX_AIM_DISTANCE_M
-  ) {
+  if (!(distance > 0) || !Number.isFinite(distance)) {
     return null
   }
   return distance

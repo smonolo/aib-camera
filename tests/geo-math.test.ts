@@ -144,6 +144,7 @@ describe('parseAimDistanceMeters', () => {
     expect(parseAimDistanceMeters('  250  ')).toBe(250)
     expect(parseAimDistanceMeters(1)).toBe(1)
     expect(parseAimDistanceMeters(50_000)).toBe(50_000)
+    expect(parseAimDistanceMeters(500_000)).toBe(500_000)
   })
 
   it('accepts every Aim sheet preset', () => {
@@ -158,7 +159,6 @@ describe('parseAimDistanceMeters', () => {
     expect(parseAimDistanceMeters('abc')).toBeNull()
     expect(parseAimDistanceMeters(0)).toBeNull()
     expect(parseAimDistanceMeters(-1)).toBeNull()
-    expect(parseAimDistanceMeters(50_001)).toBeNull()
     expect(parseAimDistanceMeters(Number.NaN)).toBeNull()
     expect(parseAimDistanceMeters(Number.POSITIVE_INFINITY)).toBeNull()
     expect(parseAimDistanceMeters(0.4)).toBeNull()

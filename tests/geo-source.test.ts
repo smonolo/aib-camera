@@ -182,10 +182,14 @@ describe('lockAimedTarget', () => {
       ok: false,
       reason: 'bad_distance',
     })
-    await expect(lockAimedTarget(50_001)).resolves.toEqual({
-      ok: false,
-      reason: 'bad_distance',
-    })
+  })
+
+  it('locks distances beyond the former 50 km cap', async () => {
+    mockGetSharedGeoSnapshot.mockReturnValue(live())
+    const result = await lockAimedTarget(50_001)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.sticky.distanceM).toBe(50_001)
   })
 
   it('still locks when reverse geocode returns nothing', async () => {
@@ -248,14 +252,14 @@ describe('moveAimedTarget', () => {
     })
   })
 
-  it('soft-fails when the drop is farther than the max aim distance', async () => {
+  it('accepts drops beyond the former 50 km cap', async () => {
     mockGetSharedGeoSnapshot.mockReturnValue(live())
     const far = destinationPoint(45.4642, 9.19, 0, 60_000)
-    await expect(moveAimedTarget(far.lat, far.lon)).resolves.toEqual({
-      ok: false,
-      reason: 'bad_distance',
-    })
-    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
+    const result = await moveAimedTarget(far.lat, far.lon)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.sticky.distanceM).toBe(60_000)
+    expect(getGeoSourceState().mode).toBe('target')
   })
 
   it('locks target mode even when starting from me', async () => {
