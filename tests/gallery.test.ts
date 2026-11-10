@@ -2,6 +2,7 @@ import {
   buildGallerySections,
   compareCapturesChronological,
   sortCapturesChronological,
+  sortCapturesNewestFirst,
   takenAtMs,
 } from '@/lib/gallery'
 import { DEFAULT_STAMP_SETTINGS, type CaptureRecord } from '@/lib/types'
@@ -80,8 +81,21 @@ describe('sortCapturesChronological', () => {
   })
 })
 
+describe('sortCapturesNewestFirst', () => {
+  it('puts later map saves before an earlier video', () => {
+    const video = capture('video', '2024-07-15T10:00:00.000Z', {
+      kind: 'video',
+    })
+    const map1 = capture('map-1', '2024-07-15T10:05:00.000Z')
+    const map2 = capture('map-2', '2024-07-15T10:06:00.000Z')
+    expect(sortCapturesNewestFirst([video, map1, map2]).map(c => c.id)).toEqual(
+      ['map-2', 'map-1', 'video']
+    )
+  })
+})
+
 describe('buildGallerySections', () => {
-  it('keeps newest day first and oldest→newest within a day', () => {
+  it('keeps newest day first and newest→oldest within a day', () => {
     const olderDay = capture('old', '2024-07-14T18:00:00.000Z')
     const video = capture('video', '2024-07-15T10:00:00.000Z', {
       kind: 'video',
@@ -95,8 +109,8 @@ describe('buildGallerySections', () => {
       '2024-07-14',
     ])
     expect(sections[0]!.data[0]!.items.map(item => item.id)).toEqual([
-      'video',
       'map',
+      'video',
     ])
     expect(sections[1]!.data[0]!.items.map(item => item.id)).toEqual(['old'])
   })
@@ -112,11 +126,11 @@ describe('buildGallerySections', () => {
     expect(sections).toHaveLength(1)
     expect(sections[0]!.data).toHaveLength(2)
     expect(sections[0]!.data[0]!.items.map(item => item.id)).toEqual([
-      'a',
-      'b',
+      'd',
       'c',
+      'b',
     ])
-    expect(sections[0]!.data[1]!.items.map(item => item.id)).toEqual(['d'])
+    expect(sections[0]!.data[1]!.items.map(item => item.id)).toEqual(['a'])
   })
 
   it('keeps captures with unusable takenAt under today’s section', () => {

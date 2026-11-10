@@ -47,6 +47,12 @@ export function sortCapturesChronological(
   return [...captures].sort(compareCapturesChronological)
 }
 
+export function sortCapturesNewestFirst(
+  captures: CaptureRecord[]
+): CaptureRecord[] {
+  return [...captures].sort(compareCapturesNewestFirst)
+}
+
 export function buildGallerySections(
   captures: CaptureRecord[],
   copy: GalleryDayCopy,
@@ -70,7 +76,7 @@ export function buildGallerySections(
 
   return dayKeys.map(dayKey => {
     const items = [...(groups.get(dayKey) ?? [])].sort(
-      compareCapturesChronological
+      compareCapturesNewestFirst
     )
     return {
       dayKey,

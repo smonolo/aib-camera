@@ -6,7 +6,7 @@ import { newCaptureId } from './config'
 import { writeCaptureExif } from './exif'
 import { buildEffectiveGeoSnapshot, getGeoSourceState } from './geo-source'
 import { captureGeoSnapshot, emptyGeoSnapshot } from './location'
-import { saveToAibAlbum } from './media'
+import { deleteLocalPhotoFiles, saveToAibAlbum } from './media'
 import { persistRawPhoto, persistRawVideo } from './persist-photo'
 import { softVoid, warn } from './soft'
 import { buildStampContent } from './stamp'
@@ -135,17 +135,19 @@ export async function finalizeVideoCapture(
   settings: StampSettings,
   stampOptions?: CompositeStampOptions
 ): Promise<CaptureRecord> {
+  const localUri = await persistRawVideo(videoUri)
   const stamped = await stampVideoCapture(
-    videoUri,
+    localUri,
     snap,
     buildStampContent(snap, settings),
     settings,
     stampOptions
   )
 
-  const persistedUri = stamped.stamped
-    ? stamped.uri
-    : await persistRawVideo(stamped.uri)
+  const persistedUri = stamped.stamped ? stamped.uri : localUri
+  if (stamped.stamped && stamped.uri !== localUri) {
+    void deleteLocalPhotoFiles([localUri])
+  }
 
   const captureId = newCaptureId()
   const record: CaptureRecord = {

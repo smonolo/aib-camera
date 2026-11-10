@@ -30,7 +30,7 @@ Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/c
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
 - **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing); returning to the tab calls Leaflet `invalidateSize` so tiles redraw if the WebView went stale. Aimed red pin is draggable — drop updates locked coords and distance from your GPS
-- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape; newest day first, oldest→newest within each day) + optional Photos album «AIB Camera»; open a shot for the **viewer** (photos + videos; swipe or bottom filmstrip, share/delete current)
+- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape; newest day first, newest→oldest within each day) + optional Photos album «AIB Camera»; open a shot for the **viewer** (photos + videos; swipe or bottom filmstrip, share/delete current)
 - Recent-capture thumbnail left of the shutter (opens the viewer; videos use a poster). On the right: zoom and Photo/Video icons side by side, each opening a short menu.
 - Deleting from the app also removes the copy in Photos when available; capture log stays
 - System share sheet (WhatsApp, Mail, …) for JPEG and MP4

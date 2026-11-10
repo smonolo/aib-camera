@@ -14,6 +14,7 @@ import {
   Pressable,
   Text,
   View,
+  type HostInstance,
   type LayoutChangeEvent,
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -85,7 +86,11 @@ function CameraExperience() {
   const insets = useSafeAreaInsets()
   const colors = useAppColors()
   const scheme = useAppColorScheme()
+  const rootRef = useRef<HostInstance>(null)
   const cameraRef = useRef<CameraView>(null)
+  const zoomBtnRef = useRef<HostInstance>(null)
+  const modeBtnRef = useRef<HostInstance>(null)
+  const chromeMenuRef = useRef<'mode' | 'zoom' | null>(null)
   const { settings } = useStampSettings()
   const { showError } = useToast()
   const { copy, locale } = useI18n()
@@ -96,6 +101,10 @@ function CameraExperience() {
   const [flash, setFlash] = useState<FlashMode>('off')
   const [captureMode, setCaptureMode] = useState<CaptureMode>('picture')
   const [chromeMenu, setChromeMenu] = useState<'mode' | 'zoom' | null>(null)
+  const [menuAnchor, setMenuAnchor] = useState<{
+    right: number
+    bottom: number
+  } | null>(null)
   const [muteAudio, setMuteAudio] = useState(true)
   const [recording, setRecording] = useState(false)
   const [recordingElapsedSec, setRecordingElapsedSec] = useState(0)
@@ -197,20 +206,28 @@ function CameraExperience() {
     router.push(`/photo/${latestCapture.id}`)
   }, [latestCapture])
 
+  const closeChromeMenu = useCallback(() => {
+    chromeMenuRef.current = null
+    setChromeMenu(null)
+    setMenuAnchor(null)
+  }, [])
+
   const toggleFlash = useCallback(() => {
     void Haptics.selectionAsync()
     setFlash(current => (current === 'off' ? 'on' : 'off'))
   }, [])
 
   const openStampSettings = useCallback(() => {
+    closeChromeMenu()
     void Haptics.selectionAsync()
     router.push('/configuration')
-  }, [])
+  }, [closeChromeMenu])
 
   const openAimTarget = useCallback(() => {
+    closeChromeMenu()
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     openAimTargetSheet()
-  }, [])
+  }, [closeChromeMenu])
 
   const reportCaptureError = useCallback(
     (error: unknown, video = false) => {
@@ -254,7 +271,7 @@ function CameraExperience() {
 
   const setMode = useCallback(
     (next: CaptureMode) => {
-      setChromeMenu(null)
+      closeChromeMenu()
       if (recordingRef.current || next === captureMode) return
       void Haptics.selectionAsync()
       shutterBusyRef.current = false
@@ -265,26 +282,57 @@ function CameraExperience() {
         void ensureMicForVideo()
       }
     },
-    [captureMode, ensureMicForVideo]
+    [captureMode, closeChromeMenu, ensureMicForVideo]
   )
 
-  const toggleChromeMenu = useCallback((menu: 'mode' | 'zoom') => {
-    if (recordingRef.current || shutterBusyRef.current) return
-    void Haptics.selectionAsync()
-    setChromeMenu(open => (open === menu ? null : menu))
-  }, [])
+  const toggleChromeMenu = useCallback(
+    (menu: 'mode' | 'zoom') => {
+      if (recordingRef.current || shutterBusyRef.current) return
+      void Haptics.selectionAsync()
+      if (chromeMenuRef.current === menu) {
+        closeChromeMenu()
+        return
+      }
+
+      const btn = (menu === 'zoom' ? zoomBtnRef : modeBtnRef).current
+      const root = rootRef.current
+      if (!btn || !root) {
+        chromeMenuRef.current = menu
+        setMenuAnchor(null)
+        setChromeMenu(menu)
+        return
+      }
+
+      btn.measureInWindow((bx, by, bw) => {
+        root.measureInWindow((rx, ry, rw, rh) => {
+          chromeMenuRef.current = menu
+          setMenuAnchor({
+            right: rw - (bx - rx + bw),
+            bottom: rh - (by - ry) + 10,
+          })
+          setChromeMenu(menu)
+        })
+      })
+    },
+    [closeChromeMenu]
+  )
 
   const selectZoomOption = useCallback(
     (option: ZoomOption) => {
-      setChromeMenu(null)
+      closeChromeMenu()
       applyZoomOption(option)
     },
-    [applyZoomOption]
+    [applyZoomOption, closeChromeMenu]
   )
 
   useEffect(() => {
-    if (recording) setChromeMenu(null)
-  }, [recording])
+    if (recording) closeChromeMenu()
+  }, [closeChromeMenu, recording])
+
+  useEffect(() => {
+    if (chromeMenuRef.current == null) return
+    closeChromeMenu()
+  }, [closeChromeMenu, viewport.width, viewport.height])
 
   useEffect(() => {
     if (!recording) {
@@ -629,18 +677,6 @@ function CameraExperience() {
     </Pressable>
   ) : null
 
-  const chromeMenuShell = {
-    position: 'absolute' as const,
-    right: 0,
-    bottom: CAMERA.sideButton + 10,
-    minWidth: 148,
-    borderRadius: radii.md,
-    overflow: 'hidden' as const,
-    backgroundColor: colors.canvas,
-    borderWidth: 1,
-    borderColor: lightChrome ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)',
-  }
-
   const chromeMenuRowStyle = (selected: boolean) => ({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -657,73 +693,6 @@ function CameraExperience() {
   const showZoomChrome = zoomOptions.length >= 2
   const useCommaZoom = locale === 'it'
 
-  const zoomMenu =
-    chromeMenu === 'zoom' ? (
-      <View style={chromeMenuShell}>
-        {zoomOptions.map(option => {
-          const selected = option.key === selectedZoomKey
-          const display = formatZoomLabel(option.factor, useCommaZoom, true)
-          return (
-            <Pressable
-              key={option.key}
-              onPress={() => selectZoomOption(option)}
-              accessibilityRole="menuitem"
-              accessibilityState={{ selected }}
-              accessibilityLabel={`${copy.camera.zoom} ${display}`}
-              style={chromeMenuRowStyle(selected)}
-            >
-              <Text
-                style={{
-                  fontFamily: fonts.semibold,
-                  fontSize: 14,
-                  color: colors.fg,
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {display}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-    ) : null
-
-  const modeMenu =
-    chromeMenu === 'mode' ? (
-      <View style={chromeMenuShell}>
-        {(['picture', 'video'] as const).map(mode => {
-          const selected = captureMode === mode
-          const label =
-            mode === 'picture' ? copy.camera.modePhoto : copy.camera.modeVideo
-          return (
-            <Pressable
-              key={mode}
-              onPress={() => setMode(mode)}
-              accessibilityRole="menuitem"
-              accessibilityState={{ selected }}
-              accessibilityLabel={label}
-              style={chromeMenuRowStyle(selected)}
-            >
-              <AppIcon
-                name={mode === 'picture' ? 'camera' : 'videocamera'}
-                size={18}
-                color={colors.fg}
-              />
-              <Text
-                style={{
-                  fontFamily: fonts.semibold,
-                  fontSize: 14,
-                  color: colors.fg,
-                }}
-              >
-                {label}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-    ) : null
-
   const zoomLevelLabel = (() => {
     const selected = zoomOptions.find(option => option.key === selectedZoomKey)
     if (!selected) return '1×'
@@ -738,12 +707,13 @@ function CameraExperience() {
 
   const zoomButton = showZoomChrome ? (
     <View
+      ref={zoomBtnRef}
+      collapsable={false}
       style={{
         width: CAMERA.sideButton,
         height: CAMERA.sideButton,
       }}
     >
-      {zoomMenu}
       <CameraChromeButton
         onPress={() => toggleChromeMenu('zoom')}
         accessibilityLabel={`${copy.camera.zoom} ${zoomLevelLabel}`}
@@ -754,12 +724,13 @@ function CameraExperience() {
 
   const modeButton = (
     <View
+      ref={modeBtnRef}
+      collapsable={false}
       style={{
         width: CAMERA.sideButton,
         height: CAMERA.sideButton,
       }}
     >
-      {modeMenu}
       <CameraChromeButton
         onPress={() => toggleChromeMenu('mode')}
         accessibilityLabel={copy.camera.modeToggle}
@@ -767,6 +738,96 @@ function CameraExperience() {
       />
     </View>
   )
+
+  const chromeMenuPanel =
+    chromeMenu == null ? null : (
+      <View
+        pointerEvents="box-none"
+        style={{
+          position: 'absolute',
+          zIndex: 22,
+          right:
+            menuAnchor?.right ??
+            CAMERA.thumbInset +
+              (chromeMenu === 'zoom' && showZoomChrome
+                ? CAMERA.sideButton + CAMERA.chromeStackGap
+                : 0),
+          bottom:
+            menuAnchor?.bottom ??
+            bottomPad +
+              (CAMERA.shutterRow - CAMERA.sideButton) / 2 +
+              CAMERA.sideButton +
+              10,
+          minWidth: 148,
+          borderRadius: radii.md,
+          overflow: 'hidden',
+          backgroundColor: colors.canvas,
+          borderWidth: 1,
+          borderColor: lightChrome
+            ? 'rgba(0,0,0,0.08)'
+            : 'rgba(255,255,255,0.12)',
+        }}
+      >
+        {chromeMenu === 'zoom'
+          ? zoomOptions.map(option => {
+              const selected = option.key === selectedZoomKey
+              const display = formatZoomLabel(option.factor, useCommaZoom, true)
+              return (
+                <Pressable
+                  key={option.key}
+                  onPress={() => selectZoomOption(option)}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${copy.camera.zoom} ${display}`}
+                  style={chromeMenuRowStyle(selected)}
+                >
+                  <Text
+                    style={{
+                      fontFamily: fonts.semibold,
+                      fontSize: 14,
+                      color: colors.fg,
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
+                    {display}
+                  </Text>
+                </Pressable>
+              )
+            })
+          : (['picture', 'video'] as const).map(mode => {
+              const selected = captureMode === mode
+              const label =
+                mode === 'picture'
+                  ? copy.camera.modePhoto
+                  : copy.camera.modeVideo
+              return (
+                <Pressable
+                  key={mode}
+                  onPress={() => setMode(mode)}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={label}
+                  style={chromeMenuRowStyle(selected)}
+                >
+                  <AppIcon
+                    name={mode === 'picture' ? 'camera' : 'videocamera'}
+                    size={18}
+                    color={colors.fg}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: fonts.semibold,
+                      fontSize: 14,
+                      color: colors.fg,
+                    }}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+      </View>
+    )
 
   const rightChromeStack = (vertical: boolean) => (
     <View
@@ -930,6 +991,8 @@ function CameraExperience() {
 
   return (
     <View
+      ref={rootRef}
+      collapsable={false}
       className="flex-1 bg-canvas dark:bg-canvas-inverse"
       onLayout={onViewportLayout}
     >
@@ -939,7 +1002,7 @@ function CameraExperience() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={copy.aim.close}
-              onPress={() => setChromeMenu(null)}
+              onPress={closeChromeMenu}
               style={{
                 position: 'absolute',
                 zIndex: 20,
@@ -950,6 +1013,7 @@ function CameraExperience() {
               }}
             />
           ) : null}
+          {chromeMenuPanel}
           {letterbox.landscape ? (
             <>
               <View

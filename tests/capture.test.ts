@@ -10,6 +10,7 @@ jest.mock('@/lib/exif', () => ({
 }))
 jest.mock('@/lib/media', () => ({
   saveToAibAlbum: jest.fn(),
+  deleteLocalPhotoFiles: jest.fn(async () => undefined),
 }))
 jest.mock('@/lib/persist-photo', () => ({
   persistRawPhoto: jest.fn(),
@@ -445,8 +446,9 @@ describe('finalizeVideoCapture', () => {
     )
     await flushMicrotasks()
 
+    expect(persistRawVideo).toHaveBeenCalledWith('file:///tmp/camera.mp4')
     expect(stampVideoCapture).toHaveBeenCalledWith(
-      'file:///tmp/camera.mp4',
+      'file:///captures/raw-video.mp4',
       geo,
       expect.objectContaining({
         customLines: ['Squadra Nord'],
@@ -454,7 +456,6 @@ describe('finalizeVideoCapture', () => {
       settings,
       undefined
     )
-    expect(persistRawVideo).not.toHaveBeenCalled()
     expect(writeCaptureExif).not.toHaveBeenCalled()
     expect(recordCapture).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -471,7 +472,7 @@ describe('finalizeVideoCapture', () => {
 
   it('persists unstamped video when stamp soft-fails', async () => {
     ;(stampVideoCapture as jest.Mock).mockResolvedValue({
-      uri: 'file:///tmp/camera.mp4',
+      uri: 'file:///captures/raw-video.mp4',
       durationMs: 2000,
       posterUri: null,
       stamped: false,
@@ -485,6 +486,13 @@ describe('finalizeVideoCapture', () => {
     await flushMicrotasks()
 
     expect(persistRawVideo).toHaveBeenCalledWith('file:///tmp/camera.mp4')
+    expect(stampVideoCapture).toHaveBeenCalledWith(
+      'file:///captures/raw-video.mp4',
+      expect.anything(),
+      expect.anything(),
+      DEFAULT_STAMP_SETTINGS,
+      undefined
+    )
     expect(record.uri).toBe('file:///captures/raw-video.mp4')
     expect(record.kind).toBe('video')
   })

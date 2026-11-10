@@ -32,7 +32,7 @@ import {
 } from '@/lib/layout'
 import {
   buildGallerySections,
-  sortCapturesChronological,
+  sortCapturesNewestFirst,
   type GalleryPhotoRow,
   type GalleryPhotoSection,
 } from '@/lib/gallery'
@@ -87,7 +87,7 @@ export default function PhotosScreen() {
   const selectedCount = selectedIds.size
   const selectedCaptures = useMemo(
     () =>
-      sortCapturesChronological(
+      sortCapturesNewestFirst(
         captures.filter(item => selectedIds.has(item.id))
       ),
     [captures, selectedIds]
