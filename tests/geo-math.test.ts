@@ -163,4 +163,10 @@ describe('parseAimDistanceMeters', () => {
     expect(parseAimDistanceMeters(Number.POSITIVE_INFINITY)).toBeNull()
     expect(parseAimDistanceMeters(0.4)).toBeNull()
   })
+
+  it('parses decimal strings without stripping the radix point', () => {
+    expect(parseAimDistanceMeters('2.5')).toBe(3)
+    expect(parseAimDistanceMeters('2,5')).toBe(3)
+    expect(parseAimDistanceMeters('2500.4 m')).toBe(2500)
+  })
 })

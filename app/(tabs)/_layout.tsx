@@ -1,21 +1,35 @@
 import { BlurTargetView } from 'expo-blur'
 import { Tabs, TabList, TabSlot, TabTrigger } from 'expo-router/ui'
 import { useRef } from 'react'
+import { Platform, View } from 'react-native'
 
 import { AppTabBar } from '@/components/AppTabBar'
 import { useI18n } from '@/lib/i18n/locale-context'
 import { TabBlurTargetProvider, type TabBlurHost } from '@/lib/tab-blur'
+
+const androidApi =
+  typeof Platform.Version === 'number'
+    ? Platform.Version
+    : Number.parseInt(String(Platform.Version), 10)
+const useBlurTarget =
+  Platform.OS !== 'android' || (Number.isFinite(androidApi) && androidApi >= 31)
 
 export default function TabLayout() {
   const { copy } = useI18n()
   const blurTargetRef = useRef<TabBlurHost | null>(null)
 
   return (
-    <TabBlurTargetProvider targetRef={blurTargetRef}>
+    <TabBlurTargetProvider targetRef={useBlurTarget ? blurTargetRef : null}>
       <Tabs style={{ flex: 1 }}>
-        <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-          <TabSlot style={{ flex: 1 }} />
-        </BlurTargetView>
+        {useBlurTarget ? (
+          <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+            <TabSlot style={{ flex: 1 }} />
+          </BlurTargetView>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <TabSlot style={{ flex: 1 }} />
+          </View>
+        )}
 
         <AppTabBar />
 

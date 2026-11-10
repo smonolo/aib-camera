@@ -86,11 +86,11 @@ describe('persistRawPhoto', () => {
     expect(uri).toContain('aib-1700000000000.jpg')
   })
 
-  it('returns the original URI when copy fails', async () => {
+  it('throws when copy fails instead of returning a temp URI', async () => {
     const spy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     mockArrayBuffer.mockRejectedValue(new Error('read failed'))
-    await expect(persistRawPhoto('file:///tmp/camera.jpg')).resolves.toBe(
-      'file:///tmp/camera.jpg'
+    await expect(persistRawPhoto('file:///tmp/camera.jpg')).rejects.toThrow(
+      'read failed'
     )
     expect(spy).toHaveBeenCalled()
   })

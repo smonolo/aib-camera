@@ -460,6 +460,7 @@ const GalleryTile = memo(function GalleryTile({
 }) {
   const colors = useAppColors()
   const { copy } = useI18n()
+  const previewUri = capturePreviewUri(item)
 
   return (
     <Pressable
@@ -473,12 +474,14 @@ const GalleryTile = memo(function GalleryTile({
         backgroundColor: colors.surfaceMuted,
       }}
     >
-      <Image
-        source={{ uri: capturePreviewUri(item) }}
-        recyclingKey={item.id}
-        style={{ width: '100%', height: '100%' }}
-        contentFit="cover"
-      />
+      {previewUri ? (
+        <Image
+          source={{ uri: previewUri }}
+          recyclingKey={item.id}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+        />
+      ) : null}
       {item.kind === 'video' ? (
         <View
           pointerEvents="none"

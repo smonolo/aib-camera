@@ -6,7 +6,11 @@ import { newCaptureId } from './config'
 import { writeCaptureExif } from './exif'
 import { buildEffectiveGeoSnapshot, getGeoSourceState } from './geo-source'
 import { captureGeoSnapshot, emptyGeoSnapshot } from './location'
-import { deleteLocalPhotoFiles, saveToAibAlbum } from './media'
+import {
+  deleteLocalPhotoFiles,
+  deleteMediaLibraryAssets,
+  saveToAibAlbum,
+} from './media'
 import { persistRawPhoto, persistRawVideo } from './persist-photo'
 import { softVoid, warn } from './soft'
 import { buildStampContent } from './stamp'
@@ -68,6 +72,17 @@ async function stampOrPersistRaw(
   }
 }
 
+function queueAlbumSave(captureId: string, uri: string): void {
+  void saveToAibAlbum(uri)
+    .then(async assetId => {
+      const linked = await setCaptureMediaAssetId(captureId, assetId)
+      if (linked == null) {
+        await deleteMediaLibraryAssets([assetId])
+      }
+    })
+    .catch(error => warn('Photos album save failed', error))
+}
+
 function baseCaptureRecord(
   captureId: string,
   uri: string,
@@ -122,9 +137,7 @@ export async function finalizeCapture(
     recordCapture(record)
   )
 
-  void saveToAibAlbum(stampedUri)
-    .then(assetId => setCaptureMediaAssetId(captureId, assetId))
-    .catch(error => warn('Photos album save failed', error))
+  queueAlbumSave(captureId, stampedUri)
 
   return record
 }
@@ -153,7 +166,10 @@ export async function finalizeVideoCapture(
   const record: CaptureRecord = {
     ...baseCaptureRecord(captureId, persistedUri, snap, settings),
     kind: 'video',
-    durationMs: stamped.durationMs || null,
+    durationMs:
+      stamped.durationMs != null && Number.isFinite(stamped.durationMs)
+        ? stamped.durationMs
+        : null,
     posterUri: stamped.posterUri,
   }
 
@@ -161,9 +177,7 @@ export async function finalizeVideoCapture(
     recordCapture(record)
   )
 
-  void saveToAibAlbum(persistedUri)
-    .then(assetId => setCaptureMediaAssetId(captureId, assetId))
-    .catch(error => warn('Photos album save failed', error))
+  queueAlbumSave(captureId, persistedUri)
 
   return record
 }

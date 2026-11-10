@@ -238,6 +238,10 @@ export function headingOffsetForScreenOrientation(orientation: number): number {
   }
 }
 
+export function getHeadingOrientationOffset(): number {
+  return headingOrientationOffset
+}
+
 export function setHeadingOrientationOffset(offset: number): number | null {
   if (headingOrientationOffset === offset) return smoothedHeading
   const delta = offset - headingOrientationOffset

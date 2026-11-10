@@ -576,6 +576,9 @@ function CameraExperience() {
   const flashOn = flash === 'on'
   const thumbTop = (CAMERA.shutterRow - CAMERA.thumbSize) / 2
   const showThumb = latestCapture != null || pendingProcessing > 0
+  const recentPreviewUri = latestCapture
+    ? capturePreviewUri(latestCapture)
+    : null
   const previewReady = letterbox.previewHeight > 0
   const flashButton = (
     <CameraChromeButton
@@ -626,11 +629,13 @@ function CameraExperience() {
       >
         {latestCapture ? (
           <>
-            <Image
-              source={{ uri: capturePreviewUri(latestCapture) }}
-              style={{ width: '100%', height: '100%' }}
-              contentFit="cover"
-            />
+            {recentPreviewUri ? (
+              <Image
+                source={{ uri: recentPreviewUri }}
+                style={{ width: '100%', height: '100%' }}
+                contentFit="cover"
+              />
+            ) : null}
             {latestCapture.kind === 'video' ? (
               <View
                 pointerEvents="none"

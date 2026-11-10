@@ -166,10 +166,11 @@ describe('applyHeadingOrientationOffset', () => {
     expect(getSharedGeoSnapshot().lat).toBe(45.4642)
   })
 
-  it('is a no-op when there is no smoothed heading yet', () => {
+  it('rotates shared heading when smoothed heading is not ready yet', () => {
     resetLiveGeoForTests(snap({ heading: 55 }))
+    setHeadingOrientationOffset(0)
     applyHeadingOrientationOffset(90)
-    expect(getSharedGeoSnapshot().heading).toBe(55)
+    expect(getSharedGeoSnapshot().heading).toBe(145)
   })
 })
 
@@ -178,6 +179,9 @@ describe('resetLiveGeoForTests', () => {
     resetLiveGeoForTests(snap())
     expect(getSharedGeoSnapshot().lat).toBe(45.4642)
     resetLiveGeoForTests()
-    expect(getSharedGeoSnapshot()).toEqual(emptyGeoSnapshot())
+    expect(getSharedGeoSnapshot()).toMatchObject({
+      ...emptyGeoSnapshot(),
+      takenAt: expect.any(Date),
+    })
   })
 })

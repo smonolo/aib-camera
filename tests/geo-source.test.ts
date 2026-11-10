@@ -333,6 +333,23 @@ describe('hydrateGeoSource', () => {
     expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
   })
 
+  it('drops sticky targets with non-finite coordinates', async () => {
+    await AsyncStorage.setItem(
+      GEO_SOURCE_KEY,
+      JSON.stringify({
+        mode: 'target',
+        sticky: {
+          ...sticky,
+          lat: Number.NaN,
+          lon: 9.19,
+        },
+      })
+    )
+    resetGeoSourceForTests()
+    await hydrateGeoSource()
+    expect(getGeoSourceState()).toEqual({ mode: 'me', sticky: null })
+  })
+
   it('keeps sticky in me mode when saved that way', async () => {
     await AsyncStorage.setItem(
       GEO_SOURCE_KEY,

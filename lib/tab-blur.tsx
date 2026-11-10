@@ -16,7 +16,7 @@ export function TabBlurTargetProvider({
   targetRef,
   children,
 }: {
-  targetRef: RefObject<TabBlurHost | null>
+  targetRef: RefObject<TabBlurHost | null> | null
   children: ReactNode
 }) {
   return (

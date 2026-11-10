@@ -240,11 +240,17 @@ export async function compositeStampOntoPhoto(
 
   const snapshot = surface.makeImageSnapshot()
   const encoded = snapshot.encodeToBytes(ImageFormat.JPEG, 92)
+  if (!encoded?.length) {
+    throw new Error(t().composite.surfaceFailed)
+  }
 
   const filename = `aib-${Date.now()}.jpg`
   const outFile = new File(capturesDirectory(), filename)
   outFile.create({ overwrite: true })
   await outFile.write(encoded)
+  if (!outFile.exists) {
+    throw new Error(t().composite.surfaceFailed)
+  }
 
   return outFile.uri
 }

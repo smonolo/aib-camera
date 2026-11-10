@@ -116,7 +116,7 @@ const StripThumb = memo(function StripThumb({
   mutedColor,
   onSelect,
 }: {
-  uri: string
+  uri: string | null
   id: string
   index: number
   selected: boolean
@@ -144,12 +144,14 @@ const StripThumb = memo(function StripThumb({
         backgroundColor: mutedColor,
       }}
     >
-      <Image
-        source={{ uri }}
-        recyclingKey={`strip-${id}`}
-        style={{ width: '100%', height: '100%' }}
-        contentFit="cover"
-      />
+      {uri ? (
+        <Image
+          source={{ uri }}
+          recyclingKey={`strip-${id}`}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+        />
+      ) : null}
     </Pressable>
   )
 })

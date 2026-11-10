@@ -131,48 +131,46 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
       aimedTitle,
     })
 
-    const pushState = useCallback(
-      (immediate = false) => {
+    const pushState = useCallback((immediate = false) => {
+      if (!readyRef.current) return
+      const current = propsRef.current
+      const payload = {
+        focusLat: current.focusLat,
+        focusLon: current.focusLon,
+        liveLat: current.liveLat,
+        liveLon: current.liveLon,
+        heading: current.heading,
+        isAimedTarget: current.isAimedTarget,
+        aimedTitle: current.aimedTitle,
+      }
+      pendingPushRef.current = payload
+      const serialized = JSON.stringify(payload)
+      if (serialized === lastPushRef.current && pushTimerRef.current == null) {
+        return
+      }
+
+      const run = () => {
+        pushTimerRef.current = null
         if (!readyRef.current) return
-        const payload = {
-          focusLat,
-          focusLon,
-          liveLat,
-          liveLon,
-          heading,
-          isAimedTarget,
-          aimedTitle,
-        }
-        pendingPushRef.current = payload
-        const serialized = JSON.stringify(payload)
-        if (
-          serialized === lastPushRef.current &&
-          pushTimerRef.current == null
-        ) {
-          return
-        }
+        const next = pendingPushRef.current
+        const nextSerialized = JSON.stringify(next)
+        if (nextSerialized === lastPushRef.current) return
+        lastPushRef.current = nextSerialized
+        webRef.current?.injectJavaScript(leafletUpdateScript(next))
+      }
 
-        const run = () => {
+      if (immediate) {
+        if (pushTimerRef.current) {
+          clearTimeout(pushTimerRef.current)
           pushTimerRef.current = null
-          if (!readyRef.current) return
-          const next = pendingPushRef.current
-          const nextSerialized = JSON.stringify(next)
-          if (nextSerialized === lastPushRef.current) return
-          lastPushRef.current = nextSerialized
-          webRef.current?.injectJavaScript(leafletUpdateScript(next))
         }
+        run()
+        return
+      }
 
-        if (immediate) {
-          if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
-          run()
-          return
-        }
-
-        if (pushTimerRef.current) return
-        pushTimerRef.current = setTimeout(run, 180)
-      },
-      [aimedTitle, focusLat, focusLon, heading, isAimedTarget, liveLat, liveLon]
-    )
+      if (pushTimerRef.current) return
+      pushTimerRef.current = setTimeout(run, 180)
+    }, [])
 
     const invalidateSize = useCallback(() => {
       if (!readyRef.current) return
@@ -186,10 +184,26 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
 
     useEffect(() => {
       pushState()
-      return () => {
-        if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
-      }
-    }, [pushState])
+    }, [
+      aimedTitle,
+      focusLat,
+      focusLon,
+      heading,
+      isAimedTarget,
+      liveLat,
+      liveLon,
+      pushState,
+    ])
+
+    useEffect(
+      () => () => {
+        if (pushTimerRef.current) {
+          clearTimeout(pushTimerRef.current)
+          pushTimerRef.current = null
+        }
+      },
+      []
+    )
 
     useEffect(() => {
       if (!readyRef.current) return

@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing'
 import { Share } from 'react-native'
 
 import {
+  capturePreviewUri,
   deleteCaptures,
   deleteLocalPhotoFiles,
   deleteMediaLibraryAssets,
@@ -77,6 +78,33 @@ function capture(overrides: Partial<CaptureRecord> = {}): CaptureRecord {
     ...overrides,
   }
 }
+
+describe('capturePreviewUri', () => {
+  it('returns poster for video and null when poster is missing', () => {
+    expect(
+      capturePreviewUri(
+        capture({
+          kind: 'video',
+          uri: 'file:///captures/a.mp4',
+          posterUri: 'file:///captures/poster.jpg',
+        })
+      )
+    ).toBe('file:///captures/poster.jpg')
+    expect(
+      capturePreviewUri(
+        capture({
+          kind: 'video',
+          uri: 'file:///captures/a.mp4',
+          posterUri: null,
+        })
+      )
+    ).toBeNull()
+  })
+
+  it('returns the photo uri for photos', () => {
+    expect(capturePreviewUri(capture())).toBe('file:///captures/aib-1.jpg')
+  })
+})
 
 describe('ensurePhotosLibraryPermission', () => {
   beforeEach(() => {

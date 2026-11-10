@@ -79,7 +79,14 @@ export function parseAimDistanceMeters(raw: string | number): number | null {
   const distance =
     typeof raw === 'number'
       ? Math.round(raw)
-      : Number.parseInt(String(raw).replace(/\D/g, ''), 10)
+      : (() => {
+          const match = String(raw)
+            .trim()
+            .replace(',', '.')
+            .match(/(\d+(?:\.\d+)?)/)
+          if (!match) return Number.NaN
+          return Math.round(Number.parseFloat(match[1]!))
+        })()
   if (!(distance > 0) || !Number.isFinite(distance)) {
     return null
   }

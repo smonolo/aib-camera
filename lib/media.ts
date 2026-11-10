@@ -18,8 +18,8 @@ const ALBUM_NAME = APP_NAME
 export const MEDIA_GRANULAR = ['photo', 'video'] as const
 export const PHOTO_GRANULAR = MEDIA_GRANULAR
 
-export function capturePreviewUri(item: CaptureRecord): string {
-  if (item.kind === 'video' && item.posterUri) return item.posterUri
+export function capturePreviewUri(item: CaptureRecord): string | null {
+  if (item.kind === 'video') return item.posterUri
   return item.uri
 }
 

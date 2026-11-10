@@ -4,6 +4,8 @@ import {
   captureGeoSnapshot,
   emptyGeoSnapshot,
   ensureForegroundLocationPermission,
+  getHeadingOrientationOffset,
+  normalizeHeadingDegrees,
   setHeadingOrientationOffset,
   watchHeading,
   watchPosition,
@@ -120,9 +122,26 @@ export function getSharedGeoSnapshot(): GeoSnapshot {
 }
 
 export function applyHeadingOrientationOffset(offset: number): void {
+  const previousOffset = getHeadingOrientationOffset()
+  const delta = offset - previousOffset
   const heading = setHeadingOrientationOffset(offset)
-  if (heading == null || !Number.isFinite(heading)) return
-  notify(mergeHeadingUpdate(sharedGeo, heading))
+  if (heading != null && Number.isFinite(heading)) {
+    notify(mergeHeadingUpdate(sharedGeo, heading))
+    return
+  }
+  if (
+    delta === 0 ||
+    sharedGeo.heading == null ||
+    !Number.isFinite(sharedGeo.heading)
+  ) {
+    return
+  }
+  notify(
+    mergeHeadingUpdate(
+      sharedGeo,
+      normalizeHeadingDegrees(sharedGeo.heading + delta)
+    )
+  )
 }
 
 export function resetLiveGeoForTests(next?: GeoSnapshot): void {

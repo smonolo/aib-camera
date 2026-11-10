@@ -23,12 +23,15 @@ async function copyIntoCaptures(
     const outFile = new File(capturesDir, filename)
     const source = new File(sourceUri)
     const bytes = new Uint8Array(await source.arrayBuffer())
+    if (!bytes.length) {
+      throw new Error('Capture source is empty')
+    }
     outFile.create({ overwrite: true })
     await outFile.write(bytes)
     return outFile.uri
   } catch (error) {
-    warn('Capture file persist failed; returning original URI', error)
-    return sourceUri
+    warn('Capture file persist failed', error)
+    throw error
   }
 }
 

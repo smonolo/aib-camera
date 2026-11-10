@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.3.0` · iOS `buildNumber`: `19` · Android `versionCode`: `10` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.3.0` · iOS `buildNumber`: `20` · Android `versionCode`: `11` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -77,7 +77,7 @@ npm run smoke-checklist   # prints the device QA checklist
 - Deleting a photo removes it from the in-app gallery and, when possible, from the system Photos album and local file; the capture log is not cleared.
 - EXIF write is best-effort (skipped if the native module is missing); stamp, gallery, and capture log still succeed.
 - The capture log is append-only locally and is not cleared when photos are deleted from the gallery; CSV export is offline via the system share sheet and includes the install ID.
-- Settings: choose **Language** (Italiano / English; default Italian); tap **Version** or **Install ID** to copy the value; stamp configuration is only from the camera tune control (full-height `AppSheet`, not the Settings tab).
+- Settings: choose **Language** (Italiano / English; default Italian); tap **Version** or **Install ID** to copy the value; stamp configuration opens from Camera or Map (full-height `AppSheet`, not the Settings tab).
 - Screen stays awake on the camera tab.
 - Camera preview sits in black chrome (portrait: between top chrome and shutter, grows to fill leftover height; landscape: between side rails, fills leftover height). Live and burned-in stamps scale from the short frame side so they match. Zoom chips show live magnification above 2× like the system Camera. Rotation uses `orientation: default` (rebuild native binary after changing it). Floating tab bar respects the full Android system nav inset; iOS may sit slightly into the home-indicator area.
 
@@ -97,6 +97,7 @@ Target floor: **Android 7+ (API 24)** and **iOS 16.4+** (Expo SDK 58). Non-criti
 | Haptics / clipboard / share helpers | Silent no-op or RN `Share` fallback                       |
 | Capture at full JPEG quality        | Retry at lower quality without shutter sound              |
 | AsyncStorage writes                 | In-memory state kept for the session; warn and continue   |
+| Tab bar blur (Android API < 31)     | Opaque dark wash only (no `BlurView` / blur target)       |
 
 ## Store release notes
 

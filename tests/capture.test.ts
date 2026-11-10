@@ -11,6 +11,7 @@ jest.mock('@/lib/exif', () => ({
 jest.mock('@/lib/media', () => ({
   saveToAibAlbum: jest.fn(),
   deleteLocalPhotoFiles: jest.fn(async () => undefined),
+  deleteMediaLibraryAssets: jest.fn(async () => undefined),
 }))
 jest.mock('@/lib/persist-photo', () => ({
   persistRawPhoto: jest.fn(),
@@ -77,7 +78,7 @@ import {
 } from '@/lib/capture'
 import { compositeStampOntoPhoto } from '@/lib/composite'
 import { writeCaptureExif } from '@/lib/exif'
-import { saveToAibAlbum } from '@/lib/media'
+import { deleteMediaLibraryAssets, saveToAibAlbum } from '@/lib/media'
 import { persistRawPhoto, persistRawVideo } from '@/lib/persist-photo'
 import { recordCapture, setCaptureMediaAssetId } from '@/lib/storage'
 import { stampVideoCapture } from '@/lib/video-stamp'
@@ -149,7 +150,11 @@ beforeEach(() => {
   ;(writeCaptureExif as jest.Mock).mockResolvedValue(true)
   ;(recordCapture as jest.Mock).mockResolvedValue(undefined)
   ;(saveToAibAlbum as jest.Mock).mockResolvedValue('asset-1')
-  ;(setCaptureMediaAssetId as jest.Mock).mockResolvedValue(undefined)
+  ;(setCaptureMediaAssetId as jest.Mock).mockResolvedValue({
+    id: captureId,
+    mediaLibraryAssetId: 'asset-1',
+  })
+  ;(deleteMediaLibraryAssets as jest.Mock).mockResolvedValue(undefined)
 })
 
 afterEach(() => {
@@ -495,5 +500,35 @@ describe('finalizeVideoCapture', () => {
     )
     expect(record.uri).toBe('file:///captures/raw-video.mp4')
     expect(record.kind).toBe('video')
+  })
+
+  it('keeps a zero durationMs from the video stamp pipeline', async () => {
+    ;(stampVideoCapture as jest.Mock).mockResolvedValue({
+      uri: 'file:///captures/raw-video.mp4',
+      durationMs: 0,
+      posterUri: null,
+      stamped: false,
+    })
+
+    const record = await finalizeVideoCapture(
+      'file:///tmp/camera.mp4',
+      snap(),
+      DEFAULT_STAMP_SETTINGS
+    )
+
+    expect(record.durationMs).toBe(0)
+  })
+
+  it('deletes the Photos asset when the capture was already removed', async () => {
+    ;(setCaptureMediaAssetId as jest.Mock).mockResolvedValue(null)
+
+    await finalizeCapture(
+      'file:///tmp/camera.jpg',
+      snap(),
+      DEFAULT_STAMP_SETTINGS
+    )
+    await flushMicrotasks()
+
+    expect(deleteMediaLibraryAssets).toHaveBeenCalledWith(['asset-1'])
   })
 })

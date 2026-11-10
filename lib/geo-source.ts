@@ -52,7 +52,10 @@ function normalizeSticky(raw: unknown): StickyTarget | null {
     typeof o.lon !== 'number' ||
     typeof o.distanceM !== 'number' ||
     typeof o.lockedHeading !== 'number' ||
-    typeof o.lockedAt !== 'string'
+    typeof o.lockedAt !== 'string' ||
+    !Number.isFinite(o.lat) ||
+    !Number.isFinite(o.lon) ||
+    !Number.isFinite(o.lockedHeading)
   ) {
     return null
   }

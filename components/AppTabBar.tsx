@@ -199,6 +199,14 @@ export function AppTabBar() {
   const selectorFill = 'rgba(255,255,255,0.18)'
   const iconFocused = '#FFFFFF'
   const iconMuted = 'rgba(255,255,255,0.55)'
+  const androidApi =
+    typeof Platform.Version === 'number'
+      ? Platform.Version
+      : Number.parseInt(String(Platform.Version), 10)
+  const androidBlurOk =
+    Platform.OS !== 'android' ||
+    (Number.isFinite(androidApi) && androidApi >= 31)
+  const useBlurTarget = blurTargetRef != null && androidBlurOk
   const barShadow = {
     shadowColor: '#000000',
     shadowOpacity: 0.28,
@@ -242,25 +250,32 @@ export function AppTabBar() {
               borderColor: barBorder,
             }}
           >
-            <BlurView
-              intensity={52}
-              tint="dark"
-              {...(blurTargetRef != null
-                ? {
-                    blurTarget: blurTargetRef,
-                    ...(Platform.OS === 'android'
-                      ? {
-                          blurMethod: 'dimezisBlurViewSdk31Plus' as const,
-                          blurReductionFactor: 2,
-                        }
-                      : null),
-                  }
-                : null)}
-              style={StyleSheet.absoluteFill}
-            />
+            {androidBlurOk ? (
+              <BlurView
+                intensity={52}
+                tint="dark"
+                {...(useBlurTarget
+                  ? {
+                      blurTarget: blurTargetRef,
+                      ...(Platform.OS === 'android'
+                        ? {
+                            blurMethod: 'dimezisBlurViewSdk31Plus' as const,
+                            blurReductionFactor: 2,
+                          }
+                        : null),
+                    }
+                  : null)}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : null}
             <View
               pointerEvents="none"
-              style={[StyleSheet.absoluteFill, { backgroundColor: wash }]}
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: androidBlurOk ? wash : 'rgba(0,0,0,0.82)',
+                },
+              ]}
             />
 
             <Animated.View
