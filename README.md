@@ -8,7 +8,7 @@ Independent, unofficial field camera for **Antincendio Boschivo (AIB)** and wild
 
 Bundle IDs: `dev.smnl.aibcamera` ([smnl.dev](https://smnl.dev)) · UI languages: Italian (default) and English · Timezone on stamps: `Europe/Rome`
 
-User-facing version: `1.3.0` · iOS `buildNumber`: `18` · Android `versionCode`: `9` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
+User-facing version: `1.3.1` · iOS `buildNumber`: `19` · Android `versionCode`: `10` (bump iOS `buildNumber` before each App Store upload; bump Android `versionCode` when shipping Play)
 
 Privacy policy source: [PRIVACY.md](./PRIVACY.md) — host at the URL in `app.json` → `extra.privacyPolicyUrl` before store submission (required by Apple/Google).
 
@@ -29,8 +29,8 @@ Public changelog (markdown-backed on the marketing site): [aib.smnl.dev/camera/c
 - Optional current wind (Open-Meteo) on the Camera/Map stamp for the effective point (Me or Aimed); cached; omitted offline; never blocks the shutter
 - UI language: Italian (default) or English, switchable in Settings (stored on device)
 - Locality-first place labels + persistent geocode cache for offline reuse
-- **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Open in Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing); returning to the tab repairs/redraws tiles if the WebView went stale. Aimed red pin is draggable — drop updates locked coords and distance from your GPS
-- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape) + optional Photos album «AIB Camera»; open a shot for the **viewer** (photos + videos; swipe or bottom filmstrip, share/delete current)
+- **Map tab:** taller live map of the effective point (Me or Aimed) with the same live stamp overlay as Camera; **Copy** stamp info, **Maps**, and **Save as photo** (map + pins + stamped coords into the in-app gallery / capture log, same path as Camera). **iOS and Android** use Leaflet + OpenStreetMap HOT in a WebView (no Google Maps SDK / API key / billing); returning to the tab calls Leaflet `invalidateSize` so tiles redraw if the WebView went stale. Aimed red pin is draggable — drop updates locked coords and distance from your GPS
+- In-app gallery (source of truth, 3-column day grid in portrait / 5 in landscape; newest day first, oldest→newest within each day) + optional Photos album «AIB Camera»; open a shot for the **viewer** (photos + videos; swipe or bottom filmstrip, share/delete current)
 - Recent-capture thumbnail left of the shutter (opens the viewer; videos use a poster). On the right: zoom and Photo/Video icons side by side, each opening a short menu.
 - Deleting from the app also removes the copy in Photos when available; capture log stays
 - System share sheet (WhatsApp, Mail, …) for JPEG and MP4

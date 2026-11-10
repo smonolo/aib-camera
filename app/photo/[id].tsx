@@ -31,6 +31,7 @@ import {
   SCREEN_PAD,
   screenEdgePad,
 } from '@/lib/layout'
+import { sortCapturesChronological } from '@/lib/gallery'
 import { capturePreviewUri, deleteCaptures, shareCaptures } from '@/lib/media'
 import { loadCaptures } from '@/lib/storage'
 import { radii, useAppColors } from '@/lib/theme'
@@ -180,9 +181,10 @@ export default function PhotoDetailScreen() {
       let active = true
       void loadCaptures().then(list => {
         if (!active) return
-        photosRef.current = list
-        setPhotos(list)
-        const found = list.findIndex(item => item.id === openId)
+        const ordered = sortCapturesChronological(list)
+        photosRef.current = ordered
+        setPhotos(ordered)
+        const found = ordered.findIndex(item => item.id === openId)
         const next = found >= 0 ? found : 0
         indexRef.current = next
         setIndex(next)

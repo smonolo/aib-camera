@@ -24,7 +24,7 @@ import * as Haptics from '@/lib/haptics'
 import { useI18n } from '@/lib/i18n/locale-context'
 import { TAB_BAR, tabBarBottomOffset, tabBarHorizontalPad } from '@/lib/layout'
 import { useTabBlurTarget } from '@/lib/tab-blur'
-import { radii, useAppColorScheme, useAppColors } from '@/lib/theme'
+import { radii } from '@/lib/theme'
 
 type TabDef = {
   name: string
@@ -84,8 +84,6 @@ function TabItem({
 }
 
 export function AppTabBar() {
-  const colors = useAppColors()
-  const scheme = useAppColorScheme()
   const insets = useSafeAreaInsets()
   const { width, height } = useWindowDimensions()
   const landscape = width > height
@@ -196,27 +194,18 @@ export function AppTabBar() {
   }))
 
   const barWidth = TAB_BAR.padding * 2 + TAB_BAR.itemWidth * tabs.length
-  const glassTint = scheme === 'dark' ? ('dark' as const) : ('light' as const)
-  const wash =
-    scheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)'
-  const selectorFill =
-    scheme === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.1)'
-  const barShadow =
-    scheme === 'dark'
-      ? {
-          shadowColor: '#000000',
-          shadowOpacity: 0.18,
-          shadowRadius: 22,
-          shadowOffset: { width: 0, height: 8 },
-          elevation: 12,
-        }
-      : {
-          shadowColor: '#000000',
-          shadowOpacity: 0.12,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: 6 },
-          elevation: 8,
-        }
+  const wash = 'rgba(0,0,0,0.42)'
+  const barBorder = 'rgba(255,255,255,0.16)'
+  const selectorFill = 'rgba(255,255,255,0.18)'
+  const iconFocused = '#FFFFFF'
+  const iconMuted = 'rgba(255,255,255,0.55)'
+  const barShadow = {
+    shadowColor: '#000000',
+    shadowOpacity: 0.28,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
+  }
 
   return (
     <View
@@ -249,11 +238,13 @@ export function AppTabBar() {
               flexDirection: 'row',
               alignItems: 'stretch',
               padding: TAB_BAR.padding,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: barBorder,
             }}
           >
             <BlurView
-              intensity={40}
-              tint={glassTint}
+              intensity={52}
+              tint="dark"
               {...(blurTargetRef != null
                 ? {
                     blurTarget: blurTargetRef,
@@ -290,7 +281,7 @@ export function AppTabBar() {
 
             {tabs.map((tab, index) => {
               const focused = index === selectedIndex
-              const tint = focused ? colors.fg : colors.muted
+              const tint = focused ? iconFocused : iconMuted
               return (
                 <TabTrigger key={tab.name} name={tab.name} asChild>
                   <TabItem

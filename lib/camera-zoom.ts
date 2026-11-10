@@ -228,9 +228,12 @@ export function factorFromCameraZoom(
   maxRatio = assumedDeviceMaxRatio()
 ): number {
   if (zoom <= 0) return baseFactor
-  const span = Math.max(0, maxRatio - baseFactor)
-  if (span <= 0) return baseFactor
-  return baseFactor + clampCameraZoom(zoom) * span
+  const z = clampCameraZoom(zoom)
+  if (Platform.OS === 'android') {
+    return Math.max(baseFactor, z * maxRatio)
+  }
+  if (maxRatio <= baseFactor) return baseFactor
+  return baseFactor * (maxRatio / baseFactor) ** z
 }
 
 export function cameraZoomFromFactor(
@@ -239,9 +242,13 @@ export function cameraZoomFromFactor(
   maxRatio = assumedDeviceMaxRatio()
 ): number {
   if (absoluteFactor <= baseFactor) return 0
-  const span = Math.max(0, maxRatio - baseFactor)
-  if (span <= 0) return 0
-  return clampCameraZoom((absoluteFactor - baseFactor) / span)
+  if (Platform.OS === 'android') {
+    return clampCameraZoom(absoluteFactor / maxRatio)
+  }
+  if (maxRatio <= baseFactor) return 0
+  return clampCameraZoom(
+    Math.log(absoluteFactor / baseFactor) / Math.log(maxRatio / baseFactor)
+  )
 }
 
 export function pinchFactorRange(

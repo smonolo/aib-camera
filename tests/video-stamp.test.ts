@@ -17,6 +17,7 @@ jest.mock('expo-file-system', () => ({
 
 jest.mock('@/lib/config', () => ({
   APP_NAME: 'AIB Camera',
+  VIDEO_MAX_DURATION_SEC: 60,
   appVersionLabel: () => '1.3.0',
 }))
 

@@ -37,15 +37,8 @@ import { PermissionGate } from '@/components/PermissionGate'
 import { StampOverlay } from '@/components/StampOverlay'
 import { useToast } from '@/components/Toast'
 import {
-  buildIosZoomOptions,
-  currentAbsoluteFactor,
-  defaultZoomOptions,
-  factorFromPinchScale,
   formatZoomChipLabel,
   formatZoomLabel,
-  pickDefaultOption,
-  resolveAbsoluteFactor,
-  type CameraLensInfo,
   type ZoomOption,
 } from '@/lib/camera-zoom'
 import {
@@ -53,6 +46,7 @@ import {
   finalizeVideoCapture,
   resolveCaptureGeo,
 } from '@/lib/capture'
+import { VIDEO_MAX_DURATION_SEC } from '@/lib/config'
 import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
 import { useI18n } from '@/lib/i18n/locale-context'
@@ -73,8 +67,8 @@ import {
   type GeoSnapshot,
   type StampSettings,
 } from '@/lib/types'
+import { useCameraZoom } from '@/lib/use-camera-zoom'
 import { createSerialQueue } from '@/lib/util'
-import { VIDEO_MAX_DURATION_SEC } from '@/lib/video-stamp'
 
 type CaptureMode = 'picture' | 'video'
 
@@ -112,22 +106,28 @@ function CameraExperience() {
   const videoSnapRef = useRef<GeoSnapshot | null>(null)
   const videoSettingsRef = useRef<StampSettings | null>(null)
   const [cameraReady, setCameraReady] = useState(false)
-  const [availableLenses, setAvailableLenses] = useState<CameraLensInfo[]>([])
-  const [selectedLens, setSelectedLens] = useState<string | undefined>()
-  const [zoom, setZoom] = useState(0)
-  const [selectedZoomKey, setSelectedZoomKey] = useState<string | null>(null)
   const [latestCapture, setLatestCapture] = useState<CaptureRecord | null>(null)
-  const [pinching, setPinching] = useState(false)
-  const [pinchFactor, setPinchFactor] = useState(1)
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
-  const pinchFactorRef = useRef(1)
-  const pinchingRef = useRef(false)
   const shutterFlash = useSharedValue(0)
-  const pinchStartFactor = useSharedValue(1)
-  const liveFactorShared = useSharedValue(1)
   const shutterFlashStyle = useAnimatedStyle(() => ({
     opacity: shutterFlash.value,
   }))
+  const {
+    zoom,
+    selectedLens,
+    selectedZoomKey,
+    zoomOptions,
+    pinchFactor,
+    liveFactorShared,
+    pinchStartFactor,
+    applyZoomOption,
+    beginPinchZoom,
+    updatePinchZoom,
+    endPinchZoom,
+    resetZoomToDefault,
+    refreshLenses,
+    setAvailableLenses,
+  } = useCameraZoom(cameraRef)
 
   const letterbox = useMemo(
     () =>
@@ -185,86 +185,6 @@ function CameraExperience() {
       withTiming(0, { duration: 220 })
     )
   }, [shutterFlash])
-
-  const zoomOptions = useMemo(() => {
-    if (Platform.OS === 'ios') return buildIosZoomOptions(availableLenses)
-    return defaultZoomOptions()
-  }, [availableLenses])
-
-  const applyZoomOption = useCallback((option: ZoomOption) => {
-    setSelectedZoomKey(option.key)
-    if (option.lens) setSelectedLens(option.lens)
-    setZoom(option.zoom)
-  }, [])
-
-  const applyResolvedZoom = useCallback(
-    (factor: number) => {
-      const resolved = resolveAbsoluteFactor(zoomOptions, factor)
-      if (!resolved) return
-
-      pinchFactorRef.current = resolved.factor
-      setPinchFactor(resolved.factor)
-      setZoom(resolved.zoom)
-      setSelectedZoomKey(resolved.option.key)
-      if (resolved.option.lens) setSelectedLens(resolved.option.lens)
-    },
-    [zoomOptions]
-  )
-
-  useEffect(() => {
-    const factor = currentAbsoluteFactor(zoomOptions, selectedZoomKey, zoom)
-    liveFactorShared.value = factor
-    if (!pinching) {
-      pinchFactorRef.current = factor
-      setPinchFactor(factor)
-    }
-  }, [zoomOptions, selectedZoomKey, zoom, pinching, liveFactorShared])
-
-  const beginPinchZoom = useCallback((startFactor: number) => {
-    pinchingRef.current = true
-    pinchFactorRef.current = startFactor
-    setPinchFactor(startFactor)
-    setPinching(true)
-  }, [])
-
-  const updatePinchZoom = useCallback(
-    (startFactor: number, scale: number) => {
-      if (!pinchingRef.current) return
-      const next = factorFromPinchScale(startFactor, scale)
-      if (Math.abs(next - pinchFactorRef.current) < 0.02) return
-      applyResolvedZoom(next)
-    },
-    [applyResolvedZoom]
-  )
-
-  const endPinchZoom = useCallback(() => {
-    if (!pinchingRef.current) return
-    pinchingRef.current = false
-    applyResolvedZoom(pinchFactorRef.current)
-    setPinching(false)
-  }, [applyResolvedZoom])
-
-  useEffect(() => {
-    if (zoomOptions.length === 0) {
-      setSelectedZoomKey(null)
-      return
-    }
-
-    const stillValid = zoomOptions.some(
-      option => option.key === selectedZoomKey
-    )
-    if (stillValid) return
-
-    const fallback = pickDefaultOption(zoomOptions)
-    if (fallback) applyZoomOption(fallback)
-  }, [zoomOptions, selectedZoomKey, applyZoomOption])
-
-  const refreshLenses = useCallback(async () => {
-    if (Platform.OS !== 'ios' || !cameraRef.current) return
-    try {
-      setAvailableLenses(await cameraRef.current.getAvailableLensesAsync())
-    } catch {}
-  }, [])
 
   const openPhotos = useCallback(() => {
     void Haptics.selectionAsync()
@@ -566,10 +486,10 @@ function CameraExperience() {
     ]
   )
 
-  const resetZoomToDefault = useCallback(() => {
+  const onDoubleTapResetZoom = useCallback(() => {
     void Haptics.selectionAsync()
-    applyResolvedZoom(1)
-  }, [applyResolvedZoom])
+    resetZoomToDefault()
+  }, [resetZoomToDefault])
 
   const doubleTapResetZoom = useMemo(
     () =>
@@ -577,9 +497,9 @@ function CameraExperience() {
         .numberOfTaps(2)
         .maxDuration(280)
         .onEnd(() => {
-          runOnJS(resetZoomToDefault)()
+          runOnJS(onDoubleTapResetZoom)()
         }),
-    [resetZoomToDefault]
+    [onDoubleTapResetZoom]
   )
 
   const longPressAim = useMemo(

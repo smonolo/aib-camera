@@ -16,6 +16,11 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   const tileUrl = 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
   const attribution =
     '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://www.hotosm.org/" target="_blank">HOT</a>'
+  const leafletCss =
+    'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'
+  const leafletJs = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'
+  const html2canvasJs =
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
 
   const initial = JSON.stringify({
     focusLat: options.focusLat,
@@ -37,12 +42,13 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
 <meta charset="utf-8" />
 <meta name="color-scheme" content="only light" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<link rel="stylesheet" href="${leafletCss}" />
+<script src="${leafletJs}"></script>
+<script src="${html2canvasJs}"></script>
 <style>
   :root { color-scheme: only light; }
   html, body, #map { margin: 0; height: 100%; width: 100%; background: ${dark ? '#111111' : '#e5e5e5'}; }
+  .leaflet-tile { image-rendering: -webkit-optimize-contrast; }
   .leaflet-control-attribution {
     font-size: 8px !important;
     line-height: 1.1 !important;
@@ -103,6 +109,10 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
     border: 2px solid #ffffff;
     box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
   }
+  .aib-div-icon {
+    background: transparent !important;
+    border: none !important;
+  }
   .aim-hit {
     width: 48px;
     height: 48px;
@@ -127,14 +137,34 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
 <div id="map"></div>
 <script>
   var state = ${initial};
-  var map = L.map('map', { zoomControl: false, attributionControl: true });
-  L.tileLayer(${JSON.stringify(tileUrl)}, {
-    maxZoom: 19,
+  var map = L.map('map', {
+    zoomControl: false,
+    attributionControl: true,
+    fadeAnimation: false,
+    zoomAnimation: true
+  });
+  var tiles = L.tileLayer(${JSON.stringify(tileUrl)}, {
+    maxZoom: 18,
+    maxNativeZoom: 18,
+    minZoom: 2,
+    keepBuffer: 4,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    updateInterval: 200,
     crossOrigin: true,
     attribution: ${JSON.stringify(attribution)}
-  }).addTo(map);
+  });
+  tiles.on('tileerror', function(event) {
+    var tile = event.tile;
+    if (!tile || tile._aibRetry) return;
+    tile._aibRetry = true;
+    setTimeout(function() {
+      if (!tile.parentNode) return;
+      tile.src = event.url + (event.url.indexOf('?') >= 0 ? '&' : '?') + 'r=' + Date.now();
+    }, 400);
+  });
+  tiles.addTo(map);
   map.setView([state.focusLat, state.focusLon], state.zoom);
-  var mapBg = ${JSON.stringify(dark ? '#111111' : '#e5e5e5')};
   var isDark = ${dark ? 'true' : 'false'};
   var darkFilterCss = ${dark ? JSON.stringify(darkFilter) : '""'};
 
@@ -147,13 +177,13 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
   }
 
   var userIcon = L.divIcon({
-    className: '',
+    className: 'aib-div-icon',
     html: '<div class="user-puck"><div class="user-puck-inner"><div class="user-cone" id="user-cone"></div><div class="user-dot"></div></div></div>',
     iconSize: [36, 36],
     iconAnchor: [18, 18]
   });
   var aimIcon = L.divIcon({
-    className: '',
+    className: 'aib-div-icon',
     html: '<div class="aim-hit"><div class="aim-pin"></div></div>',
     iconSize: [48, 48],
     iconAnchor: [24, 48]
@@ -227,12 +257,13 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
           icon: aimIcon,
           title: state.aimedTitle || '',
           draggable: true,
-          autoPan: false
+          autoPan: false,
+          zIndexOffset: 600
         }).addTo(map);
         bindAimDrag(aimMarker);
       } else if (!aimDragging) {
         aimMarker.setLatLng([state.focusLat, state.focusLon]);
-        aimMarker.dragging && aimMarker.dragging.enable();
+        if (aimMarker.dragging) aimMarker.dragging.enable();
       }
     } else if (aimMarker) {
       map.removeLayer(aimMarker);
@@ -251,19 +282,8 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
     map.setView([lat, lon], zoom == null ? map.getZoom() : zoom, { animate: true });
   };
 
-  window.repairFieldMap = function(lat, lon) {
+  window.invalidateFieldMapSize = function() {
     map.invalidateSize({ animate: false, pan: false });
-    if (lat != null && lon != null && isFinite(lat) && isFinite(lon)) {
-      map.setView([lat, lon], map.getZoom(), { animate: false });
-    }
-    map.eachLayer(function(layer) {
-      if (typeof layer.redraw === 'function') layer.redraw();
-    });
-    syncMarkers();
-  };
-
-  window.pingFieldMap = function() {
-    postMessage({ type: 'map-pong' });
   };
 
   function restoreCaptureTheme() {
@@ -309,7 +329,6 @@ export function buildLeafletMapHtml(options: LeafletMapHtmlOptions): string {
 
   syncMarkers();
   setTimeout(function() { map.invalidateSize({ animate: false, pan: false }); }, 0);
-  setTimeout(function() { map.invalidateSize({ animate: false, pan: false }); }, 200);
 </script>
 </body>
 </html>`
@@ -336,12 +355,8 @@ export function leafletRecenterScript(
   return `window.recenterFieldMap && window.recenterFieldMap(${lat}, ${lon}, ${z}); true;`
 }
 
-export function leafletRepairScript(lat: number, lon: number): string {
-  return `window.repairFieldMap && window.repairFieldMap(${lat}, ${lon}); true;`
-}
-
-export function leafletPingScript(): string {
-  return `window.pingFieldMap && window.pingFieldMap(); true;`
+export function leafletInvalidateSizeScript(): string {
+  return `window.invalidateFieldMapSize && window.invalidateFieldMapSize(); true;`
 }
 
 export function leafletCaptureScript(): string {
@@ -352,7 +367,6 @@ export type LeafletMapMessage =
   | { type: 'aim-drag-end'; lat: number; lon: number }
   | { type: 'map-snapshot'; dataUrl: string }
   | { type: 'map-snapshot-error'; message: string }
-  | { type: 'map-pong' }
 
 export function parseLeafletMapMessage(raw: string): LeafletMapMessage | null {
   try {
@@ -386,9 +400,6 @@ export function parseLeafletMapMessage(raw: string): LeafletMapMessage | null {
             ? parsed.message
             : 'snapshot failed',
       }
-    }
-    if (parsed.type === 'map-pong') {
-      return { type: 'map-pong' }
     }
     return null
   } catch {

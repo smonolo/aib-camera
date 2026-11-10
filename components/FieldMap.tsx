@@ -6,7 +6,6 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
-  useState,
   type ComponentType,
   type Ref,
 } from 'react'
@@ -18,9 +17,8 @@ import { useOnAppActive } from '@/lib/hooks'
 import {
   buildLeafletMapHtml,
   leafletCaptureScript,
-  leafletPingScript,
+  leafletInvalidateSizeScript,
   leafletRecenterScript,
-  leafletRepairScript,
   leafletUpdateScript,
   parseLeafletMapMessage,
 } from '@/lib/leaflet-map-html'
@@ -45,12 +43,16 @@ type MapWebViewProps = {
   overScrollMode?: string
   androidLayerType?: string
   forceDarkOn?: boolean
+  cacheEnabled?: boolean
+  allowsInlineMediaPlayback?: boolean
+  mediaPlaybackRequiresUserAction?: boolean
+  setBuiltInZoomControls?: boolean
+  displayZoomControls?: boolean
 }
 
 const WebView = RNWebView as unknown as ComponentType<MapWebViewProps>
 
 const CAPTURE_TIMEOUT_MS = 20_000
-const PING_TIMEOUT_MS = 800
 
 export type FieldMapHandle = {
   captureJpeg: () => Promise<string>
@@ -76,84 +78,63 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
     const readyRef = useRef(false)
     const focusRef = useRef({ lat: focusLat, lon: focusLon })
     focusRef.current = { lat: focusLat, lon: focusLon }
+    const propsRef = useRef({
+      focusLat,
+      focusLon,
+      liveLat,
+      liveLon,
+      heading,
+      isAimedTarget,
+      aimedTitle,
+    })
+    propsRef.current = {
+      focusLat,
+      focusLon,
+      liveLat,
+      liveLon,
+      heading,
+      isAimedTarget,
+      aimedTitle,
+    }
     const onAimDragEndRef = useRef(onAimDragEnd)
     onAimDragEndRef.current = onAimDragEnd
+    const layoutSizeRef = useRef({ width: 0, height: 0 })
     const pendingCaptureRef = useRef<{
       resolve: (uri: string) => void
       reject: (error: Error) => void
       timer: ReturnType<typeof setTimeout>
     } | null>(null)
-    const pingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const awaitingPongRef = useRef(false)
-    const focusedRef = useRef(false)
-    const [surfaceKey, setSurfaceKey] = useState(0)
 
-    const html = useMemo(
-      () =>
-        buildLeafletMapHtml({
-          focusLat: focusRef.current.lat,
-          focusLon: focusRef.current.lon,
-          liveLat,
-          liveLon,
-          heading,
-          isAimedTarget,
-          aimedTitle,
-          dark: scheme === 'dark',
-        }),
-      [aimedTitle, isAimedTarget, scheme, surfaceKey]
-    )
+    const html = useMemo(() => {
+      const current = propsRef.current
+      return buildLeafletMapHtml({
+        focusLat: current.focusLat,
+        focusLon: current.focusLon,
+        liveLat: current.liveLat,
+        liveLon: current.liveLon,
+        heading: current.heading,
+        isAimedTarget: current.isAimedTarget,
+        aimedTitle: current.aimedTitle,
+        dark: scheme === 'dark',
+      })
+    }, [scheme])
 
-    const clearPingTimer = useCallback(() => {
-      if (pingTimerRef.current == null) return
-      clearTimeout(pingTimerRef.current)
-      pingTimerRef.current = null
-    }, [])
+    const pushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const lastPushRef = useRef('')
+    const pendingPushRef = useRef({
+      focusLat,
+      focusLon,
+      liveLat,
+      liveLon,
+      heading,
+      isAimedTarget,
+      aimedTitle,
+    })
 
-    const repairMap = useCallback(() => {
-      if (!readyRef.current) return
-      const { lat, lon } = focusRef.current
-      webRef.current?.injectJavaScript(leafletRepairScript(lat, lon))
-      webRef.current?.injectJavaScript(
-        leafletUpdateScript({
-          focusLat: lat,
-          focusLon: lon,
-          liveLat,
-          liveLon,
-          heading,
-          isAimedTarget,
-          aimedTitle,
-        })
-      )
-    }, [aimedTitle, heading, isAimedTarget, liveLat, liveLon])
-
-    const recoverMapSurface = useCallback(() => {
-      clearPingTimer()
-      awaitingPongRef.current = false
-      readyRef.current = false
-      setSurfaceKey(value => value + 1)
-    }, [clearPingTimer])
-
-    const pingOrRepair = useCallback(() => {
-      if (!readyRef.current || !webRef.current) return
-      clearPingTimer()
-      awaitingPongRef.current = true
-      webRef.current.injectJavaScript(leafletPingScript())
-      pingTimerRef.current = setTimeout(() => {
-        pingTimerRef.current = null
-        if (!awaitingPongRef.current) return
-        awaitingPongRef.current = false
-        recoverMapSurface()
-      }, PING_TIMEOUT_MS)
-    }, [clearPingTimer, recoverMapSurface])
-
-    useEffect(() => {
-      readyRef.current = false
-    }, [html, surfaceKey])
-
-    useEffect(() => {
-      if (!readyRef.current) return
-      webRef.current?.injectJavaScript(
-        leafletUpdateScript({
+    const pushState = useCallback(
+      (immediate = false) => {
+        if (!readyRef.current) return
+        const payload = {
           focusLat,
           focusLon,
           liveLat,
@@ -161,17 +142,54 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
           heading,
           isAimedTarget,
           aimedTitle,
-        })
-      )
-    }, [
-      aimedTitle,
-      focusLat,
-      focusLon,
-      heading,
-      isAimedTarget,
-      liveLat,
-      liveLon,
-    ])
+        }
+        pendingPushRef.current = payload
+        const serialized = JSON.stringify(payload)
+        if (
+          serialized === lastPushRef.current &&
+          pushTimerRef.current == null
+        ) {
+          return
+        }
+
+        const run = () => {
+          pushTimerRef.current = null
+          if (!readyRef.current) return
+          const next = pendingPushRef.current
+          const nextSerialized = JSON.stringify(next)
+          if (nextSerialized === lastPushRef.current) return
+          lastPushRef.current = nextSerialized
+          webRef.current?.injectJavaScript(leafletUpdateScript(next))
+        }
+
+        if (immediate) {
+          if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
+          run()
+          return
+        }
+
+        if (pushTimerRef.current) return
+        pushTimerRef.current = setTimeout(run, 180)
+      },
+      [aimedTitle, focusLat, focusLon, heading, isAimedTarget, liveLat, liveLon]
+    )
+
+    const invalidateSize = useCallback(() => {
+      if (!readyRef.current) return
+      webRef.current?.injectJavaScript(leafletInvalidateSizeScript())
+    }, [])
+
+    useEffect(() => {
+      readyRef.current = false
+      lastPushRef.current = ''
+    }, [html])
+
+    useEffect(() => {
+      pushState()
+      return () => {
+        if (pushTimerRef.current) clearTimeout(pushTimerRef.current)
+      }
+    }, [pushState])
 
     useEffect(() => {
       if (!readyRef.current) return
@@ -181,23 +199,13 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
 
     useFocusEffect(
       useCallback(() => {
-        focusedRef.current = true
-        const immediate = setTimeout(pingOrRepair, 0)
-        const later = setTimeout(repairMap, 280)
-        return () => {
-          focusedRef.current = false
-          clearTimeout(immediate)
-          clearTimeout(later)
-          clearPingTimer()
-          awaitingPongRef.current = false
-        }
-      }, [clearPingTimer, pingOrRepair, repairMap])
+        const timer = setTimeout(invalidateSize, 50)
+        return () => clearTimeout(timer)
+      }, [invalidateSize])
     )
 
     useOnAppActive(() => {
-      if (!focusedRef.current) return
-      pingOrRepair()
-      setTimeout(repairMap, 280)
+      invalidateSize()
     })
 
     useImperativeHandle(
@@ -226,48 +234,53 @@ export const FieldMap = forwardRef<FieldMapHandle, FieldMapProps>(
 
     useEffect(
       () => () => {
-        clearPingTimer()
         const pending = pendingCaptureRef.current
         if (!pending) return
         clearTimeout(pending.timer)
         pendingCaptureRef.current = null
         pending.reject(new Error('Map unmounted'))
       },
-      [clearPingTimer]
+      []
     )
 
     return (
       <View
         style={StyleSheet.absoluteFill}
-        onLayout={() => {
-          repairMap()
+        onLayout={event => {
+          const { width, height } = event.nativeEvent.layout
+          const prev = layoutSizeRef.current
+          if (
+            Math.abs(prev.width - width) < 1 &&
+            Math.abs(prev.height - height) < 1
+          ) {
+            return
+          }
+          layoutSizeRef.current = { width, height }
+          invalidateSize()
         }}
       >
         <WebView
-          key={`${scheme}-${surfaceKey}`}
+          key={scheme}
           ref={webRef}
           style={StyleSheet.absoluteFill}
           originWhitelist={['*']}
           source={{ html }}
           onLoadEnd={() => {
             readyRef.current = true
-            repairMap()
+            pushState(true)
             webRef.current?.injectJavaScript(
               leafletRecenterScript(focusLat, focusLon)
             )
-            setTimeout(repairMap, 120)
-            setTimeout(repairMap, 360)
+            setTimeout(invalidateSize, 50)
           }}
+          cacheEnabled
+          allowsInlineMediaPlayback={false}
+          mediaPlaybackRequiresUserAction
+          setBuiltInZoomControls={false}
+          displayZoomControls={false}
           onMessage={event => {
             const message = parseLeafletMapMessage(event.nativeEvent.data)
             if (!message) return
-
-            if (message.type === 'map-pong') {
-              awaitingPongRef.current = false
-              clearPingTimer()
-              repairMap()
-              return
-            }
 
             if (message.type === 'aim-drag-end') {
               onAimDragEndRef.current?.(message.lat, message.lon)

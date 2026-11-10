@@ -1,9 +1,8 @@
 import {
   buildLeafletMapHtml,
   leafletCaptureScript,
-  leafletPingScript,
+  leafletInvalidateSizeScript,
   leafletRecenterScript,
-  leafletRepairScript,
   leafletUpdateScript,
   parseLeafletMapMessage,
 } from '@/lib/leaflet-map-html'
@@ -25,11 +24,18 @@ describe('buildLeafletMapHtml', () => {
     expect(html).not.toContain('leaflet-rotate')
     expect(html).toContain('45.5')
     expect(html).toContain('"zoom":15')
+    expect(html).toContain('cdn.jsdelivr.net/npm/leaflet@1.9.4')
+    expect(html).toContain('updateWhenZooming: false')
+    expect(html).toContain('keepBuffer: 4')
+    expect(html).not.toContain('preferCanvas')
+    expect(html).toContain('aib-div-icon')
     expect(html).toContain('#2563eb')
     expect(html).toContain('aim-hit')
     expect(html).toContain('iconSize: [48, 48]')
     expect(html).toContain('iconAnchor: [18, 18]')
+    expect(html).toContain('zIndexOffset: 600')
     expect(html).not.toContain('margin-left: -18px')
+    expect(html).not.toContain('unpkg.com')
     expect(html).not.toContain('cartocdn.com')
     expect(html).not.toContain('<html class="aib-dark">')
     expect(html).not.toContain('html.aib-dark .leaflet-tile-pane')
@@ -121,14 +127,9 @@ describe('leaflet scripts', () => {
     expect(leafletRecenterScript(45.1, 9.2, 18)).toContain('45.1, 9.2, 18')
   })
 
-  it('builds a capture script', () => {
+  it('builds capture and invalidate-size scripts', () => {
     expect(leafletCaptureScript()).toContain('captureFieldMap')
-  })
-
-  it('builds repair and ping scripts', () => {
-    expect(leafletRepairScript(45.1, 9.2)).toContain('repairFieldMap')
-    expect(leafletRepairScript(45.1, 9.2)).toContain('45.1, 9.2')
-    expect(leafletPingScript()).toContain('pingFieldMap')
+    expect(leafletInvalidateSizeScript()).toContain('invalidateFieldMapSize')
   })
 })
 
@@ -141,7 +142,7 @@ describe('parseLeafletMapMessage', () => {
     ).toEqual({ type: 'aim-drag-end', lat: 45.1, lon: 9.2 })
   })
 
-  it('parses map snapshot and pong messages', () => {
+  it('parses map snapshot messages', () => {
     expect(
       parseLeafletMapMessage(
         JSON.stringify({
@@ -161,15 +162,15 @@ describe('parseLeafletMapMessage', () => {
     expect(
       parseLeafletMapMessage(JSON.stringify({ type: 'map-snapshot-error' }))
     ).toEqual({ type: 'map-snapshot-error', message: 'snapshot failed' })
-    expect(
-      parseLeafletMapMessage(JSON.stringify({ type: 'map-pong' }))
-    ).toEqual({ type: 'map-pong' })
   })
 
   it('rejects invalid payloads', () => {
     expect(parseLeafletMapMessage('nope')).toBeNull()
     expect(
       parseLeafletMapMessage(JSON.stringify({ type: 'other', lat: 1, lon: 2 }))
+    ).toBeNull()
+    expect(
+      parseLeafletMapMessage(JSON.stringify({ type: 'map-pong' }))
     ).toBeNull()
     expect(
       parseLeafletMapMessage(
@@ -210,7 +211,7 @@ describe('parseLeafletMapMessage', () => {
 })
 
 describe('buildLeafletMapHtml capture wiring', () => {
-  it('includes html2canvas and captureFieldMap', () => {
+  it('includes html2canvas, capture, and invalidateSize', () => {
     const html = buildLeafletMapHtml({
       focusLat: 45.5,
       focusLon: 9.2,
@@ -224,7 +225,10 @@ describe('buildLeafletMapHtml capture wiring', () => {
     expect(html).toContain('html2canvas')
     expect(html).toContain('captureFieldMap')
     expect(html).toContain('crossOrigin: true')
-    expect(html).toContain('repairFieldMap')
+    expect(html).toContain('invalidateFieldMapSize')
     expect(html).toContain('invalidateSize')
+    expect(html).not.toContain('repairFieldMap')
+    expect(html).not.toContain('ResizeObserver')
+    expect(html).not.toContain('pingFieldMap')
   })
 })

@@ -241,13 +241,13 @@ describe('corrupt storage recovery', () => {
     )
     resetStorageCaches()
     expect(await loadAuditLog()).toEqual([
-      { id: 'ok', takenAt: '2024-07-15T14:30:45.000Z', lat: 1, lon: 2 },
       {
         id: 'partial',
         takenAt: '2024-07-15T14:30:45.000Z',
         lat: null,
         lon: 9,
       },
+      { id: 'ok', takenAt: '2024-07-15T14:30:45.000Z', lat: 1, lon: 2 },
     ])
   })
 

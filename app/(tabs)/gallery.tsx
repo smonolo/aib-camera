@@ -19,7 +19,6 @@ import { IconButton } from '@/components/IconButton'
 import { useToast } from '@/components/Toast'
 import { errorMessage } from '@/lib/errors'
 import { fonts } from '@/lib/fonts'
-import type { AppLocale, TranslationKeys } from '@/lib/i18n'
 import { useI18n } from '@/lib/i18n/locale-context'
 import {
   galleryColumns,
@@ -31,24 +30,21 @@ import {
   screenEdgePad,
   tabScrollBottomPad,
 } from '@/lib/layout'
+import {
+  buildGallerySections,
+  sortCapturesChronological,
+  type GalleryPhotoRow,
+  type GalleryPhotoSection,
+} from '@/lib/gallery'
 import { capturePreviewUri, deleteCaptures, shareCaptures } from '@/lib/media'
-import { formatGalleryDayLabel, galleryDayKey } from '@/lib/stamp'
 import { loadCaptures } from '@/lib/storage'
 import { radii, useAppColors } from '@/lib/theme'
 import type { CaptureRecord } from '@/lib/types'
 
 const GAP = 2
 
-type PhotoRow = {
-  key: string
-  items: CaptureRecord[]
-}
-
-type PhotoSection = {
-  title: string
-  dayKey: string
-  data: PhotoRow[]
-}
+type PhotoRow = GalleryPhotoRow
+type PhotoSection = GalleryPhotoSection
 
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets()
@@ -84,13 +80,16 @@ export default function PhotosScreen() {
   )
 
   const sections = useMemo(
-    () => buildPhotoSections(captures, copy, locale, columns),
+    () => buildGallerySections(captures, copy, locale, columns),
     [captures, copy, locale, columns]
   )
 
   const selectedCount = selectedIds.size
   const selectedCaptures = useMemo(
-    () => captures.filter(item => selectedIds.has(item.id)),
+    () =>
+      sortCapturesChronological(
+        captures.filter(item => selectedIds.has(item.id))
+      ),
     [captures, selectedIds]
   )
 
@@ -555,46 +554,4 @@ function GalleryEmpty() {
       </Text>
     </View>
   )
-}
-
-function buildPhotoSections(
-  captures: CaptureRecord[],
-  copy: TranslationKeys,
-  locale: AppLocale,
-  columns: number
-): PhotoSection[] {
-  const groups = new Map<string, CaptureRecord[]>()
-
-  for (const capture of captures) {
-    const key = galleryDayKey(capture.takenAt)
-    const list = groups.get(key)
-    if (list) list.push(capture)
-    else groups.set(key, [capture])
-  }
-
-  return [...groups.entries()].map(([dayKey, items]) => ({
-    dayKey,
-    title: formatGalleryDayLabel(
-      dayKey,
-      { today: copy.photos.today, yesterday: copy.photos.yesterday },
-      locale
-    ),
-    data: chunkRows(items, dayKey, columns),
-  }))
-}
-
-function chunkRows(
-  items: CaptureRecord[],
-  dayKey: string,
-  columns: number
-): PhotoRow[] {
-  const rows: PhotoRow[] = []
-  for (let i = 0; i < items.length; i += columns) {
-    const slice = items.slice(i, i + columns)
-    rows.push({
-      key: `${dayKey}-${i}`,
-      items: slice,
-    })
-  }
-  return rows
 }

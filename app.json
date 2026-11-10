@@ -2,7 +2,7 @@
   "expo": {
     "name": "AIB Camera",
     "slug": "aib-camera",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "orientation": "default",
     "newArchEnabled": true,
     "icon": "./assets/images/icon.png",
@@ -13,7 +13,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "dev.smnl.aibcamera",
-      "buildNumber": "18",
+      "buildNumber": "19",
       "infoPlist": {
         "NSCameraUsageDescription": "AIB Camera usa la fotocamera per scattare foto e registrare video con data, ora e posizione per attività di antincendio boschivo.",
         "NSMicrophoneUsageDescription": "AIB Camera usa il microfono per registrare l’audio nei video. Puoi registrare anche senza microfono.",
@@ -46,7 +46,7 @@
     },
     "android": {
       "package": "dev.smnl.aibcamera",
-      "versionCode": 9,
+      "versionCode": 10,
       "userInterfaceStyle": "automatic",
       "adaptiveIcon": {
         "backgroundColor": "#AF2525",

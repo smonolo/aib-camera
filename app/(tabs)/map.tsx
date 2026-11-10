@@ -138,7 +138,8 @@ export default function MapScreen() {
     setSaving(true)
     try {
       const photoUri = await map.captureJpeg()
-      await finalizeCapture(photoUri, stampGeo, settings, {
+      const snap = { ...stampGeo, takenAt: new Date() }
+      await finalizeCapture(photoUri, snap, settings, {
         minScale: 0,
         referenceMultiplier: MAP_STAMP_SCALE,
         textColor: MAP_STAMP_SAVE_APPEARANCE.textColor,

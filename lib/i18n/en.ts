@@ -12,7 +12,7 @@ export const en: TranslationKeys = {
     emptyHint:
       'Allow location to see the point on the map. You can still shoot without GPS.',
     noLocation: 'Location unavailable',
-    openInMaps: 'Open in Maps',
+    openInMaps: 'Maps',
     openInMapsFailed: 'Couldn’t open Maps.',
     copy: 'Copy',
     copied: 'Copied to clipboard',

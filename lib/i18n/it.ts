@@ -12,7 +12,7 @@ export const it: TranslationKeys = {
     emptyHint:
       'Concedi la posizione per vedere il punto sulla mappa. Puoi comunque scattare senza GPS.',
     noLocation: 'Posizione non disponibile',
-    openInMaps: 'Apri nelle mappe',
+    openInMaps: 'Mappe',
     openInMapsFailed: 'Impossibile aprire le mappe.',
     copy: 'Copia',
     copied: 'Informazioni copiate',

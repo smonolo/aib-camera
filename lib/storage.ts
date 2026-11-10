@@ -50,10 +50,20 @@ export function resetStorageCaches(): void {
   resetInstallIdCache()
 }
 
-function sortByTakenAtDesc<T extends { takenAt: string }>(items: T[]): T[] {
-  return [...items].sort(
-    (a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
-  )
+function sortByTakenAtDesc<T extends { id?: string; takenAt: string }>(
+  items: T[]
+): T[] {
+  return [...items].sort((a, b) => {
+    const aMs = Date.parse(a.takenAt)
+    const bMs = Date.parse(b.takenAt)
+    const safeA = Number.isFinite(aMs) ? aMs : 0
+    const safeB = Number.isFinite(bMs) ? bMs : 0
+    const delta = safeB - safeA
+    if (delta !== 0) return delta
+    const idA = a.id ?? ''
+    const idB = b.id ?? ''
+    return idA < idB ? 1 : idA > idB ? -1 : 0
+  })
 }
 
 function normalizeAuditLogEntry(

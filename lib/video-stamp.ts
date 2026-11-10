@@ -12,7 +12,7 @@ import { warn } from './soft'
 import type { GeoSnapshot, StampSettings } from './types'
 import { extractVideoPoster } from './video-poster'
 
-export const VIDEO_MAX_DURATION_SEC = 60
+export { VIDEO_MAX_DURATION_SEC } from '@/lib/config'
 
 export type VideoStampResult = {
   uri: string

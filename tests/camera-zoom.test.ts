@@ -196,8 +196,8 @@ describe('defaultZoomOptions', () => {
     ])
     expect(options[1]).toMatchObject({ factor: 2 })
     expect(options[2]).toMatchObject({ factor: 4 })
-    expect(options[1]!.zoom).toBeCloseTo(1 / 7, 5)
-    expect(options[2]!.zoom).toBeCloseTo(3 / 7, 5)
+    expect(options[1]!.zoom).toBeCloseTo(2 / 8, 5)
+    expect(options[2]!.zoom).toBeCloseTo(4 / 8, 5)
   })
 
   it('omits 4× when max ratio is below 4', () => {
@@ -237,11 +237,19 @@ describe('clampCameraZoom', () => {
 })
 
 describe('absolute factor mapping', () => {
+  const originalPlatform = Platform.OS
   const options = buildIosZoomOptions([
     lens('Back Ultra Wide Camera'),
     lens('Back Camera'),
     lens('Back Telephoto Camera'),
   ])
+
+  afterEach(() => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: originalPlatform,
+    })
+  })
 
   it('uses the correct lens base for each option', () => {
     expect(lensBaseFactor(options[0]!)).toBe(0.5)
@@ -249,13 +257,38 @@ describe('absolute factor mapping', () => {
     expect(lensBaseFactor(options[2]!)).toBe(2)
   })
 
-  it('converts between camera zoom and absolute factor linearly', () => {
+  it('converts between camera zoom and absolute factor on Android via zoom×maxRatio', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    })
+    expect(factorFromCameraZoom(1, 0, 8)).toBe(1)
+    expect(cameraZoomFromFactor(1, 1, 8)).toBe(0)
+    expect(cameraZoomFromFactor(1, 2, 8)).toBeCloseTo(2 / 8, 5)
+    expect(factorFromCameraZoom(1, 2 / 8, 8)).toBeCloseTo(2, 5)
+    expect(cameraZoomFromFactor(1, 4, 8)).toBeCloseTo(4 / 8, 5)
+    expect(factorFromCameraZoom(1, 4 / 8, 8)).toBeCloseTo(4, 5)
+    expect(cameraZoomFromFactor(1, 8, 8)).toBe(1)
+    expect(factorFromCameraZoom(1, 1, 8)).toBe(8)
+  })
+
+  it('converts between camera zoom and absolute factor on iOS via expo exponential curve', () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'ios',
+    })
     expect(factorFromCameraZoom(1, 0, 8)).toBe(1)
     expect(cameraZoomFromFactor(1, 1, 8)).toBe(0)
     expect(factorFromCameraZoom(0.5, 0, 8)).toBe(0.5)
     expect(cameraZoomFromFactor(0.5, 0.5, 8)).toBe(0)
-    expect(cameraZoomFromFactor(1, 2, 8)).toBeCloseTo(1 / 7, 5)
-    expect(factorFromCameraZoom(1, 1 / 7, 8)).toBeCloseTo(2, 5)
+    expect(cameraZoomFromFactor(1, 2, 8)).toBeCloseTo(
+      Math.log(2) / Math.log(8),
+      5
+    )
+    expect(factorFromCameraZoom(1, Math.log(2) / Math.log(8), 8)).toBeCloseTo(
+      2,
+      5
+    )
     expect(cameraZoomFromFactor(1, 8, 8)).toBe(1)
     expect(factorFromCameraZoom(1, 1, 8)).toBe(8)
   })

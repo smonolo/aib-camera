@@ -3,6 +3,7 @@ import Constants from 'expo-constants'
 import { Platform } from 'react-native'
 
 export const APP_NAME = 'AIB Camera'
+export const VIDEO_MAX_DURATION_SEC = 60
 
 type Extra = {
   privacyPolicyUrl?: string
